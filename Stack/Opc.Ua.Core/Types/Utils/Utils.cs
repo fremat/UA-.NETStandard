@@ -1276,7 +1276,7 @@ namespace Opc.Ua
 
             if (buffer.Length == 0)
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
 
             string text = buffer.ToUpperInvariant();
@@ -2531,7 +2531,7 @@ namespace Opc.Ua
         {
             if (arrays == null)
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
 
             int length = 0;
