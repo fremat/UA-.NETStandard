@@ -419,7 +419,7 @@ namespace Opc.Ua
             var bytes = ArrayPool<byte>.Shared.Rent(length);
             try
             {
-                m_reader.Read(bytes, 0, length);
+                m_reader.BaseStream.Read(bytes, 0, length);
 
                 // If 0 terminated, decrease length by one before converting to string
                 var utf8StringLength = bytes[length - 1] == 0 ? length - 1 : length;
@@ -466,7 +466,7 @@ namespace Opc.Ua
             var bytes = ArrayPool<byte>.Shared.Rent(16);
             try
             {
-                var len = m_reader.Read(bytes, 0, 16);
+                var len = m_reader.BaseStream.Read(bytes, 0, 16);
                 var uuid = new Uuid(new Guid(bytes));
                 return uuid;
             }
