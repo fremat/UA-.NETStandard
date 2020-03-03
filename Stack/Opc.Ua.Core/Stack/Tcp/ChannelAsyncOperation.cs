@@ -318,16 +318,13 @@ namespace Opc.Ua.Bindings
             {
                 if (doNotBlock)
                 {
-                    Task.Run(() =>
-                    {
-                        m_callback(this);
-                    });
+                    Task.Run(InternalCompleteCallbackDelegate);
                 }
                 else
                 {
                     try
                     {
-                        m_callback(this);
+                        InternalCompleteCallbackDelegate();
                     }
                     catch (Exception e)
                     {
@@ -339,10 +336,11 @@ namespace Opc.Ua.Bindings
             return true;
         }
         #endregion
-
+        private Action InternalCompleteCallbackDelegate => _internalCompleteCallbackDelegate ?? (_internalCompleteCallbackDelegate = () => m_callback(this));
         #region Private Fields
+        private Action _internalCompleteCallbackDelegate;
         private object m_lock = new object();
-        private AsyncCallback m_callback;
+        private readonly AsyncCallback m_callback;
         private object m_asyncState;
         private bool m_synchronous;
         private bool m_completed;
