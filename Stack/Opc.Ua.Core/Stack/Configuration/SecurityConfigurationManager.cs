@@ -381,7 +381,7 @@ namespace Opc.Ua.Security
         /// </summary>
         private static string SetObject(Type type, object value)
         {
-            using (MemoryStream memoryStream = new MemoryStream())
+            using (MemoryStream memoryStream = PooledMemoryStream.GetMemoryStream())
             {
                 DataContractSerializer serializer = new DataContractSerializer(value.GetType());
                 serializer.WriteObject(memoryStream, value);

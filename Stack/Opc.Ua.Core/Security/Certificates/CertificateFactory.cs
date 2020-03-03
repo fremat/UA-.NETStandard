@@ -20,6 +20,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Opc.Ua;
+using Opc.Ua.Core;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
@@ -839,7 +840,7 @@ public class CertificateFactory
     {
         Org.BouncyCastle.X509.X509Certificate bcCert = new Org.BouncyCastle.X509.X509CertificateParser().ReadCertificate(certificate.RawData);
 
-        using (var memoryStream = new MemoryStream())
+        using (var memoryStream = PooledMemoryStream.GetMemoryStream())
         {
             using (var textWriter = new StreamWriter(memoryStream))
             {
@@ -1307,7 +1308,7 @@ public class CertificateFactory
         SecureRandom random)
     {
         // create pkcs12 store for cert and private key
-        using (MemoryStream pfxData = new MemoryStream())
+        using (var pfxData = PooledMemoryStream.GetMemoryStream())
         {
             Pkcs12StoreBuilder builder = new Pkcs12StoreBuilder();
             builder.SetUseDerEncoding(true);

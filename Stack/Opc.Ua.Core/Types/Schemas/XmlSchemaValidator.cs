@@ -17,6 +17,7 @@ using System.Xml;
 using System.IO;
 using System.Reflection;
 using System.Xml.Schema;
+using Opc.Ua.Core;
 
 namespace Opc.Ua.Schema.Xml
 {
@@ -113,40 +114,42 @@ namespace Opc.Ua.Schema.Xml
             settings.Indent      = true;
             settings.IndentChars = "    ";
 
-            MemoryStream ostrm = new MemoryStream();
-            XmlWriter writer = XmlWriter.Create(ostrm, settings);
-            
-            try
+            using (var ostrm = PooledMemoryStream.GetMemoryStream())
             {
-                if (typeName == null || m_schema.ChildNodes.Count == 0)
+                XmlWriter writer = XmlWriter.Create(ostrm, settings);
+
+                try
                 {
-                    m_schema.WriteTo(writer);
-                }
-                else
-                {
-                    foreach (XmlNode current in m_schema.ChildNodes)
-                    {       
-                        XmlElement element = current as XmlElement;
-                        if (element != null)
+                    if (typeName == null || m_schema.ChildNodes.Count == 0)
+                    {
+                        m_schema.WriteTo(writer);
+                    }
+                    else
+                    {
+                        foreach (XmlNode current in m_schema.ChildNodes)
                         {
-                            if (element.Name == typeName)
-                            {                                
-                                XmlDocument schema = new XmlDocument();
-                                schema.AppendChild(element);
-                                schema.WriteTo(writer);
-                                break;
+                            XmlElement element = current as XmlElement;
+                            if (element != null)
+                            {
+                                if (element.Name == typeName)
+                                {
+                                    XmlDocument schema = new XmlDocument();
+                                    schema.AppendChild(element);
+                                    schema.WriteTo(writer);
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
-            finally
-            {
-                writer.Flush();
-                writer.Dispose();
-            }
+                finally
+                {
+                    writer.Flush();
+                    writer.Dispose();
+                }
 
-            return s_utf8NoBom.GetString(ostrm.ToArray());
+                return s_utf8NoBom.GetString(ostrm.ToArray());
+            }
         } 
         #endregion
         
