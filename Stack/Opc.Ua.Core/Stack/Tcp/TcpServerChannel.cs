@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
@@ -662,17 +663,23 @@ namespace Opc.Ua.Bindings
                         return false;
                     }
 
-                    byte[] endpointUrl = new byte[length];
-
-                    for (int ii = 0; ii < endpointUrl.Length; ii++)
+                    byte[] endpointUrl = ArrayPool<byte>.Shared.Rent(length);
+                    try
                     {
-                        endpointUrl[ii] = decoder.ReadByte(null);
+                        for (int ii = 0; ii < length; ii++)
+                        {
+                            endpointUrl[ii] = decoder.ReadByte(null);
+                        }
+
+                        if (!SetEndpointUrl(s_utf8NoBom.GetString(endpointUrl, 0, length)))
+                        {
+                            ForceChannelFault(StatusCodes.BadTcpEndpointUrlInvalid);
+                            return false;
+                        }
                     }
-
-                    if (!SetEndpointUrl(s_utf8NoBom.GetString(endpointUrl, 0, endpointUrl.Length)))
+                    finally
                     {
-                        ForceChannelFault(StatusCodes.BadTcpEndpointUrlInvalid);
-                        return false;
+                        ArrayPool<byte>.Shared.Return(endpointUrl);
                     }
                 }
 

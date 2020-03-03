@@ -11,10 +11,12 @@
 */
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
+using Opc.Ua.Core;
 
 namespace Opc.Ua.Security
 {
@@ -357,11 +359,20 @@ namespace Opc.Ua.Security
         /// </summary>
         private static object GetObject(Type type, XmlNode element)
         {
-            using (MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(element.InnerXml)))
+            int count = Encoding.UTF8.GetByteCount(element.InnerXml);
+            var bytes = ArrayPool<byte>.Shared.Rent(count);
+            try
             {
-                XmlDictionaryReader reader = XmlDictionaryReader.CreateTextReader(memoryStream, Encoding.UTF8, new XmlDictionaryReaderQuotas(), null);
-                DataContractSerializer serializer = new DataContractSerializer(type);
-                return serializer.ReadObject(reader);
+                using (MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(element.InnerXml, 0, count, bytes, 0)))
+                {
+                    XmlDictionaryReader reader = XmlDictionaryReader.CreateTextReader(memoryStream, Encoding.UTF8, new XmlDictionaryReaderQuotas(), null);
+                    DataContractSerializer serializer = new DataContractSerializer(type);
+                    return serializer.ReadObject(reader);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
             }
         }
 

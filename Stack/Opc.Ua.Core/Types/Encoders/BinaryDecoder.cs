@@ -14,6 +14,8 @@ using System;
 using System.IO;
 using System.Text;
 using System.Xml;
+using System.IO;
+using System.Buffers;
 
 namespace Opc.Ua
 {
@@ -414,11 +416,19 @@ namespace Opc.Ua
                     length);
             }
 
-            byte[] bytes = m_reader.ReadBytes(length);
+            var bytes = ArrayPool<byte>.Shared.Rent(length);
+            try
+            {
+                m_reader.Read(bytes, 0, length);
 
-            // If 0 terminated, decrease length by one before converting to string
-            var utf8StringLength = bytes[bytes.Length - 1] == 0 ? bytes.Length - 1 : bytes.Length;
-            return Encoding.UTF8.GetString(bytes, 0, utf8StringLength);
+                // If 0 terminated, decrease length by one before converting to string
+                var utf8StringLength = bytes[length - 1] == 0 ? length - 1 : length;
+                return Encoding.UTF8.GetString(bytes, 0, utf8StringLength);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
 
         /// <summary>
@@ -453,8 +463,17 @@ namespace Opc.Ua
         /// </summary>
         public Uuid ReadGuid(string fieldName)
         {
-            byte[] bytes = m_reader.ReadBytes(16);
-            return new Uuid(new Guid(bytes));
+            var bytes = ArrayPool<byte>.Shared.Rent(16);
+            try
+            {
+                var len = m_reader.Read(bytes, 0, 16);
+                var uuid = new Uuid(new Guid(bytes));
+                return uuid;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
 
         /// <summary>
@@ -510,7 +529,7 @@ namespace Opc.Ua
                 string xmlString = Encoding.UTF8.GetString(bytes, 0, utf8StringLength);
 
                 using (XmlReader reader = XmlReader.Create(new StringReader(xmlString), new XmlReaderSettings()
-                    { DtdProcessing = System.Xml.DtdProcessing.Prohibit }))
+                { DtdProcessing = System.Xml.DtdProcessing.Prohibit }))
                 {
                     document.Load(reader);
                 }
