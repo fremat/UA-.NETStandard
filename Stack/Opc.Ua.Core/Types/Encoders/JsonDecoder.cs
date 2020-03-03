@@ -885,7 +885,7 @@ namespace Opc.Ua
             var value = token as string;
             if (value == null)
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
 
             var bytes = Convert.FromBase64String(value);
@@ -1540,7 +1540,7 @@ namespace Opc.Ua
                 if (encoding == (byte)ExtensionObjectEncoding.Binary)
                 {
                     var bytes = ReadByteString("Body");
-                    return new ExtensionObject(typeId, bytes ?? new byte[0]);
+                    return new ExtensionObject(typeId, bytes ?? Array.Empty<byte>());
                 }
 
                 if (encoding == (byte)ExtensionObjectEncoding.Xml)
@@ -2529,7 +2529,7 @@ namespace Opc.Ua
 
                 case IdType.Opaque:
                 {
-                    return new NodeId(new byte[0], namespaceIndex);
+                    return new NodeId(Array.Empty<byte>(), namespaceIndex);
                 }
 
                 case IdType.String:

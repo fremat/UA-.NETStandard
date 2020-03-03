@@ -989,7 +989,7 @@ namespace Opc.Ua
                 }
                 else
                 {
-                    value = new byte[0];
+                    value = Array.Empty<byte>();
                 }
 
                 // check the length.
@@ -1004,7 +1004,7 @@ namespace Opc.Ua
 
             if (!isNil)
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
 
             return null;
