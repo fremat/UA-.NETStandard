@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -437,18 +438,26 @@ namespace Opc.Ua
                 return;
             }
 
-            byte[] bytes = s_utf8NoBom.GetBytes(value);
+            int length = s_utf8NoBom.GetByteCount(value);
 
-            if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < bytes.Length)
+            if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < length)
             {
                 throw ServiceResultException.Create(
                     StatusCodes.BadEncodingLimitsExceeded,
                     "MaxStringLength {0} < {1}",
                     m_context.MaxStringLength,
-                    bytes.Length);
+                    length);
             }
-
-            WriteByteString(null, new UTF8Encoding().GetBytes(value));
+            var bytes = ArrayPool<byte>.Shared.Rent(length);
+            try
+            {
+                Encoding.UTF8.GetBytes(value, 0, value.Length, bytes, 0);
+                WriteByteString(null, bytes);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
 
         /// <summary>
