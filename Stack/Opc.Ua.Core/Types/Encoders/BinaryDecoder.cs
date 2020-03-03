@@ -513,9 +513,9 @@ namespace Opc.Ua
         /// </summary>
         public XmlElement ReadXmlElement(string fieldName)
         {
-            byte[] bytes = ReadByteString(fieldName);
+            var xmlString = ReadString(fieldName);
 
-            if (bytes == null || bytes.Length == 0)
+            if (string.IsNullOrEmpty(xmlString))
             {
                 return null;
             }
@@ -524,10 +524,6 @@ namespace Opc.Ua
 
             try
             {
-                // If 0 terminated, decrease length by one before converting to string
-                var utf8StringLength = bytes[bytes.Length - 1] == 0 ? bytes.Length - 1 : bytes.Length;
-                string xmlString = Encoding.UTF8.GetString(bytes, 0, utf8StringLength);
-
                 using (XmlReader reader = XmlReader.Create(new StringReader(xmlString), new XmlReaderSettings()
                 { DtdProcessing = System.Xml.DtdProcessing.Prohibit }))
                 {
