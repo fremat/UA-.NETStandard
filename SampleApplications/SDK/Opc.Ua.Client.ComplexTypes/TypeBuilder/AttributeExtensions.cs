@@ -88,7 +88,7 @@ namespace Opc.Ua.Client.ComplexTypes
             ConstructorInfo ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
             CustomAttributeBuilder builder = new CustomAttributeBuilder(
                 ctorInfo,
-                new object[0],  // constructor arguments
+                Array.Empty<object>(),  // constructor arguments
                 new[]           // properties to assign
                 {
                     attributeType.GetProperty("DefaultEncodingId"),
@@ -118,7 +118,7 @@ namespace Opc.Ua.Client.ComplexTypes
             ConstructorInfo ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
             CustomAttributeBuilder builder = new CustomAttributeBuilder(
                 ctorInfo,
-                new object[0],  // constructor arguments
+                Array.Empty<object>(),  // constructor arguments
                 new[]           // properties to assign
                 {
                     attributeType.GetProperty("ComplexTypeId"),
@@ -145,7 +145,7 @@ namespace Opc.Ua.Client.ComplexTypes
             ConstructorInfo ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
             CustomAttributeBuilder builder = new CustomAttributeBuilder(
                 ctorInfo,
-                new object[0],  // constructor arguments
+                Array.Empty<object>(),  // constructor arguments
                 new[]           // properties to assign
                 {
                     attributeType.GetProperty("ValueRank"),
@@ -171,7 +171,7 @@ namespace Opc.Ua.Client.ComplexTypes
             ConstructorInfo ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
             CustomAttributeBuilder builder = new CustomAttributeBuilder(
                 ctorInfo,
-                new object[0],  // constructor arguments
+                Array.Empty<object>(),  // constructor arguments
                 new[]           // properties to assign
                 {
                     attributeType.GetProperty("Value")
@@ -194,7 +194,7 @@ namespace Opc.Ua.Client.ComplexTypes
             ConstructorInfo ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
             CustomAttributeBuilder builder = new CustomAttributeBuilder(
                 ctorInfo,
-                new object[0],  // constructor arguments
+                Array.Empty<object>(),  // constructor arguments
                 new[]           // properties to assign
                 {
                     attributeType.GetProperty("Name"),
@@ -219,7 +219,7 @@ namespace Opc.Ua.Client.ComplexTypes
             ConstructorInfo ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
             CustomAttributeBuilder builder = new CustomAttributeBuilder(
                 ctorInfo,
-                new object[0],  // constructor arguments
+                Array.Empty<object>(),  // constructor arguments
                 new[]           // properties to assign
                 {
                     attributeType.GetProperty("Namespace")

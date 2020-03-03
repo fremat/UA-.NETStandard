@@ -1728,7 +1728,7 @@ namespace Opc.Ua.Client
                         {
                             if (value.Value == null)
                             {
-                                variableNode.ArrayDimensions = new uint[0];
+                                variableNode.ArrayDimensions = Array.Empty<uint>();
                             }
                             else
                             {
@@ -2297,8 +2297,8 @@ namespace Opc.Ua.Client
             byte[] clientNonce = Utils.Nonce.CreateNonce(length);
             NodeId sessionId = null;
             NodeId sessionCookie = null;
-            byte[] serverNonce = new byte[0];
-            byte[] serverCertificateData = new byte[0];
+            byte[] serverNonce = Array.Empty<byte>();
+            byte[] serverCertificateData = Array.Empty<byte>();
             SignatureData serverSignature = null;
             EndpointDescriptionCollection serverEndpoints = null;
             SignedSoftwareCertificateCollection serverSoftwareCertificates = null;
