@@ -451,8 +451,8 @@ namespace Opc.Ua
             var bytes = ArrayPool<byte>.Shared.Rent(length);
             try
             {
-                Encoding.UTF8.GetBytes(value, 0, value.Length, bytes, 0);
-                WriteByteString(null, bytes);
+                Encoding.UTF8.GetBytes(value, 0, length, bytes, 0);
+                WriteByteString(null, bytes, 0, length);
             }
             finally
             {
@@ -506,6 +506,30 @@ namespace Opc.Ua
         public void WriteGuid(string fieldName, Guid value)
         {
             m_writer.Write(((Guid)value).ToByteArray());
+        }
+
+        /// <summary>
+        /// Writes a byte string to the stream.
+        /// </summary>
+        public void WriteByteString(string fieldName, byte[] value, int index, int count)
+        {
+            if (value == null)
+            {
+                WriteInt32(null, -1);
+                return;
+            }
+
+            if (m_context.MaxByteStringLength > 0 && m_context.MaxByteStringLength < count)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "MaxByteStringLength {0} < {1}",
+                    m_context.MaxByteStringLength,
+                    value.Length);
+            }
+
+            WriteInt32(null, count);
+            m_writer.Write(value, index, count);
         }
 
         /// <summary>
