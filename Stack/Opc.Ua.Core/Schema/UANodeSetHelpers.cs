@@ -292,7 +292,7 @@ namespace Opc.Ua.Export
             }
             else
             {
-                exportedNode.Description = new LocalizedText[0];
+                exportedNode.Description = Array.Empty<LocalizedText>();
             }
 
             exportedNode.Category = (node.Categories != null && node.Categories.Count > 0) ? new List<string>(node.Categories).ToArray() : null;

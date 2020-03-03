@@ -2321,7 +2321,7 @@ namespace Opc.Ua
 
                     if (text.Length == 0)
                     {
-                        return new byte[0];
+                        return Array.Empty<byte>();
                     }
 
                     using (System.IO.MemoryStream ostrm = new System.IO.MemoryStream())
