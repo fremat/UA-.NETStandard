@@ -35,6 +35,7 @@ namespace Opc.Ua
         private uint m_nestingLevel;
         private bool m_topLevelIsArray;
         private bool m_levelOneSkipped;
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding(false);
         #endregion
 
         #region Constructors
@@ -68,7 +69,7 @@ namespace Opc.Ua
             if (m_writer == null)
             {
                 m_destination = new MemoryStream();
-                m_writer = new StreamWriter(m_destination, new UTF8Encoding(false));
+                m_writer = new StreamWriter(m_destination, s_utf8NoBom);
             }
 
             if (m_topLevelIsArray)
@@ -110,7 +111,7 @@ namespace Opc.Ua
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             // create encoder.
-            JsonEncoder encoder = new JsonEncoder(context, true, new StreamWriter(stream, new UTF8Encoding(false), 65535, leaveOpen));
+            JsonEncoder encoder = new JsonEncoder(context, true, new StreamWriter(stream, s_utf8NoBom, 65535, leaveOpen));
 
             try
             {
@@ -158,7 +159,7 @@ namespace Opc.Ua
 
             using (MemoryStream stream = new MemoryStream(buffer, true))
             {
-                var encoder = new JsonEncoder(context, true, new StreamWriter(stream, new UTF8Encoding(false), 65535, false));
+                var encoder = new JsonEncoder(context, true, new StreamWriter(stream, s_utf8NoBom, 65535, false));
 
                 // encode message
                 encoder.EncodeMessage(message);
