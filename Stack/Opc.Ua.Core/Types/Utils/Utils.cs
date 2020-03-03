@@ -34,6 +34,8 @@ namespace Opc.Ua
     /// </summary>
     public static class Utils
     {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Public Constants
         /// <summary>
         /// The URI scheme for the HTTPS protocol. 
@@ -2760,7 +2762,7 @@ namespace Opc.Ua
             // convert label to UTF-8 byte sequence.
             if (!String.IsNullOrEmpty(label))
             {
-                seed = new UTF8Encoding().GetBytes(label);
+                seed = s_utf8NoBom.GetBytes(label);
             }
 
             // append data to label.

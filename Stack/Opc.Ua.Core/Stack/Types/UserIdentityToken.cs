@@ -59,6 +59,8 @@ namespace Opc.Ua
 	/// </summary>
 	public partial class UserNameIdentityToken
 	{
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Public Properties
         /// <summary>
         /// The decrypted password associated with the token.
@@ -85,13 +87,13 @@ namespace Opc.Ua
             // handle no encryption.
             if (String.IsNullOrEmpty(securityPolicyUri) || securityPolicyUri == SecurityPolicies.None)
             {
-                m_password = new UTF8Encoding().GetBytes(m_decryptedPassword);
+                m_password = s_utf8NoBom.GetBytes(m_decryptedPassword);
                 m_encryptionAlgorithm = null;
                 return;
             }
             
             // encrypt the password.
-            byte[] dataToEncrypt = Utils.Append(new UTF8Encoding().GetBytes(m_decryptedPassword), senderNonce);
+            byte[] dataToEncrypt = Utils.Append(s_utf8NoBom.GetBytes(m_decryptedPassword), senderNonce);
 
             EncryptedData encryptedData = SecurityPolicies.Encrypt(
                 certificate,
@@ -110,7 +112,7 @@ namespace Opc.Ua
             // handle no encryption.
             if (String.IsNullOrEmpty(securityPolicyUri) || securityPolicyUri == SecurityPolicies.None)
             {
-                m_decryptedPassword = new UTF8Encoding().GetString(m_password, 0, m_password.Length);
+                m_decryptedPassword = s_utf8NoBom.GetString(m_password, 0, m_password.Length);
                 return;
             }
             
@@ -150,7 +152,7 @@ namespace Opc.Ua
             }
                      
             // convert to UTF-8.
-            m_decryptedPassword = new UTF8Encoding().GetString(decryptedPassword, 0, startOfNonce);
+            m_decryptedPassword = s_utf8NoBom.GetString(decryptedPassword, 0, startOfNonce);
         }
         #endregion
 

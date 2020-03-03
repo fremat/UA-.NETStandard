@@ -27,6 +27,8 @@ namespace Opc.Ua.Bindings
     /// </summary>
     public class TcpServerChannel : UaSCUaBinaryChannel
     {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         /// <summary>
         /// Attaches the object to an existing socket.
         /// </summary>
@@ -667,7 +669,7 @@ namespace Opc.Ua.Bindings
                         endpointUrl[ii] = decoder.ReadByte(null);
                     }
 
-                    if (!SetEndpointUrl(new UTF8Encoding().GetString(endpointUrl, 0, endpointUrl.Length)))
+                    if (!SetEndpointUrl(s_utf8NoBom.GetString(endpointUrl, 0, endpointUrl.Length)))
                     {
                         ForceChannelFault(StatusCodes.BadTcpEndpointUrlInvalid);
                         return false;

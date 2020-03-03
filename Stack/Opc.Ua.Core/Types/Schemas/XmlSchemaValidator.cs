@@ -24,12 +24,14 @@ namespace Opc.Ua.Schema.Xml
     /// Generates files used to describe data types.
     /// </summary>
     public class XmlSchemaValidator : SchemaValidator
-    {       
+    {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Constructors
-		/// <summary>
-		/// Intializes the object with default values.
-		/// </summary>
-		public XmlSchemaValidator()
+        /// <summary>
+        /// Intializes the object with default values.
+        /// </summary>
+        public XmlSchemaValidator()
 		{
             SetResourcePaths(WellKnownDictionaries);
 		}
@@ -144,7 +146,7 @@ namespace Opc.Ua.Schema.Xml
                 writer.Dispose();
             }
 
-            return new UTF8Encoding().GetString(ostrm.ToArray());
+            return s_utf8NoBom.GetString(ostrm.ToArray());
         } 
         #endregion
         

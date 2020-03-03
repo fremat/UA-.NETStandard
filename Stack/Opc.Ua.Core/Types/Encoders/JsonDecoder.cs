@@ -26,6 +26,7 @@ namespace Opc.Ua
     public class JsonDecoder : IDecoder, IDisposable
     {
         #region Private Fields
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
         private JsonTextReader m_reader;
         private Dictionary<string, object> m_root;
         private Stack<object> m_stack;
@@ -922,7 +923,7 @@ namespace Opc.Ua
             if (bytes != null && bytes.Length > 0)
             {
                 XmlDocument document = new XmlDocument();
-                string xmlString = new UTF8Encoding().GetString(bytes, 0, bytes.Length);
+                string xmlString = s_utf8NoBom.GetString(bytes, 0, bytes.Length);
 
                 using (XmlReader reader = XmlReader.Create(new StringReader(xmlString),
                     new XmlReaderSettings() { DtdProcessing = System.Xml.DtdProcessing.Prohibit }))
