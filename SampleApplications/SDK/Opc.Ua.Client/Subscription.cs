@@ -1574,11 +1574,7 @@ namespace Opc.Ua.Client
                 }
 
                 // process messages.
-                Task.Run(() =>
-                {
-                    Interlocked.Increment(ref m_outstandingMessageWorkers);
-                    OnMessageReceived(null);
-                });
+                Task.Run(ProcessMessagesDelegate);
             }
 
             // send notification that publishing has recovered.
@@ -1595,11 +1591,16 @@ namespace Opc.Ua.Client
             }
         }
 
+        private Action _processMessagesDelegate;
+
+        private Action ProcessMessagesDelegate => _processMessagesDelegate ?? (_processMessagesDelegate = OnMessageReceived);
+
         /// <summary>
         /// Processes the incoming messages.
         /// </summary>
-        private void OnMessageReceived(object state)
+        private void OnMessageReceived()
         {
+            Interlocked.Increment(ref m_outstandingMessageWorkers);
             try
             {
                 Session session = null;
