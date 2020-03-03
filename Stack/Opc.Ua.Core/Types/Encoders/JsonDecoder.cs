@@ -17,6 +17,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using Newtonsoft.Json;
+using Opc.Ua.Core;
 
 namespace Opc.Ua
 {
@@ -1564,14 +1565,14 @@ namespace Opc.Ua
                     return new ExtensionObject(typeId, encodeable);
                 }
 
-                var ostrm = new MemoryStream();
-
-                using (JsonTextWriter writer = new JsonTextWriter(new StreamWriter(ostrm)))
+                using (var ostrm = PooledMemoryStream.GetMemoryStream())
                 {
-                    EncodeAsJson(writer, token);
+                    using (JsonTextWriter writer = new JsonTextWriter(new StreamWriter(ostrm)))
+                    {
+                        EncodeAsJson(writer, token);
+                    }
+                    return new ExtensionObject(typeId, ostrm.ToArray());
                 }
-
-                return new ExtensionObject(typeId, ostrm.ToArray());
             }
             finally
             {

@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using Opc.Ua.Core;
 
 namespace Opc.Ua.Schema.Binary
 {
@@ -93,39 +94,41 @@ namespace Opc.Ua.Schema.Binary
             settings.Indent = true;
             settings.IndentChars = "    ";
 
-            MemoryStream ostrm = new MemoryStream();
-            XmlWriter writer = XmlWriter.Create(ostrm, settings);
-
-            try
+            using (var ostrm = PooledMemoryStream.GetMemoryStream())
             {
-                if (typeName == null)
-                {
-                    XmlSerializer serializer = new XmlSerializer(typeof(TypeDictionary));
-                    serializer.Serialize(writer, Dictionary);
-                }
-                else
-                {
-                    TypeDescription description = null;
+                XmlWriter writer = XmlWriter.Create(ostrm, settings);
 
-                    if (!m_descriptions.TryGetValue(new XmlQualifiedName(typeName, Dictionary.TargetNamespace), out description))
+                try
+                {
+                    if (typeName == null)
                     {
                         XmlSerializer serializer = new XmlSerializer(typeof(TypeDictionary));
                         serializer.Serialize(writer, Dictionary);
                     }
                     else
                     {
-                        XmlSerializer serializer = new XmlSerializer(typeof(TypeDescription));
-                        serializer.Serialize(writer, description);
+                        TypeDescription description = null;
+
+                        if (!m_descriptions.TryGetValue(new XmlQualifiedName(typeName, Dictionary.TargetNamespace), out description))
+                        {
+                            XmlSerializer serializer = new XmlSerializer(typeof(TypeDictionary));
+                            serializer.Serialize(writer, Dictionary);
+                        }
+                        else
+                        {
+                            XmlSerializer serializer = new XmlSerializer(typeof(TypeDescription));
+                            serializer.Serialize(writer, description);
+                        }
                     }
                 }
-            }
-            finally
-            {
-                writer.Flush();
-                writer.Dispose();
-            }
+                finally
+                {
+                    writer.Flush();
+                    writer.Dispose();
+                }
 
-            return s_utf8NoBom.GetString(ostrm.ToArray(), 0, (int)ostrm.Length);
+                return s_utf8NoBom.GetString(ostrm.ToArray(), 0, (int)ostrm.Length);
+            }
         }
         #endregion
 

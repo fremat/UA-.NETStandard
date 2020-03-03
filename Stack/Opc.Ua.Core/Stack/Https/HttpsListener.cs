@@ -28,6 +28,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Logging;
+using Opc.Ua.Core;
 using System;
 using System.IdentityModel.Selectors;
 using System.IO;
@@ -340,7 +341,7 @@ namespace Opc.Ua.Bindings
 
         private async Task<byte[]> ReadBodyAsync(HttpRequest req)
         {
-            using (var memory = new MemoryStream())
+            using (var memory = PooledMemoryStream.GetMemoryStream())
             using (var reader = new StreamReader(req.Body))
             {
                 await reader.BaseStream.CopyToAsync(memory);
