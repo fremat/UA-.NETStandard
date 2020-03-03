@@ -75,7 +75,7 @@ namespace Opc.Ua.Bindings
                 // verify signature.
                 if (!rsa.VerifyData(dataToVerify.Array, dataToVerify.Offset, dataToVerify.Count, signature, algorithm, padding))
                 {
-                    string messageType = new UTF8Encoding().GetString(dataToVerify.Array, dataToVerify.Offset, 4);
+                    string messageType = s_utf8NoBom.GetString(dataToVerify.Array, dataToVerify.Offset, 4);
                     int messageLength = BitConverter.ToInt32(dataToVerify.Array, dataToVerify.Offset + 4);
                     string actualSignature = Utils.ToHexString(signature);
 

@@ -26,6 +26,8 @@ namespace Opc.Ua.Schema.Binary
     /// </summary>
     public class BinarySchemaValidator : SchemaValidator
     {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Constructors
         /// <summary>
         /// Intializes the object with default values.
@@ -123,7 +125,7 @@ namespace Opc.Ua.Schema.Binary
                 writer.Dispose();
             }
 
-            return new UTF8Encoding().GetString(ostrm.ToArray(), 0, (int)ostrm.Length);
+            return s_utf8NoBom.GetString(ostrm.ToArray(), 0, (int)ostrm.Length);
         }
         #endregion
 

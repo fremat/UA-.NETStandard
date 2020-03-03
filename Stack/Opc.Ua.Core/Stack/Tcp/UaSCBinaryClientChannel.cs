@@ -27,6 +27,8 @@ namespace Opc.Ua.Bindings
     /// </summary>
     public class UaSCUaBinaryClientChannel : UaSCUaBinaryChannel
     {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Constructors
         /// <summary>
         /// Creates a channel for for a client.
@@ -369,7 +371,7 @@ namespace Opc.Ua.Bindings
                 encoder.WriteUInt32(null, (uint)MaxResponseMessageSize);
                 encoder.WriteUInt32(null, (uint)MaxResponseChunkCount);
 
-                byte[] endpointUrl = new UTF8Encoding().GetBytes(m_url.ToString());
+                byte[] endpointUrl = s_utf8NoBom.GetBytes(m_url.ToString());
 
                 if (endpointUrl.Length > TcpMessageLimits.MaxEndpointUrlLength)
                 {

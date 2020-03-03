@@ -23,6 +23,8 @@ namespace Opc.Ua.Bindings
     /// </summary>
     public partial class UaSCUaBinaryChannel : IMessageSink, IDisposable
     {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Constructors
 
         /// <summary>
@@ -92,7 +94,7 @@ namespace Opc.Ua.Bindings
                 }
             }
 
-            if (new UTF8Encoding().GetByteCount(securityPolicyUri) > TcpMessageLimits.MaxSecurityPolicyUriSize)
+            if (s_utf8NoBom.GetByteCount(securityPolicyUri) > TcpMessageLimits.MaxSecurityPolicyUriSize)
             {
                 throw new ArgumentException(
                     Utils.Format("UTF-8 form of the security policy URI may not be more than {0} bytes.", TcpMessageLimits.MaxSecurityPolicyUriSize),
@@ -509,11 +511,9 @@ namespace Opc.Ua.Bindings
             // check that length is not exceeded.
             if (reason != null)
             {
-                UTF8Encoding encoding = new UTF8Encoding();
-
-                if (encoding.GetByteCount(reason) > TcpMessageLimits.MaxErrorReasonLength)
+                if (s_utf8NoBom.GetByteCount(reason) > TcpMessageLimits.MaxErrorReasonLength)
                 {
-                    reason = reason.Substring(0, TcpMessageLimits.MaxErrorReasonLength / encoding.GetMaxByteCount(1));
+                    reason = reason.Substring(0, TcpMessageLimits.MaxErrorReasonLength / s_utf8NoBom.GetMaxByteCount(1));
                 }
             }
 
@@ -543,7 +543,7 @@ namespace Opc.Ua.Bindings
                     reasonBytes[ii] = decoder.ReadByte(null);
                 }
 
-                reason = new UTF8Encoding().GetString(reasonBytes, 0, reasonLength);
+                reason = s_utf8NoBom.GetString(reasonBytes, 0, reasonLength);
             }
 
             return ServiceResult.Create(statusCode, "Error received from remote host: {0}", reason);

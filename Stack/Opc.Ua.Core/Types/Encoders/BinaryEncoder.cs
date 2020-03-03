@@ -24,6 +24,8 @@ namespace Opc.Ua
     /// </summary>
     public class BinaryEncoder : IEncoder, IDisposable
     {
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+
         #region Constructor
         /// <summary>
         /// Creates an encoder that writes to a memory buffer.
@@ -435,7 +437,7 @@ namespace Opc.Ua
                 return;
             }
 
-            byte[] bytes = new UTF8Encoding().GetBytes(value);
+            byte[] bytes = s_utf8NoBom.GetBytes(value);
 
             if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < bytes.Length)
             {
@@ -532,7 +534,7 @@ namespace Opc.Ua
                 return;
             }
 
-            WriteByteString(null, new UTF8Encoding().GetBytes(value.OuterXml));
+            WriteByteString(null, s_utf8NoBom.GetBytes(value.OuterXml));
         }
 
         /// <summary>
