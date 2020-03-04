@@ -1637,7 +1637,7 @@ namespace Opc.Ua
 
             if (unused > 0)
             {
-                m_reader.ReadBytes(unused);
+                m_reader.BaseStream.Position += unused;
             }
 
             if (encodeable != null)
