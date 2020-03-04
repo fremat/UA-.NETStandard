@@ -354,7 +354,7 @@ namespace Opc.Ua.Server
         {
             try
             {
-                //Utils.Trace("Server: {0} Thread Started.", Thread.CurrentThread.Name);
+                //if (Utils.IsTraceEnabled) Utils.Trace("Server: {0} Thread Started.", Thread.CurrentThread.Name);
 
                 int sleepCycle = Convert.ToInt32(data, CultureInfo.InvariantCulture);
                 int timeToWait = sleepCycle;
@@ -409,17 +409,17 @@ namespace Opc.Ua.Server
 
                         if (timeToWait < 0)
                         {
-                            Utils.Trace("WARNING: SamplingGroup cannot sample fast enough. TimeToSample={0}ms, SamplingInterval={1}ms", delay, sleepCycle);
+                            if (Utils.IsTraceEnabled) Utils.Trace("WARNING: SamplingGroup cannot sample fast enough. TimeToSample={0}ms, SamplingInterval={1}ms", delay, sleepCycle);
                             timeToWait = sleepCycle;
                         }
                     }
                 }
                 
-                //Utils.Trace("Server: {0} Thread Exited Normally.", Thread.CurrentThread.Name);
+                //if (Utils.IsTraceEnabled) Utils.Trace("Server: {0} Thread Exited Normally.", Thread.CurrentThread.Name);
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Server: SampleMonitoredItems Thread Exited Unexpectedly.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Server: SampleMonitoredItems Thread Exited Unexpectedly.");
             }
         }
 
@@ -474,7 +474,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Server: Unexpected error sampling values.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Server: Unexpected error sampling values.");
             }
         }
         #endregion

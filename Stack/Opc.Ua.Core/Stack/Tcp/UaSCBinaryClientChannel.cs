@@ -182,7 +182,7 @@ namespace Opc.Ua.Bindings
             try
             {
                 operation.End(Int32.MaxValue);
-                Utils.Trace("CLIENTCHANNEL SOCKET CONNECTED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
+                if (Utils.IsTraceEnabled) Utils.Trace("CLIENTCHANNEL SOCKET CONNECTED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
             }
             catch (Exception e)
             {
@@ -216,7 +216,7 @@ namespace Opc.Ua.Bindings
                     m_handshakeOperation.Fault(ServiceResult.Create(StatusCodes.BadConnectionClosed, "Channel was closed by the user."));
                 }
 
-                Utils.Trace("Channel {0}: Close", ChannelId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Close", ChannelId);
 
                 // attempt a graceful shutdown.
                 if (State == TcpChannelState.Open)
@@ -246,14 +246,14 @@ namespace Opc.Ua.Bindings
 
                         default:
                             {
-                                Utils.Trace(e, "Could not gracefully close the channel.");
+                                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not gracefully close the channel.");
                                 break;
                             }
                     }
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Could not gracefully close the channel.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not gracefully close the channel.");
                 }
             }
 
@@ -310,7 +310,7 @@ namespace Opc.Ua.Bindings
                     throw new ServiceResultException(StatusCodes.BadConnectionClosed);
                 }
 
-                //Utils.Trace("Channel {0}: BeginSendRequest()", ChannelId);
+                //if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: BeginSendRequest()", ChannelId);
 
                 if (m_reconnecting)
                 {
@@ -355,7 +355,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private void SendHelloMessage(WriteOperation operation)
         {
-            Utils.Trace("Channel {0}: SendHelloMessage()", ChannelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: SendHelloMessage()", ChannelId);
 
             byte[] buffer = BufferManager.TakeBuffer(SendBufferSize, "SendHelloMessage");
 
@@ -406,7 +406,7 @@ namespace Opc.Ua.Bindings
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "protocolVersion")]
         private bool ProcessAcknowledgeMessage(ArraySegment<byte> messageChunk)
         {
-            Utils.Trace("Channel {0}: ProcessAcknowledgeMessage()", ChannelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessAcknowledgeMessage()", ChannelId);
 
             // check state.
             if (State != TcpChannelState.Connecting)
@@ -546,7 +546,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private bool ProcessOpenSecureChannelResponse(uint messageType, ArraySegment<byte> messageChunk)
         {
-            Utils.Trace("Channel {0}: ProcessOpenSecureChannelResponse()", ChannelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessOpenSecureChannelResponse()", ChannelId);
 
             // validate the channel state.            
             if (State != TcpChannelState.Opening && State != TcpChannelState.Open)
@@ -812,7 +812,7 @@ namespace Opc.Ua.Bindings
         {
             try
             {
-                Utils.Trace("Channel {0}: Scheduled Handshake Starting: TokenId={1}", ChannelId, CurrentToken.TokenId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Scheduled Handshake Starting: TokenId={1}", ChannelId, CurrentToken.TokenId);
 
                 Task task;
                 lock (DataLock)
@@ -822,7 +822,7 @@ namespace Opc.Ua.Bindings
 
                     if (token == CurrentToken)
                     {
-                        Utils.Trace("TCP CHANNEL {0}: Attempting Renew Token Now: TokenId={1}", ChannelId, token.TokenId);
+                        if (Utils.IsTraceEnabled) Utils.Trace("TCP CHANNEL {0}: Attempting Renew Token Now: TokenId={1}", ChannelId, token.TokenId);
 
                         // do nothing if not connected.
                         if (State != TcpChannelState.Open)
@@ -844,7 +844,7 @@ namespace Opc.Ua.Bindings
                         return;
                     }
 
-                    Utils.Trace("Channel {0}: Attempting Reconnect Now.", ChannelId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Attempting Reconnect Now.", ChannelId);
 
                     // cancel any previous attempt.
                     if (m_handshakeOperation != null)
@@ -858,7 +858,7 @@ namespace Opc.Ua.Bindings
 
                     if (Socket != null)
                     {
-                        Utils.Trace("CLIENTCHANNEL SOCKET CLOSED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
+                        if (Utils.IsTraceEnabled) Utils.Trace("CLIENTCHANNEL SOCKET CLOSED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
                         Socket.Close();
                         Socket = null;
                     }
@@ -873,7 +873,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception e)
             {
-                Utils.Trace("Channel {0}: Reconnect Failed {1}.", ChannelId, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Reconnect Failed {1}.", ChannelId, e.Message);
                 ForceReconnect(ServiceResult.Create(e, StatusCodes.BadUnexpectedError, "Unexpected error reconnecting or renewing a token."));
             }
         }
@@ -892,7 +892,7 @@ namespace Opc.Ua.Bindings
                         return;
                     }
 
-                    Utils.Trace("Channel {0}: OnHandshakeComplete", ChannelId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: OnHandshakeComplete", ChannelId);
 
                     m_handshakeOperation.End(Int32.MaxValue);
                     m_handshakeOperation = null;
@@ -900,7 +900,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Channel {0}: Handshake Failed {1}", ChannelId, e.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Channel {0}: Handshake Failed {1}", ChannelId, e.Message);
 
                     m_handshakeOperation = null;
                     m_reconnecting = false;
@@ -910,7 +910,7 @@ namespace Opc.Ua.Bindings
                     // check for expired channel or token.
                     if (error.Code == StatusCodes.BadTcpSecureChannelUnknown || error.Code == StatusCodes.BadSecurityChecksFailed)
                     {
-                        Utils.Trace("Channel {0}: Cannot Recover Channel", ChannelId);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Cannot Recover Channel", ChannelId);
                         Shutdown(error);
                         return;
                     }
@@ -1040,7 +1040,7 @@ namespace Opc.Ua.Bindings
 
                 if (Socket != null)
                 {
-                    Utils.Trace("CLIENTCHANNEL SOCKET CLOSED: {0:X8}, ChannelId={1}", Socket.Handle, channelId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("CLIENTCHANNEL SOCKET CLOSED: {0:X8}, ChannelId={1}", Socket.Handle, channelId);
                     Socket.Close();
                     Socket = null;
                 }
@@ -1106,7 +1106,7 @@ namespace Opc.Ua.Bindings
                 State = TcpChannelState.Faulted;
 
                 // schedule a reconnect.
-                Utils.Trace("Channel {0}: Attempting Reconnect in {1} ms. {2}", ChannelId, m_waitBetweenReconnects, reason.ToLongString());
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Attempting Reconnect in {1} ms. {2}", ChannelId, m_waitBetweenReconnects, reason.ToLongString());
                 m_handshakeTimer = new Timer(m_StartHandshake, null, m_waitBetweenReconnects, Timeout.Infinite);
 
                 // set next reconnect period.
@@ -1271,7 +1271,7 @@ namespace Opc.Ua.Bindings
             {
                 ServiceResult error = ReadErrorMessageBody(decoder);
 
-                Utils.Trace((int)Utils.TraceMasks.Error, "Channel {0}: ProcessErrorMessage({1})", ChannelId, error);
+                if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Error, "Channel {0}: ProcessErrorMessage({1})", ChannelId, error);
 
                 // check if a handshake is in progress
                 if (m_handshakeOperation != null)
@@ -1295,7 +1295,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private void SendCloseSecureChannelRequest(WriteOperation operation)
         {
-            Utils.Trace("Channel {0}: SendCloseSecureChannelRequest()", ChannelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: SendCloseSecureChannelRequest()", ChannelId);
 
             // supress reconnects if an error occurs.
             m_waitBetweenReconnects = Timeout.Infinite;
@@ -1343,7 +1343,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private bool ProcessResponseMessage(uint messageType, ArraySegment<byte> messageChunk)
         {
-            //Utils.Trace("Channel {0}: ProcessResponseMessage()", ChannelId);
+            //if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessResponseMessage()", ChannelId);
 
             // validate security on the message.
             ChannelToken token = null;

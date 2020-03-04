@@ -119,7 +119,7 @@ namespace Opc.Ua.Client.Controls
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Could not get ip addresses for host: {0}", hostname);                
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not get ip addresses for host: {0}", hostname);                
                 ThreadPool.QueueUserWorkItem(new WaitCallback(OnUpdateAddress), new object[] { listItem, e.Message });
             }
         }

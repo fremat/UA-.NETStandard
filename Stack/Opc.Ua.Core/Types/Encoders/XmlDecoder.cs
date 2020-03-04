@@ -1379,7 +1379,7 @@ namespace Opc.Ua
                     }
                     catch(Exception ex)
                     {
-                        Utils.Trace(ex, "Error reading variant.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(ex, "Error reading variant.");
                         value = new Variant(StatusCodes.BadEncodingError);
                     }
                     EndField("Value");
@@ -1441,7 +1441,7 @@ namespace Opc.Ua
             
             if (!NodeId.IsNull(typeId) && NodeId.IsNull(absoluteId))
             {            
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     "Cannot de-serialized extension objects if the NamespaceUri is not in the NamespaceTable: Type = {0}", 
                     typeId);
             }

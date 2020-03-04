@@ -263,14 +263,14 @@ namespace Opc.Ua
                     case StatusCodes.BadCertificateUseNotAllowed:
                     case StatusCodes.BadCertificateUntrusted:
                         {
-                            Utils.Trace("Certificate Vaildation failed for '{0}'. Reason={1}", certificate.Subject, (StatusCode)se.StatusCode);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Certificate Vaildation failed for '{0}'. Reason={1}", certificate.Subject, (StatusCode)se.StatusCode);
                             break;
                         }
 
                     default:
                         {
                             // write the invalid certificate to rejected store if specified.
-                            Utils.Trace((int)Utils.TraceMasks.Error, "Certificate '{0}' rejected. Reason={1}", certificate.Subject, (StatusCode)se.StatusCode);
+                            if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Error, "Certificate '{0}' rejected. Reason={1}", certificate.Subject, (StatusCode)se.StatusCode);
                             SaveCertificate(certificate);
 
                             throw new ServiceResultException(se, StatusCodes.BadCertificateInvalid);
@@ -294,7 +294,7 @@ namespace Opc.Ua
                 if (!accept)
                 {
                     // write the invalid certificate to rejected store if specified.
-                    Utils.Trace((int)Utils.TraceMasks.Error, "Certificate '{0}' rejected. Reason={1}", certificate.Subject, (StatusCode)se.StatusCode);
+                    if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Error, "Certificate '{0}' rejected. Reason={1}", certificate.Subject, (StatusCode)se.StatusCode);
                     SaveCertificate(certificate);
 
                     throw new ServiceResultException(se, StatusCodes.BadCertificateInvalid);
@@ -303,7 +303,7 @@ namespace Opc.Ua
                 // add to list of peers.
                 lock (m_lock)
                 {
-                    Utils.Trace("Validation error suppressed for '{0}'.", certificate.Subject);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Validation error suppressed for '{0}'.", certificate.Subject);
                     m_validatedCertificates[certificate.Thumbprint] = new X509Certificate2(certificate.RawData);
                 }
             }
@@ -318,7 +318,7 @@ namespace Opc.Ua
             {
                 if (m_rejectedCertificateStore != null)
                 {
-                    Utils.Trace((int)Utils.TraceMasks.Error, "Writing rejected certificate to directory: {0}", m_rejectedCertificateStore);
+                    if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Error, "Writing rejected certificate to directory: {0}", m_rejectedCertificateStore);
                     try
                     {
                         ICertificateStore store = m_rejectedCertificateStore.OpenStore();
@@ -335,7 +335,7 @@ namespace Opc.Ua
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Could not write certificate to directory: {0}", m_rejectedCertificateStore);
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not write certificate to directory: {0}", m_rejectedCertificateStore);
                     }
                 }
             }

@@ -116,7 +116,7 @@ namespace Opc.Ua.Bindings
                 State = TcpChannelState.Connecting;
 
                 Socket = new TcpMessageSocket(this, socket, BufferManager, Quotas.MaxBufferSize);
-                Utils.Trace("TCPSERVERCHANNEL SOCKET ATTACHED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
+                if (Utils.IsTraceEnabled) Utils.Trace("TCPSERVERCHANNEL SOCKET ATTACHED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
                 Socket.ReadNextMessage();
 
                 // automatically clean up the channel if no hello received.
@@ -155,7 +155,7 @@ namespace Opc.Ua.Bindings
                 {
                     // replace the socket.
                     Socket = socket;
-                    Utils.Trace("TCPSERVERCHANNEL SOCKET RECONNECTED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("TCPSERVERCHANNEL SOCKET RECONNECTED: {0:X8}, ChannelId={1}", Socket.Handle, ChannelId);
                     Socket.ChangeSink(this);
 
                     // need to assign a new token id.
@@ -201,7 +201,7 @@ namespace Opc.Ua.Bindings
                     return;
                 }
 
-                Utils.Trace("Channel {0}: SendResponse {1}", ChannelId, requestId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: SendResponse {1}", ChannelId, requestId);
 
                 BufferCollection buffers = null;
 
@@ -263,28 +263,28 @@ namespace Opc.Ua.Bindings
                     // process a response.
                     if (TcpMessageType.IsType(messageType, TcpMessageType.Message))
                     {
-                        //Utils.Trace("Channel {0}: ProcessRequestMessage", ChannelId);
+                        //if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessRequestMessage", ChannelId);
                         return ProcessRequestMessage(messageType, messageChunk);
                     }
 
                     // check for hello.
                     if (messageType == TcpMessageType.Hello)
                     {
-                        //Utils.Trace("Channel {0}: ProcessHelloMessage", ChannelId);
+                        //if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessHelloMessage", ChannelId);
                         return ProcessHelloMessage(messageChunk);
                     }
 
                     // process open secure channel repsonse.
                     if (TcpMessageType.IsType(messageType, TcpMessageType.Open))
                     {
-                        //Utils.Trace("Channel {0}: ProcessOpenSecureChannelRequest", ChannelId);
+                        //if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessOpenSecureChannelRequest", ChannelId);
                         return ProcessOpenSecureChannelRequest(messageType, messageChunk);
                     }
 
                     // process close secure channel response.
                     if (TcpMessageType.IsType(messageType, TcpMessageType.Close))
                     {
-                        //Utils.Trace("Channel {0}: ProcessCloseSecureChannelRequest", ChannelId);
+                        //if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessCloseSecureChannelRequest", ChannelId);
                         return ProcessCloseSecureChannelRequest(messageType, messageChunk);
                     }
 
@@ -347,7 +347,7 @@ namespace Opc.Ua.Bindings
         {
             lock (DataLock)
             {
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     "TCPSERVERCHANNEL ForceChannelFault Socket={0:X8}, ChannelId={1}, TokenId={2}, Reason={3}",
                     (Socket != null) ? Socket.Handle : 0,
                     (CurrentToken != null) ? CurrentToken.ChannelId : 0,
@@ -421,7 +421,7 @@ namespace Opc.Ua.Bindings
                     reason = new ServiceResult(StatusCodes.BadTimeout);
                 }
 
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     "TCPSERVERCHANNEL Cleanup Socket={0:X8}, ChannelId={1}, TokenId={2}, Reason={3}",
                     (Socket != null) ? Socket.Handle : 0,
                     (CurrentToken != null) ? CurrentToken.ChannelId : 0,
@@ -473,7 +473,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Unexpected error re-sending request (ID={0}).", response.Key);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error re-sending request (ID={0}).", response.Key);
                 }
             }
         }
@@ -483,7 +483,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         protected void SendErrorMessage(ServiceResult error)
         {
-            Utils.Trace("Channel {0}: SendErrorMessage()", ChannelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: SendErrorMessage()", ChannelId);
 
             byte[] buffer = BufferManager.TakeBuffer(SendBufferSize, "SendErrorMessage");
 
@@ -516,7 +516,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private void SendServiceFault(ChannelToken token, uint requestId, ServiceResult fault)
         {
-            Utils.Trace("Channel {0} Request {1}: SendServiceFault()", ChannelId, requestId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0} Request {1}: SendServiceFault()", ChannelId, requestId);
 
             BufferCollection buffers = null;
 
@@ -569,7 +569,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private void SendServiceFault(uint requestId, ServiceResult fault)
         {
-            Utils.Trace("Channel {0} Request {1}: SendServiceFault()", ChannelId, requestId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0} Request {1}: SendServiceFault()", ChannelId, requestId);
 
             BufferCollection chunksToSend = null;
 
@@ -927,7 +927,7 @@ namespace Opc.Ua.Bindings
                             token,
                             request);
 
-                        Utils.Trace(
+                        if (Utils.IsTraceEnabled) Utils.Trace(
                             "TCPSERVERCHANNEL ReconnectToExistingChannel Socket={0:X8}, ChannelId={1}, TokenId={2}",
                             (Socket != null) ? Socket.Handle : 0,
                             (CurrentToken != null) ? CurrentToken.ChannelId : 0,
@@ -1002,7 +1002,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         private void SendOpenSecureChannelResponse(uint requestId, ChannelToken token, OpenSecureChannelRequest request)
         {
-            Utils.Trace("Channel {0}: SendOpenSecureChannelResponse()", ChannelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: SendOpenSecureChannelResponse()", ChannelId);
 
             OpenSecureChannelResponse response = new OpenSecureChannelResponse();
 
@@ -1096,7 +1096,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error processing OpenSecureChannel request.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error processing OpenSecureChannel request.");
             }
             finally
             {
@@ -1105,7 +1105,7 @@ namespace Opc.Ua.Bindings
                     chunksToProcess.Release(BufferManager, "ProcessCloseSecureChannelRequest");
                 }
 
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     "TCPSERVERCHANNEL ProcessCloseSecureChannelRequest Socket={0:X8}, ChannelId={1}, TokenId={2}",
                     (Socket != null) ? Socket.Handle : 0,
                     (CurrentToken != null) ? CurrentToken.ChannelId : 0,
@@ -1151,13 +1151,13 @@ namespace Opc.Ua.Bindings
 
                 if (token == CurrentToken && PreviousToken != null && !PreviousToken.Expired)
                 {
-                    Utils.Trace("Server Revoked Token. ChannelId={1}, TokenId={0}", PreviousToken.TokenId, PreviousToken.ChannelId, DateTime.UtcNow);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Server Revoked Token. ChannelId={1}, TokenId={0}", PreviousToken.TokenId, PreviousToken.ChannelId, DateTime.UtcNow);
                     PreviousToken.Lifetime = 0;
                 }
             }
             catch (Exception e)
             {
-                Utils.Trace("Could not verify security on incoming request.");
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not verify security on incoming request.");
                 ForceChannelFault(e, StatusCodes.BadSecurityChecksFailed, "Could not verify security on incoming request.");
                 return false;
             }
@@ -1169,7 +1169,7 @@ namespace Opc.Ua.Bindings
                 // check for an abort.
                 if (TcpMessageType.IsAbort(messageType))
                 {
-                    Utils.Trace("Request was aborted.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Request was aborted.");
                     chunksToProcess = GetSavedChunks(requestId, messageBody);
                     return true;
                 }
@@ -1181,7 +1181,7 @@ namespace Opc.Ua.Bindings
                     return true;
                 }
 
-                Utils.Trace("Channel {0}: ProcessRequestMessage {1}", ChannelId, requestId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: ProcessRequestMessage {1}", ChannelId, requestId);
 
                 // get the chunks to process.
                 chunksToProcess = GetSavedChunks(requestId, messageBody);
@@ -1215,7 +1215,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error processing request.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error processing request.");
                 SendServiceFault(token, requestId, ServiceResult.Create(e, StatusCodes.BadTcpInternalError, "Unexpected error processing request."));
                 return true;
             }

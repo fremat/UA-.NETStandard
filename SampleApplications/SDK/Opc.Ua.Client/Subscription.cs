@@ -724,7 +724,7 @@ namespace Opc.Ua.Client
             // keep alive count must be at least 1, 10 is a good default.
             if (keepAliveCount == 0)
             {
-                Utils.Trace("Adjusted KeepAliveCount from value={0}, to value={1}, for subscription {2}. ", keepAliveCount, kDefaultKeepAlive, Id);
+                if (Utils.IsTraceEnabled) Utils.Trace("Adjusted KeepAliveCount from value={0}, to value={1}, for subscription {2}. ", keepAliveCount, kDefaultKeepAlive, Id);
                 keepAliveCount = kDefaultKeepAlive;
             }
 
@@ -742,14 +742,14 @@ namespace Opc.Ua.Client
                         lifetimeCount++;
                     }
 
-                    Utils.Trace("Adjusted LifetimeCount to value={0}, for subscription {1}. ", lifetimeCount, Id);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Adjusted LifetimeCount to value={0}, for subscription {1}. ", lifetimeCount, Id);
                 }
             }
             else if (lifetimeCount == 0)
             {
                 // don't know what the sampling interval will be - use something large enough
                 // to ensure the user does not experience unexpected drop outs.
-                Utils.Trace("Adjusted LifetimeCount from value={0}, to value={1}, for subscription {2}. ", lifetimeCount, kDefaultLifeTime, Id);
+                if (Utils.IsTraceEnabled) Utils.Trace("Adjusted LifetimeCount from value={0}, to value={1}, for subscription {2}. ", lifetimeCount, kDefaultLifeTime, Id);
                 lifetimeCount = kDefaultLifeTime;
             }
 
@@ -757,7 +757,7 @@ namespace Opc.Ua.Client
             uint minLifeTimeCount = 3 * keepAliveCount;
             if (lifetimeCount < minLifeTimeCount)
             {
-                Utils.Trace("Adjusted LifetimeCount from value={0}, to value={1}, for subscription {2}. ", lifetimeCount, minLifeTimeCount, Id);
+                if (Utils.IsTraceEnabled) Utils.Trace("Adjusted LifetimeCount from value={0}, to value={1}, for subscription {2}. ", lifetimeCount, minLifeTimeCount, Id);
                 lifetimeCount = minLifeTimeCount;
             }
         }
@@ -804,27 +804,27 @@ namespace Opc.Ua.Client
 
             if (m_keepAliveCount != revisedKeepAliveCount)
             {
-                Utils.Trace("For subscription {0}, Keep alive count was revised from {1} to {2}", Id, m_keepAliveCount, revisedKeepAliveCount);
+                if (Utils.IsTraceEnabled) Utils.Trace("For subscription {0}, Keep alive count was revised from {1} to {2}", Id, m_keepAliveCount, revisedKeepAliveCount);
             }
 
             if (m_lifetimeCount != revisedLifetimeCounter)
             {
-                Utils.Trace("For subscription {0}, Lifetime count was revised from {1} to {2}", Id, m_lifetimeCount, revisedLifetimeCounter);
+                if (Utils.IsTraceEnabled) Utils.Trace("For subscription {0}, Lifetime count was revised from {1} to {2}", Id, m_lifetimeCount, revisedLifetimeCounter);
             }
 
             if (m_publishingInterval != revisedPublishingInterval)
             {
-                Utils.Trace("For subscription {0}, Publishing interval was revised from {1} to {2}", Id, m_publishingInterval, revisedPublishingInterval);
+                if (Utils.IsTraceEnabled) Utils.Trace("For subscription {0}, Publishing interval was revised from {1} to {2}", Id, m_publishingInterval, revisedPublishingInterval);
             }
 
             if (revisedLifetimeCounter < revisedKeepAliveCount * 3)
             {
-                Utils.Trace("For subscription {0}, Revised lifetime counter (value={1}) is less than three times the keep alive count (value={2})", Id, revisedLifetimeCounter, revisedKeepAliveCount);
+                if (Utils.IsTraceEnabled) Utils.Trace("For subscription {0}, Revised lifetime counter (value={1}) is less than three times the keep alive count (value={2})", Id, revisedLifetimeCounter, revisedKeepAliveCount);
             }
 
             if (m_currentPriority == 0)
             {
-                Utils.Trace("For subscription {0}, the priority was set to 0.", Id);
+                if (Utils.IsTraceEnabled) Utils.Trace("For subscription {0}, the priority was set to 0.", Id);
             }
 
             CreateItems();
@@ -887,7 +887,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Error while raising PublishStateChanged event.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Error while raising PublishStateChanged event.");
                 }
             }
         }
@@ -918,7 +918,7 @@ namespace Opc.Ua.Client
             buffer.AppendFormat(", PublishingEnabled={0}", m_currentPublishingEnabled);    
             buffer.AppendFormat(", MonitoredItemCount={0}", MonitoredItemCount);    
 
-            Utils.Trace("{0}", buffer.ToString());
+            if (Utils.IsTraceEnabled) Utils.Trace("{0}", buffer.ToString());
         }
         
         /// <summary>
@@ -1586,7 +1586,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Error while raising PublishStateChanged event.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Error while raising PublishStateChanged event.");
                 }
             }
         }
@@ -1666,7 +1666,7 @@ namespace Opc.Ua.Client
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Error while raising PublishStateChanged event.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Error while raising PublishStateChanged event.");
                     }
                 }
 
@@ -1723,18 +1723,18 @@ namespace Opc.Ua.Client
 
                                 if (statusChanged != null)
                                 {
-                                    Utils.Trace("StatusChangeNotification received with Status = {0} for SubscriptionId={1}.", statusChanged.Status.ToString(), Id);
+                                    if (Utils.IsTraceEnabled) Utils.Trace("StatusChangeNotification received with Status = {0} for SubscriptionId={1}.", statusChanged.Status.ToString(), Id);
                                 }
                             }
                         }
                         catch (Exception e)
                         {
-                            Utils.Trace(e, "Error while processing incoming message #{0}.", message.SequenceNumber);
+                            if (Utils.IsTraceEnabled) Utils.Trace(e, "Error while processing incoming message #{0}.", message.SequenceNumber);
                         }
 
                         if (MaxNotificationsPerPublish != 0 && noNotificationsReceived > MaxNotificationsPerPublish)
                         {
-                            Utils.Trace("For subscription {0}, more notifications were received={1} than the max notifications per publish value={2}", Id, noNotificationsReceived, MaxNotificationsPerPublish);    
+                            if (Utils.IsTraceEnabled) Utils.Trace("For subscription {0}, more notifications were received={1} than the max notifications per publish value={2}", Id, noNotificationsReceived, MaxNotificationsPerPublish);    
                         }
                     }
                 }
@@ -1753,7 +1753,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Error while processing incoming messages.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Error while processing incoming messages.");
             }
             Interlocked.Decrement(ref m_outstandingMessageWorkers);
         }
@@ -1935,7 +1935,7 @@ namespace Opc.Ua.Client
             // check for empty monitored items list.
             if (notifications.MonitoredItems == null || notifications.MonitoredItems.Count == 0)
             {
-                Utils.Trace("Publish response contains empty MonitoredItems list for SubscritpionId = {0}.", m_id);                
+                if (Utils.IsTraceEnabled) Utils.Trace("Publish response contains empty MonitoredItems list for SubscritpionId = {0}.", m_id);                
             }
 
             for (int ii = 0; ii < notifications.MonitoredItems.Count; ii++)
@@ -1949,7 +1949,7 @@ namespace Opc.Ua.Client
                 {
                     if (!m_monitoredItems.TryGetValue(notification.ClientHandle, out monitoredItem))
                     {
-                        Utils.Trace("Publish response contains invalid MonitoredItem.SubscritpionId = {0}, ClientHandle = {1}", m_id, notification.ClientHandle);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Publish response contains invalid MonitoredItem.SubscritpionId = {0}, ClientHandle = {1}", m_id, notification.ClientHandle);
                         continue;
                     }
                 } 
@@ -1983,7 +1983,7 @@ namespace Opc.Ua.Client
                 {
                     if (!m_monitoredItems.TryGetValue(eventFields.ClientHandle, out monitoredItem))
                     {
-                        Utils.Trace("Publish response contains invalid MonitoredItem.SubscritpionId = {0}, ClientHandle = {1}", m_id, eventFields.ClientHandle);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Publish response contains invalid MonitoredItem.SubscritpionId = {0}, ClientHandle = {1}", m_id, eventFields.ClientHandle);
                         continue;
                     }
                 }

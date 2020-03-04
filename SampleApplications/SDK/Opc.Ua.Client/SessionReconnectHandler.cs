@@ -130,7 +130,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception exception)
             {
-                Utils.Trace(exception, "Unexpected error during reconnect.");
+                if (Utils.IsTraceEnabled) Utils.Trace(exception, "Unexpected error during reconnect.");
             }
 
             // schedule the next reconnect.
@@ -170,7 +170,7 @@ namespace Opc.Ua.Client
                         // check if reconnecting is still an option.
                         if (m_session.LastKeepAliveTime.AddMilliseconds(m_session.SessionTimeout) > DateTime.UtcNow)
                         {
-                            Utils.Trace("Calling OnReconnectSession in {0} ms.", m_reconnectPeriod);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Calling OnReconnectSession in {0} ms.", m_reconnectPeriod);
                             return false;
                         }
                     }
@@ -189,7 +189,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception exception)
             {
-                Utils.Trace("Could not reconnect the Session. {0}", exception.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not reconnect the Session. {0}", exception.Message);
                 return false;
             }
         }

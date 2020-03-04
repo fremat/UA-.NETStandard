@@ -616,18 +616,18 @@ namespace Opc.Ua.Client
                         // validate the ServerTimestamp of the notification.
                         if (datachange.Value != null && datachange.Value.ServerTimestamp > DateTime.UtcNow)
                         {
-                            Utils.Trace("Received ServerTimestamp {0} is in the future for MonitoredItemId {1}", datachange.Value.ServerTimestamp.ToLocalTime(), ClientHandle);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Received ServerTimestamp {0} is in the future for MonitoredItemId {1}", datachange.Value.ServerTimestamp.ToLocalTime(), ClientHandle);
                         }
 
                         // validate SourceTimestamp of the notification.
                         if (datachange.Value != null && datachange.Value.SourceTimestamp > DateTime.UtcNow)
                         {
-                            Utils.Trace("Received SourceTimestamp {0} is in the future for MonitoredItemId {1}", datachange.Value.SourceTimestamp.ToLocalTime(), ClientHandle);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Received SourceTimestamp {0} is in the future for MonitoredItemId {1}", datachange.Value.SourceTimestamp.ToLocalTime(), ClientHandle);
                         }
 
                         if (datachange.Value != null && datachange.Value.StatusCode.Overflow)
                         {
-                            Utils.Trace("Overflow bit set for data change with ServerTimestamp {0} and value {1} for MonitoredItemId {2}", datachange.Value.ServerTimestamp.ToLocalTime(), datachange.Value.Value, ClientHandle);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Overflow bit set for data change with ServerTimestamp {0} and value {1} for MonitoredItemId {2}", datachange.Value.ServerTimestamp.ToLocalTime(), datachange.Value.Value, ClientHandle);
                         }
 
                         m_dataCache.OnNotification(datachange);
@@ -1172,7 +1172,7 @@ namespace Opc.Ua.Client
             m_values.Enqueue(notification.Value);
             m_lastValue = notification.Value;
             
-            Utils.Trace(
+            if (Utils.IsTraceEnabled) Utils.Trace(
                 "NotificationReceived: ClientHandle={0}, Value={1}", 
                 notification.ClientHandle,
                 m_lastValue.Value);

@@ -1518,7 +1518,7 @@ namespace Opc.Ua
 
                 if (!NodeId.IsNull(typeId) && NodeId.IsNull(absoluteId))
                 {
-                    Utils.Trace("Cannot de-serialized extension objects if the NamespaceUri is not in the NamespaceTable: Type = {0}", typeId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Cannot de-serialized extension objects if the NamespaceUri is not in the NamespaceTable: Type = {0}", typeId);
                 }
                 else
                 {

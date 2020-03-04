@@ -79,7 +79,7 @@ namespace Opc.Ua.Bindings
                     int messageLength = BitConverter.ToInt32(dataToVerify.Array, dataToVerify.Offset + 4);
                     string actualSignature = Utils.ToHexString(signature);
 
-                    Utils.Trace(
+                    if (Utils.IsTraceEnabled) Utils.Trace(
                         "Could not validate signature.\r\nCertificate={0}, MessageType={1}, Length={2}\r\nActualSignature={3}",
                         signingCertificate.Subject,
                         messageType,
@@ -121,7 +121,7 @@ namespace Opc.Ua.Bindings
                 // verify the input data is the correct block size.
                 if (dataToEncrypt.Count % inputBlockSize != 0)
                 {
-                    Utils.Trace("Message is not an integral multiple of the block size. Length = {0}, BlockSize = {1}.", dataToEncrypt.Count, inputBlockSize);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Message is not an integral multiple of the block size. Length = {0}, BlockSize = {1}.", dataToEncrypt.Count, inputBlockSize);
                 }
 
                 byte[] encryptedBuffer = BufferManager.TakeBuffer(SendBufferSize, "Rsa_Encrypt");
@@ -178,7 +178,7 @@ namespace Opc.Ua.Bindings
                 // verify the input data is the correct block size.
                 if (dataToDecrypt.Count % inputBlockSize != 0)
                 {
-                    Utils.Trace("Message is not an integral multiple of the block size. Length = {0}, BlockSize = {1}.", dataToDecrypt.Count, inputBlockSize);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Message is not an integral multiple of the block size. Length = {0}, BlockSize = {1}.", dataToDecrypt.Count, inputBlockSize);
                 }
 
                 byte[] decryptedBuffer = BufferManager.TakeBuffer(SendBufferSize, "Rsa_Decrypt");

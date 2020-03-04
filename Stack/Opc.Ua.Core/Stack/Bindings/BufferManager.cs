@@ -157,7 +157,7 @@ namespace Opc.Ua.Bindings
                 m_allocations[m_id] = allocation;
 #endif
 #if TRACE_MEMORY
-                Utils.Trace("{0:X}:TakeBuffer({1:X},{2:X},{3},{4})", this.GetHashCode(), buffer.GetHashCode(), buffer.Length, owner, ++m_buffersTaken);
+                if (Utils.IsTraceEnabled) Utils.Trace("{0:X}:TakeBuffer({1:X},{2:X},{3},{4})", this.GetHashCode(), buffer.GetHashCode(), buffer.Length, owner, ++m_buffersTaken);
 #endif
                 buffer[buffer.Length - 1] = m_cookieUnlocked;
                 return buffer;
@@ -189,7 +189,7 @@ namespace Opc.Ua.Bindings
 
                     if (allocation.Reported > 0)
                     {
-                        Utils.Trace("{0}: Id={1}; Owner={2}; Size={3} KB; *** TRANSFERRED ***", 
+                        if (Utils.IsTraceEnabled) Utils.Trace("{0}: Id={1}; Owner={2}; Size={3} KB; *** TRANSFERRED ***", 
                             m_name,
                             allocation.Id, 
                             allocation.Owner, 
@@ -199,7 +199,7 @@ namespace Opc.Ua.Bindings
             }
 #endif
 #if TRACE_MEMORY
-            Utils.Trace("{0:X}:TransferBuffer({1:X},{2:X},{3})", this.GetHashCode(), buffer.GetHashCode(), buffer.Length, owner);
+            if (Utils.IsTraceEnabled) Utils.Trace("{0:X}:TransferBuffer({1:X},{2:X},{3})", this.GetHashCode(), buffer.GetHashCode(), buffer.Length, owner);
 #endif
         }
 
@@ -214,7 +214,7 @@ namespace Opc.Ua.Bindings
                 throw new InvalidOperationException("Buffer is already locked.");
             }
 #if TRACE_MEMORY
-            Utils.Trace("LockBuffer({0:X},{1:X})", buffer.GetHashCode(), buffer.Length);
+            if (Utils.IsTraceEnabled) Utils.Trace("LockBuffer({0:X},{1:X})", buffer.GetHashCode(), buffer.Length);
 #endif
             buffer[buffer.Length-1] = m_cookieLocked;
         }
@@ -230,7 +230,7 @@ namespace Opc.Ua.Bindings
                 throw new InvalidOperationException("Buffer is not locked.");
             }
 #if TRACE_MEMORY
-            Utils.Trace("UnlockBuffer({0:X},{1:X})", buffer.GetHashCode(), buffer.Length);
+            if (Utils.IsTraceEnabled) Utils.Trace("UnlockBuffer({0:X},{1:X})", buffer.GetHashCode(), buffer.Length);
 #endif
             buffer[buffer.Length-1] = m_cookieUnlocked;
         }
@@ -250,7 +250,7 @@ namespace Opc.Ua.Bindings
             lock (m_lock)
             {
 #if TRACE_MEMORY
-                Utils.Trace("{0:X}:ReturnBuffer({1:X},{2:X},{3},{4})", this.GetHashCode(), buffer.GetHashCode(), buffer.Length, owner, --m_buffersTaken);
+                if (Utils.IsTraceEnabled) Utils.Trace("{0:X}:ReturnBuffer({1:X},{2:X},{3},{4})", this.GetHashCode(), buffer.GetHashCode(), buffer.Length, owner, --m_buffersTaken);
 #endif
                 if (buffer[buffer.Length-1] != m_cookieUnlocked)
                 {
@@ -273,7 +273,7 @@ namespace Opc.Ua.Bindings
 
                     if (allocation.Reported > 0)
                     {
-                        Utils.Trace("{0}: Id={1}; Owner={2}; ReleasedBy={3}; Size={4} KB; *** RETURNED ***", 
+                        if (Utils.IsTraceEnabled) Utils.Trace("{0}: Id={1}; Owner={2}; ReleasedBy={3}; Size={4} KB; *** RETURNED ***", 
                             m_name,
                             allocation.Id, 
                             allocation.Owner, 
@@ -284,7 +284,7 @@ namespace Opc.Ua.Bindings
 
                 m_allocations.Remove(id);
                                
-                //Utils.Trace("Deallocated ID {0}: {1}/{2}", id, buffer.Length, m_allocated);
+                //if (Utils.IsTraceEnabled) Utils.Trace("Deallocated ID {0}: {1}/{2}", id, buffer.Length, m_allocated);
 
                 foreach (KeyValuePair<int,Allocation> current in m_allocations)
                 {
@@ -303,7 +303,7 @@ namespace Opc.Ua.Bindings
                     {        
                         if (allocation.Reported < age)
                         {
-                            Utils.Trace("{0}: Id={1}; Owner={2}; Size={3} KB; Age={4}", 
+                            if (Utils.IsTraceEnabled) Utils.Trace("{0}: Id={1}; Owner={2}; Size={3} KB; Age={4}", 
                                 m_name,
                                 allocation.Id, 
                                 allocation.Owner, 

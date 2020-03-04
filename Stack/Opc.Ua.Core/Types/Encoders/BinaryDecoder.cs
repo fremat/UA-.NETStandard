@@ -1536,7 +1536,7 @@ namespace Opc.Ua
 
             if (!NodeId.IsNull(typeId) && NodeId.IsNull(extension.TypeId))
             {
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     "Cannot de-serialized extension objects if the NamespaceUri is not in the NamespaceTable: Type = {0}",
                     typeId);
             }
@@ -1575,7 +1575,7 @@ namespace Opc.Ua
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace("Could not decode known type {0}. Error={1}, Value={2}", systemType.FullName, e.Message, element.OuterXml);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Could not decode known type {0}. Error={1}, Value={2}", systemType.FullName, e.Message, element.OuterXml);
                     }
                 }
 
@@ -1899,7 +1899,7 @@ namespace Opc.Ua
                         }
                         catch (Exception ex)
                         {
-                            Utils.Trace(ex, "Error reading variant.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(ex, "Error reading variant.");
                         }
 
                         break;
@@ -2174,7 +2174,7 @@ namespace Opc.Ua
                         }
                         catch (Exception ex)
                         {
-                            Utils.Trace(ex, "Error reading xml element for variant.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(ex, "Error reading xml element for variant.");
                             value.Set(StatusCodes.BadEncodingError);
                         }
                         break;

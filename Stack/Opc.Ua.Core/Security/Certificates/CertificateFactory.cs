@@ -174,7 +174,7 @@ public class CertificateFactory
 
             if (m_certificates.Count > 100)
             {
-                Utils.Trace("WARNING - Process certificate cache has {0} certificates in it.", m_certificates.Count);
+                if (Utils.IsTraceEnabled) Utils.Trace("WARNING - Process certificate cache has {0} certificates in it.", m_certificates.Count);
             }
 
             // save the key container so it can be deleted later.
@@ -386,7 +386,7 @@ public class CertificateFactory
                 certificate = CreateCertificateWithPrivateKey(x509, null, subjectPrivateKey, random);
             }
 
-            Utils.Trace(Utils.TraceMasks.Security, "Created new certificate: {0}", certificate.Thumbprint);
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Security, "Created new certificate: {0}", certificate.Thumbprint);
 
             // add cert to the store.
             if (!String.IsNullOrEmpty(storePath) && !String.IsNullOrEmpty(storeType))

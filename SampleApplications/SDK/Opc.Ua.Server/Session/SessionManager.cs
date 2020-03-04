@@ -554,7 +554,7 @@ namespace Opc.Ua.Server
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Session event handler raised an exception.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Session event handler raised an exception.");
                     }
                 }
             }
@@ -569,7 +569,7 @@ namespace Opc.Ua.Server
         {
             try
             {
-                Utils.Trace("Server: Session Monitor Thread Started.");
+                if (Utils.IsTraceEnabled) Utils.Trace("Server: Session Monitor Thread Started.");
 
                 int sleepCycle = Convert.ToInt32(data, CultureInfo.InvariantCulture);
 
@@ -599,7 +599,7 @@ namespace Opc.Ua.Server
 
                     if (m_shutdownEvent.WaitOne(sleepCycle))
                     {
-                        Utils.Trace("Server: Session Monitor Thread Exited Normally.");
+                        if (Utils.IsTraceEnabled) Utils.Trace("Server: Session Monitor Thread Exited Normally.");
                         break;
                     }
                 }
@@ -607,7 +607,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Server: Session Monitor Thread Exited Unexpectedly");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Server: Session Monitor Thread Exited Unexpectedly");
             }
         }
         #endregion

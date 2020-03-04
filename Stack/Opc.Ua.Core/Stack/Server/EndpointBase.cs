@@ -403,7 +403,7 @@ namespace Opc.Ua
             {
                 result = new ServiceResult(sre);
 
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     Utils.TraceMasks.Service, 
                     "Service Fault Occured. Reason={0}", 
                     result);
@@ -411,7 +411,7 @@ namespace Opc.Ua
             else
             {
                 result = new ServiceResult(exception, StatusCodes.BadUnexpectedError);
-                Utils.Trace(exception, "SERVER - Unexpected Service Fault: {0}", exception.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace(exception, "SERVER - Unexpected Service Fault: {0}", exception.Message);
             }                               
 
             fault.ResponseHeader.ServiceResult = result.Code;

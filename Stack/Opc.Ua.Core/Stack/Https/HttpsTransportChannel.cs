@@ -101,8 +101,8 @@ namespace Opc.Ua.Bindings
                                 }
                                 catch (Exception ex)
                                 {
-                                    Utils.Trace("HTTPS: Failed to validate server cert: " + cert.Subject);
-                                    Utils.Trace("HTTPS: Exception:" + ex.Message);
+                                    if (Utils.IsTraceEnabled) Utils.Trace("HTTPS: Failed to validate server cert: " + cert.Subject);
+                                    if (Utils.IsTraceEnabled) Utils.Trace("HTTPS: Exception:" + ex.Message);
                                 }
                                 return false;
                             };
@@ -118,7 +118,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception ex)
             {
-                Utils.Trace("Exception creating HTTPS Client: " + ex.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Exception creating HTTPS Client: " + ex.Message);
                 throw;
             }
         }
@@ -169,7 +169,7 @@ namespace Opc.Ua.Bindings
                    }
                    catch (Exception ex)
                    {
-                       Utils.Trace("Exception sending HTTPS request: " + ex.Message);
+                       if (Utils.IsTraceEnabled) Utils.Trace("Exception sending HTTPS request: " + ex.Message);
                        result.Exception = ex;
                        response = null;
                    }
@@ -181,7 +181,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception ex)
             {
-                Utils.Trace("Exception sending HTTPS request: " + ex.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Exception sending HTTPS request: " + ex.Message);
                 AsyncResult result = new AsyncResult(callback, callbackData, m_operationTimeout, request, response);
                 result.Exception = ex;
                 result.OperationCompleted();
@@ -208,7 +208,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception ex)
             {
-                Utils.Trace("Exception reading HTTPS response: " + ex.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Exception reading HTTPS response: " + ex.Message);
                 result2.Exception = ex;
             }
             return result2 as IServiceResponse;
@@ -226,7 +226,7 @@ namespace Opc.Ua.Bindings
 
         public void Reconnect()
         {
-            Utils.Trace("HttpsTransportChannel RECONNECT: Reconnecting to {0}.", m_url);
+            if (Utils.IsTraceEnabled) Utils.Trace("HttpsTransportChannel RECONNECT: Reconnecting to {0}.", m_url);
         }
 
         public IAsyncResult BeginReconnect(AsyncCallback callback, object callbackData)

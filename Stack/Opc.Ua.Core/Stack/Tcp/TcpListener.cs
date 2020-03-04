@@ -164,7 +164,7 @@ namespace Opc.Ua.Bindings
             }
 
             channel.Reconnect(socket, requestId, sequenceNumber, clientCertificate, token, request);
-            Utils.Trace("Channel {0} reconnected", channelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0} reconnected", channelId);
             return true;
         }
 
@@ -178,7 +178,7 @@ namespace Opc.Ua.Bindings
                 m_channels.Remove(channelId);
             }
 
-            Utils.Trace("Channel {0} closed", channelId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Channel {0} closed", channelId);
         }
         #endregion
 
@@ -217,7 +217,7 @@ namespace Opc.Ua.Bindings
                 {
                     // no IPv4 support.
                     m_listeningSocket = null;
-                    Utils.Trace("failed to create IPv4 listening socket: " + ex.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("failed to create IPv4 listening socket: " + ex.Message);
                 }
 
                 // create IPv6 socket
@@ -239,7 +239,7 @@ namespace Opc.Ua.Bindings
                 {
                     // no IPv6 support
                     m_listeningSocketIPv6 = null;
-                    Utils.Trace("failed to create IPv6 listening socket: " + ex.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("failed to create IPv6 listening socket: " + ex.Message);
                 }
 
                 if (m_listeningSocketIPv6 == null && m_listeningSocket == null)
@@ -310,7 +310,7 @@ namespace Opc.Ua.Bindings
 
                     if (listeningSocket == null)
                     {
-                        Utils.Trace("OnAccept: Listensocket was null.");
+                        if (Utils.IsTraceEnabled) Utils.Trace("OnAccept: Listensocket was null.");
                         e.Dispose();
                         return;
                     }
@@ -344,7 +344,7 @@ namespace Opc.Ua.Bindings
                         }
                         catch (Exception ex)
                         {
-                            Utils.Trace(ex, "Unexpected error accepting a new connection.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(ex, "Unexpected error accepting a new connection.");
                         }
                     }
 
@@ -365,7 +365,7 @@ namespace Opc.Ua.Bindings
                         }
                         catch (Exception ex)
                         {
-                            Utils.Trace(ex, "Unexpected error listening for a new connection.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(ex, "Unexpected error listening for a new connection.");
                         }
                     }
                 }
@@ -393,7 +393,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "TCPLISTENER - Unexpected error processing request.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "TCPLISTENER - Unexpected error processing request.");
             }
         }
 
@@ -412,7 +412,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "TCPLISTENER - Unexpected error sending result.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "TCPLISTENER - Unexpected error sending result.");
             }
         }
         #endregion

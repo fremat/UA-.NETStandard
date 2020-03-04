@@ -444,13 +444,13 @@ namespace Opc.Ua.Server
                     ServerInternal.ServerDiagnostics.CumulatedSessionCount++;
                 }
 
-                Utils.Trace("Server - SESSION CREATED. SessionId={0}", sessionId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Server - SESSION CREATED. SessionId={0}", sessionId);
 
                 return CreateResponse(requestHeader, StatusCodes.Good);
             }
             catch (ServiceResultException e)
             {
-                Utils.Trace("Server - SESSION CREATE failed. {0}", e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Server - SESSION CREATE failed. {0}", e.Message);
 
                 lock (ServerInternal.DiagnosticsWriteLock)
                 {
@@ -580,13 +580,13 @@ namespace Opc.Ua.Server
                     // TBD - call Node Manager and Subscription Manager.
                 }
 
-                Utils.Trace("Server - SESSION ACTIVATED.");
+                if (Utils.IsTraceEnabled) Utils.Trace("Server - SESSION ACTIVATED.");
 
                 return CreateResponse(requestHeader, StatusCodes.Good);
             }
             catch (ServiceResultException e)
             {
-                Utils.Trace("Server - SESSION ACTIVATE failed. {0}", e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Server - SESSION ACTIVATE failed. {0}", e.Message);
 
                 lock (ServerInternal.DiagnosticsWriteLock)
                 {
@@ -1413,14 +1413,14 @@ namespace Opc.Ua.Server
                 // check if there is an odd delay.
                 if (DateTime.UtcNow > requestHeader.Timestamp.AddMilliseconds(100))
                 {
-                    Utils.Trace(
+                    if (Utils.IsTraceEnabled) Utils.Trace(
                         "WARNING. Unexpected delay receiving Publish request. Time={0:hh:mm:ss.fff}, ReceiveTime={1:hh:mm:ss.fff}",
                         DateTime.UtcNow,
                         requestHeader.Timestamp);
                 }
                 */
                 
-                Utils.Trace("PUBLISH #{0} RECEIVED. TIME={1:hh:mm:ss.fff}", requestHeader.RequestHandle, requestHeader.Timestamp);
+                if (Utils.IsTraceEnabled) Utils.Trace("PUBLISH #{0} RECEIVED. TIME={1:hh:mm:ss.fff}", requestHeader.RequestHandle, requestHeader.Timestamp);
                 
                 notificationMessage = ServerInternal.SubscriptionManager.Publish(
                     context,
@@ -1435,7 +1435,7 @@ namespace Opc.Ua.Server
                 /*
                 if (notificationMessage != null)
                 {
-                    Utils.Trace(
+                    if (Utils.IsTraceEnabled) Utils.Trace(
                         "PublishResponse: SubId={0} SeqNo={1}, PublishTime={2:mm:ss.fff}, Time={3:mm:ss.fff}",
                         subscriptionId,
                         notificationMessage.SequenceNumber,
@@ -1508,7 +1508,7 @@ namespace Opc.Ua.Server
                     operation.Response.DiagnosticInfos = diagnosticInfos;
                     operation.Response.NotificationMessage = notificationMessage;
 
-                    Utils.Trace("PUBLISH: #{0} Completed Synchronously", input.RequestHeader.RequestHandle);
+                    if (Utils.IsTraceEnabled) Utils.Trace("PUBLISH: #{0} Completed Synchronously", input.RequestHeader.RequestHandle);
                     request.OperationCompleted(operation.Response, null);
                 }
             }
@@ -2220,7 +2220,7 @@ namespace Opc.Ua.Server
                             }
                             catch (Exception e)
                             {
-                                Utils.Trace("RegisterServer{0} failed for at: {1}. Exception={2}",
+                                if (Utils.IsTraceEnabled) Utils.Trace("RegisterServer{0} failed for at: {1}. Exception={2}",
                                     m_useRegisterServer2 ? "2" : "", endpoint.EndpointUrl, e.Message);
                                 m_useRegisterServer2 = !m_useRegisterServer2;
                             }
@@ -2235,7 +2235,7 @@ namespace Opc.Ua.Server
                                     }
                                     catch (Exception e)
                                     {
-                                        Utils.Trace("Could not cleanly close connection with LDS. Exception={0}", e.Message);
+                                        if (Utils.IsTraceEnabled) Utils.Trace("Could not cleanly close connection with LDS. Exception={0}", e.Message);
                                     }
                                 }
                             }
@@ -2313,7 +2313,7 @@ namespace Opc.Ua.Server
                                 Timeout.Infinite);
 
                             m_lastRegistrationInterval = m_minRegistrationInterval;
-                            Utils.Trace("Register server succeeded. Registering again in {0} ms", m_maxRegistrationInterval);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Register server succeeded. Registering again in {0} ms", m_maxRegistrationInterval);
                         }
                     }
                 }
@@ -2331,7 +2331,7 @@ namespace Opc.Ua.Server
                                 m_lastRegistrationInterval = m_maxRegistrationInterval;
                             }
 
-                            Utils.Trace("Register server failed. Trying again in {0} ms", m_lastRegistrationInterval);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Register server failed. Trying again in {0} ms", m_lastRegistrationInterval);
                                       
                             // create timer.        
                             m_registrationTimer = new Timer(OnRegisterServer, this, m_lastRegistrationInterval, Timeout.Infinite);
@@ -2341,7 +2341,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {                   
-                Utils.Trace(e, "Unexpected exception handling registration timer.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected exception handling registration timer.");
             }
         }
 #endregion
@@ -2469,7 +2469,7 @@ namespace Opc.Ua.Server
 
             OperationContext context = ServerInternal.SessionManager.ValidateRequest(requestHeader, requestType);
 
-            Utils.Trace(
+            if (Utils.IsTraceEnabled) Utils.Trace(
                 (int)Utils.TraceMasks.Service,
                 "{0} Validated. ID={1}",
                 context.RequestType,
@@ -2598,7 +2598,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Could not load updated configuration file from: {0}", args);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not load updated configuration file from: {0}", args);
             }
         }
 
@@ -2887,7 +2887,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Unexpected error starting application");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error starting application");
                     m_serverInternal = null;
                     ServiceResult error = ServiceResult.Create(e, StatusCodes.BadInternalError, "Unexpected error starting application");
                     ServerError = error;

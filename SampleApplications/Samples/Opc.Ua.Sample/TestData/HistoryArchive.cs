@@ -184,7 +184,7 @@ namespace TestData
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error updating history.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error updating history.");
             }
         }
         #endregion

@@ -292,7 +292,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Could not validate schema.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not validate schema.");
                 }
 
                 m_validator = validator;
@@ -308,7 +308,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, $"Could not validate schema. {e.Message}");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, $"Could not validate schema. {e.Message}");
                 }
 
                 m_validator = validator;

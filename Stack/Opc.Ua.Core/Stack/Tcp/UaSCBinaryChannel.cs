@@ -217,7 +217,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(ex, "Exception invoking State Changed Handler", true, null);
+                    if (Utils.IsTraceEnabled) Utils.Trace(ex, "Exception invoking State Changed Handler", true, null);
                 }
             });
         }
@@ -262,7 +262,7 @@ namespace Opc.Ua.Bindings
                 }
             }
 
-            Utils.Trace((int)Utils.TraceMasks.Error, "{0}: Channel {1} - Duplicate sequence number: {2} <= {3}", context, this.ChannelId, sequenceNumber, m_remoteSequenceNumber);
+            if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Error, "{0}: Channel {1} - Duplicate sequence number: {2} <= {3}", context, this.ChannelId, sequenceNumber, m_remoteSequenceNumber);
             return false;
         }
 
@@ -280,7 +280,7 @@ namespace Opc.Ua.Bindings
             {
                 if (m_partialMessageChunks.Count > 0)
                 {
-                    Utils.Trace("WARNING - Discarding unprocessed message chunks for Request #{0}", m_partialRequestId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("WARNING - Discarding unprocessed message chunks for Request #{0}", m_partialRequestId);
                 }
 
                 m_partialMessageChunks.Release(BufferManager, "SaveIntermediateChunk");
@@ -713,7 +713,7 @@ namespace Opc.Ua.Bindings
             {
                 if (m_state != value)
                 {
-                    Utils.Trace("Channel {0} in {1} state.", ChannelId, value);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Channel {0} in {1} state.", ChannelId, value);
                 }
 
                 m_state = value;

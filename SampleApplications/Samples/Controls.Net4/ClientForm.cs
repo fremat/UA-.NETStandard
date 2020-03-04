@@ -457,7 +457,7 @@ namespace Opc.Ua.Sample.Controls
             }
             catch (Exception exception)
             {
-                Utils.Trace(exception, "Could not register with the LDS");
+                if (Utils.IsTraceEnabled) Utils.Trace(exception, "Could not register with the LDS");
             }
         }
 

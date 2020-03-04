@@ -651,7 +651,7 @@ namespace Opc.Ua
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error unshelving alarm.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error unshelving alarm.");
             }
         }
         #endregion

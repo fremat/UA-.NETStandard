@@ -684,7 +684,7 @@ namespace TestData
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Unexpected error monitoring system status.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error monitoring system status.");
                 }
             }
             #endif

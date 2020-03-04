@@ -1503,7 +1503,7 @@ namespace Opc.Ua
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Error converting a {1} (Value={0}) to {2}.", source, sourceType, targetType);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Error converting a {1} (Value={0}) to {2}.", source, sourceType, targetType);
             }
 
             // conversion not supported.

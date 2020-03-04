@@ -1043,14 +1043,14 @@ namespace Opc.Ua.Client
                     // check if already connecting.
                     if (m_reconnecting)
                     {
-                        Utils.Trace("Session is already attempting to reconnect.");
+                        if (Utils.IsTraceEnabled) Utils.Trace("Session is already attempting to reconnect.");
 
                         throw ServiceResultException.Create(
                             StatusCodes.BadInvalidState,
                             "Session is already attempting to reconnect.");
                     }
 
-                    Utils.Trace("Session RECONNECT starting.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Session RECONNECT starting.");
                     m_reconnecting = true;
 
                     // stop keep alives.
@@ -1071,7 +1071,7 @@ namespace Opc.Ua.Client
 
                 if (identityPolicy == null)
                 {
-                    Utils.Trace("Endpoint does not support the user identity type provided.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Endpoint does not support the user identity type provided.");
 
                     throw ServiceResultException.Create(
                         StatusCodes.BadUserAccessDenied,
@@ -1106,7 +1106,7 @@ namespace Opc.Ua.Client
                 // send the software certificates assigned to the client.
                 SignedSoftwareCertificateCollection clientSoftwareCertificates = GetSoftwareCertificates();
 
-                Utils.Trace("Session REPLACING channel.");
+                if (Utils.IsTraceEnabled) Utils.Trace("Session REPLACING channel.");
 
                 // check if the channel supports reconnect.
                 if ((TransportChannel.SupportedFeatures & TransportChannelFeatures.Reconnect) != 0)
@@ -1133,7 +1133,7 @@ namespace Opc.Ua.Client
                 StatusCodeCollection certificateResults = null;
                 DiagnosticInfoCollection certificateDiagnosticInfos = null;
 
-                Utils.Trace("Session RE-ACTIVATING session.");
+                if (Utils.IsTraceEnabled) Utils.Trace("Session RE-ACTIVATING session.");
 
                 IAsyncResult result = BeginActivateSession(
                     null,
@@ -1147,7 +1147,7 @@ namespace Opc.Ua.Client
 
                 if (!result.AsyncWaitHandle.WaitOne(5000))
                 {
-                    Utils.Trace("WARNING: ACTIVATE SESSION timed out. {1}/{0}", OutstandingRequestCount, GoodPublishRequestCount);
+                    if (Utils.IsTraceEnabled) Utils.Trace("WARNING: ACTIVATE SESSION timed out. {1}/{0}", OutstandingRequestCount, GoodPublishRequestCount);
                 }
 
                 EndActivateSession(
@@ -1160,7 +1160,7 @@ namespace Opc.Ua.Client
 
                 lock (SyncRoot)
                 {
-                    Utils.Trace("Session RECONNECT completed successfully.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Session RECONNECT completed successfully.");
                     m_previousServerNonce = m_serverNonce;
                     m_serverNonce = serverNonce;
                     m_reconnecting = false;
@@ -1297,7 +1297,7 @@ namespace Opc.Ua.Client
 
             if (ServiceResult.IsBad(result))
             {
-                Utils.Trace("FetchNamespaceTables: Cannot read NamespaceArray node: {0} " + result.StatusCode);
+                if (Utils.IsTraceEnabled) Utils.Trace("FetchNamespaceTables: Cannot read NamespaceArray node: {0} " + result.StatusCode);
             }
             else
             {
@@ -1309,7 +1309,7 @@ namespace Opc.Ua.Client
 
             if (ServiceResult.IsBad(result))
             {
-                Utils.Trace("FetchNamespaceTables: Cannot read ServerArray node: {0} " + result.StatusCode);
+                if (Utils.IsTraceEnabled) Utils.Trace("FetchNamespaceTables: Cannot read ServerArray node: {0} " + result.StatusCode);
             }
             else
             {
@@ -1538,7 +1538,7 @@ namespace Opc.Ua.Client
                     }
                     catch (Exception ex)
                     {
-                        Utils.Trace("Dictionary load error for Dictionary {0} : {1}", r.NodeId, ex.Message);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Dictionary load error for Dictionary {0} : {1}", r.NodeId, ex.Message);
                     }
                 }
             }
@@ -2363,7 +2363,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace("Create session failed with client certificate NULL. " + ex.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Create session failed with client certificate NULL. " + ex.Message);
                     successCreateSession = false;
                 }
             }
@@ -2397,8 +2397,8 @@ namespace Opc.Ua.Client
                 base.SessionCreated(sessionId, sessionCookie);
             }
 
-            Utils.Trace("Revised session timeout value: {0}. ", m_sessionTimeout);
-            Utils.Trace("Max response message size value: {0}. Max request message size: {1} ", MessageContext.MaxMessageSize, m_maxRequestMessageSize);
+            if (Utils.IsTraceEnabled) Utils.Trace("Revised session timeout value: {0}. ", m_sessionTimeout);
+            if (Utils.IsTraceEnabled) Utils.Trace("Max response message size value: {0}. Max request message size: {1} ", MessageContext.MaxMessageSize, m_maxRequestMessageSize);
 
             //we need to call CloseSession if CreateSession was successful but some other exception is thrown
             try
@@ -2428,7 +2428,7 @@ namespace Opc.Ua.Client
 
                 if (serverSignature == null || serverSignature.Signature == null)
                 {
-                    Utils.Trace("Server signature is null or empty.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Server signature is null or empty.");
 
                     //throw ServiceResultException.Create(
                     //    StatusCodes.BadSecurityChecksFailed,
@@ -2627,13 +2627,13 @@ namespace Opc.Ua.Client
                 {
                     for (int i = 0; i < certificateResults.Count; i++)
                     {
-                        Utils.Trace("ActivateSession result[{0}] = {1}", i, certificateResults[i]);
+                        if (Utils.IsTraceEnabled) Utils.Trace("ActivateSession result[{0}] = {1}", i, certificateResults[i]);
                     }
                 }
 
                 if (certificateResults == null || certificateResults.Count == 0)
                 {
-                    Utils.Trace("Empty results were received for the ActivateSession call.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Empty results were received for the ActivateSession call.");
                 }
 
                 // fetch namespaces.
@@ -2666,7 +2666,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace("Cleanup: CloseSession() or CloseChannel() raised exception. " + e.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Cleanup: CloseSession() or CloseChannel() raised exception. " + e.Message);
                 }
                 finally
                 {
@@ -3107,7 +3107,7 @@ namespace Opc.Ua.Client
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Session: Unexpected eror raising SessionClosing event.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Session: Unexpected eror raising SessionClosing event.");
                     }
                 }
             }
@@ -3142,7 +3142,7 @@ namespace Opc.Ua.Client
                         result = StatusCodes.Bad;
                     }
 
-                    Utils.Trace("Session close error: " + result);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Session close error: " + result);
                 }
             }
 
@@ -3759,7 +3759,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace("Could not send keep alive request: {1} {0}", e.Message, e.GetType().FullName);
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not send keep alive request: {1} {0}", e.Message, e.GetType().FullName);
             }
         }
 
@@ -3799,7 +3799,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace("Unexpected keep alive error occurred: {0}", e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Unexpected keep alive error occurred: {0}", e.Message);
             }
         }
 
@@ -3860,7 +3860,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Session: Unexpected error invoking KeepAliveCallback.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Session: Unexpected error invoking KeepAliveCallback.");
                 }
             }
         }
@@ -3877,7 +3877,7 @@ namespace Opc.Ua.Client
                 delta = DateTime.UtcNow.Ticks - m_lastKeepAliveTime.Ticks;
             }
 
-            Utils.Trace(
+            if (Utils.IsTraceEnabled) Utils.Trace(
                 "KEEP ALIVE LATE: {0}s, EndpointUrl={1}, RequestCount={3}/{2}",
                 ((double)delta) / TimeSpan.TicksPerSecond,
                 this.Endpoint.EndpointUrl,
@@ -3901,7 +3901,7 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Session: Unexpected error invoking KeepAliveCallback.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Session: Unexpected error invoking KeepAliveCallback.");
                 }
             }
 
@@ -3918,7 +3918,7 @@ namespace Opc.Ua.Client
             // do not publish if reconnecting.
             if (m_reconnecting)
             {
-                Utils.Trace("Published skipped due to reconnect");
+                if (Utils.IsTraceEnabled) Utils.Trace("Published skipped due to reconnect");
                 return null;
             }
 
@@ -3966,13 +3966,13 @@ namespace Opc.Ua.Client
 
                 AsyncRequestStarted(result, requestHeader.RequestHandle, DataTypes.PublishRequest);
 
-                Utils.Trace("PUBLISH #{0} SENT", requestHeader.RequestHandle);
+                if (Utils.IsTraceEnabled) Utils.Trace("PUBLISH #{0} SENT", requestHeader.RequestHandle);
 
                 return result;
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error sending publish request.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error sending publish request.");
                 return null;
             }
         }
@@ -3993,7 +3993,7 @@ namespace Opc.Ua.Client
 
             try
             {
-                Utils.Trace("PUBLISH #{0} RECEIVED", requestHeader.RequestHandle);
+                if (Utils.IsTraceEnabled) Utils.Trace("PUBLISH #{0} RECEIVED", requestHeader.RequestHandle);
 
                 // complete publish.
                 uint subscriptionId;
@@ -4015,18 +4015,18 @@ namespace Opc.Ua.Client
                 {
                     if (StatusCode.IsBad(code))
                     {
-                        Utils.Trace("Error - Publish call finished. ResultCode={0}; SubscriptionId={1};", code.ToString(), subscriptionId);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Error - Publish call finished. ResultCode={0}; SubscriptionId={1};", code.ToString(), subscriptionId);
                     }
                 }
 
                 // nothing more to do if session changed.
                 if (sessionId != SessionId)
                 {
-                    Utils.Trace("Publish response discarded because session id changed: Old {0} != New {1}", sessionId, SessionId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Publish response discarded because session id changed: Old {0} != New {1}", sessionId, SessionId);
                     return;
                 }
 
-                Utils.Trace("NOTIFICATION RECEIVED: SubId={0}, SeqNo={1}", subscriptionId, notificationMessage.SequenceNumber);
+                if (Utils.IsTraceEnabled) Utils.Trace("NOTIFICATION RECEIVED: SubId={0}, SeqNo={1}", subscriptionId, notificationMessage.SequenceNumber);
 
                 // process response.
                 ProcessPublishResponse(
@@ -4039,7 +4039,7 @@ namespace Opc.Ua.Client
                 // nothing more to do if reconnecting.
                 if (m_reconnecting)
                 {
-                    Utils.Trace("No new publish sent because of reconnect in progress.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("No new publish sent because of reconnect in progress.");
                     return;
                 }
             }
@@ -4048,11 +4048,11 @@ namespace Opc.Ua.Client
                 if (m_subscriptions.Count == 0)
                 {
                     // Publish responses with error should occur after deleting the last subscription.
-                    Utils.Trace("Publish #{0}, Subscription count = 0, Error: {1}", requestHeader.RequestHandle, e.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Publish #{0}, Subscription count = 0, Error: {1}", requestHeader.RequestHandle, e.Message);
                 }
                 else
                 {
-                    Utils.Trace("Publish #{0}, Reconnecting={2}, Error: {1}", requestHeader.RequestHandle, e.Message, m_reconnecting);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Publish #{0}, Reconnecting={2}, Error: {1}", requestHeader.RequestHandle, e.Message, m_reconnecting);
                 }
 
                 moreNotifications = false;
@@ -4060,14 +4060,14 @@ namespace Opc.Ua.Client
                 // ignore errors if reconnecting.
                 if (m_reconnecting)
                 {
-                    Utils.Trace("Publish abandoned after error due to reconnect: {0}", e.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Publish abandoned after error due to reconnect: {0}", e.Message);
                     return;
                 }
 
                 // nothing more to do if session changed.
                 if (sessionId != SessionId)
                 {
-                    Utils.Trace("Publish abandoned after error because session id changed: Old {0} != New {1}", sessionId, SessionId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Publish abandoned after error because session id changed: Old {0} != New {1}", sessionId, SessionId);
                     return;
                 }
 
@@ -4100,7 +4100,7 @@ namespace Opc.Ua.Client
                         }
                         catch (Exception e2)
                         {
-                            Utils.Trace(e2, "Session: Unexpected error invoking PublishErrorCallback.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(e2, "Session: Unexpected error invoking PublishErrorCallback.");
                         }
                     }
                 }
@@ -4118,7 +4118,7 @@ namespace Opc.Ua.Client
                         }
                 }
 
-                Utils.Trace(e, "PUBLISH #{0} - Unhandled error during Publish.", requestHeader.RequestHandle);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "PUBLISH #{0} - Unhandled error during Publish.", requestHeader.RequestHandle);
             }
 
             int requestCount = GoodPublishRequestCount;
@@ -4129,7 +4129,7 @@ namespace Opc.Ua.Client
             }
             else
             {
-                Utils.Trace("PUBLISH - Did not send another publish request. GoodPublishRequestCount={0}, Subscriptions={1}", requestCount, m_subscriptions.Count);
+                if (Utils.IsTraceEnabled) Utils.Trace("PUBLISH - Did not send another publish request. GoodPublishRequestCount={0}, Subscriptions={1}", requestCount, m_subscriptions.Count);
             }
         }
 
@@ -4147,7 +4147,7 @@ namespace Opc.Ua.Client
 
             try
             {
-                Utils.Trace("Requesting Republish for {0}-{1}", subscriptionId, sequenceNumber);
+                if (Utils.IsTraceEnabled) Utils.Trace("Requesting Republish for {0}-{1}", subscriptionId, sequenceNumber);
 
                 // request republish.
                 NotificationMessage notificationMessage = null;
@@ -4158,7 +4158,7 @@ namespace Opc.Ua.Client
                     sequenceNumber,
                     out notificationMessage);
 
-                Utils.Trace("Received Republish for {0}-{1}", subscriptionId, sequenceNumber);
+                if (Utils.IsTraceEnabled) Utils.Trace("Received Republish for {0}-{1}", subscriptionId, sequenceNumber);
 
                 // process response.
                 ProcessPublishResponse(
@@ -4178,11 +4178,11 @@ namespace Opc.Ua.Client
 
                 if (result)
                 {
-                    Utils.Trace("Message {0}-{1} no longer available.", subscriptionId, sequenceNumber);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Message {0}-{1} no longer available.", subscriptionId, sequenceNumber);
                 }
                 else
                 {
-                    Utils.Trace(e, "Unexpected error sending republish request.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error sending republish request.");
                 }
 
                 PublishErrorEventHandler callback = null;
@@ -4206,7 +4206,7 @@ namespace Opc.Ua.Client
                     }
                     catch (Exception e2)
                     {
-                        Utils.Trace(e2, "Session: Unexpected error invoking PublishErrorCallback.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e2, "Session: Unexpected error invoking PublishErrorCallback.");
                     }
                 }
 
@@ -4276,7 +4276,7 @@ namespace Opc.Ua.Client
                             // If the last sent sequence number is greater or equal to the available sequence number (returned by the publish), a warning must be logged.
                             if (((lastSentSequenceNumber >= availableSequenceNumber) && (lastSentSequenceNumber != uint.MaxValue)) || (lastSentSequenceNumber == availableSequenceNumber) && (lastSentSequenceNumber == uint.MaxValue))
                             {
-                                Utils.Trace("Received sequence number which was already acknowledged={0}", availableSequenceNumber);
+                                if (Utils.IsTraceEnabled) Utils.Trace("Received sequence number which was already acknowledged={0}", availableSequenceNumber);
                             }
                         }
                     }
@@ -4290,7 +4290,7 @@ namespace Opc.Ua.Client
                     // If the last sent sequence number is greater or equal to the notificationMessage's sequence number (returned by the publish), a warning must be logged.
                     if (((lastSentSequenceNumber >= notificationMessage.SequenceNumber) && (lastSentSequenceNumber != uint.MaxValue)) || (lastSentSequenceNumber == notificationMessage.SequenceNumber) && (lastSentSequenceNumber == uint.MaxValue))
                     {
-                        Utils.Trace("Received sequence number which was already acknowledged={0}", notificationMessage.SequenceNumber);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Received sequence number which was already acknowledged={0}", notificationMessage.SequenceNumber);
                     }
                 }
 
@@ -4300,7 +4300,7 @@ namespace Opc.Ua.Client
                     {
                         if (acknowledgement.SubscriptionId == subscriptionId && !availableSequenceNumbers.Contains(acknowledgement.SequenceNumber))
                         {
-                            Utils.Trace("Sequence number={0} was not received in the available sequence numbers.", acknowledgement.SequenceNumber);
+                            if (Utils.IsTraceEnabled) Utils.Trace("Sequence number={0} was not received in the available sequence numbers.", acknowledgement.SequenceNumber);
                         }
                     }
                 }
@@ -4309,7 +4309,7 @@ namespace Opc.Ua.Client
 
                 if (notificationMessage.IsEmpty)
                 {
-                    Utils.Trace("Empty notification message received for SessionId {0} with PublishTime {1}", SessionId, notificationMessage.PublishTime.ToLocalTime());
+                    if (Utils.IsTraceEnabled) Utils.Trace("Empty notification message received for SessionId {0} with PublishTime {1}", SessionId, notificationMessage.PublishTime.ToLocalTime());
                 }
 
                 // find the subscription.
@@ -4329,13 +4329,13 @@ namespace Opc.Ua.Client
                 // Validate publish time and reject old values.
                 if (notificationMessage.PublishTime.AddMilliseconds(subscription.CurrentPublishingInterval * subscription.CurrentLifetimeCount) < DateTime.UtcNow)
                 {
-                    Utils.Trace("PublishTime {0} in publish response is too old for SubscriptionId {1}.", notificationMessage.PublishTime.ToLocalTime(), subscription.Id);
+                    if (Utils.IsTraceEnabled) Utils.Trace("PublishTime {0} in publish response is too old for SubscriptionId {1}.", notificationMessage.PublishTime.ToLocalTime(), subscription.Id);
                 }
 
                 // Validate publish time and reject old values.
                 if (notificationMessage.PublishTime > DateTime.UtcNow.AddMilliseconds(subscription.CurrentPublishingInterval * subscription.CurrentLifetimeCount))
                 {
-                    Utils.Trace("PublishTime {0} in publish response is newer than actual time for SubscriptionId {1}.", notificationMessage.PublishTime.ToLocalTime(), subscription.Id);
+                    if (Utils.IsTraceEnabled) Utils.Trace("PublishTime {0} in publish response is newer than actual time for SubscriptionId {1}.", notificationMessage.PublishTime.ToLocalTime(), subscription.Id);
                 }
 
                 // update subscription cache.                                 
@@ -4359,7 +4359,7 @@ namespace Opc.Ua.Client
             }
             else
             {
-                Utils.Trace("Received Publish Response for Unknown SubscriptionId={0}", subscriptionId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Received Publish Response for Unknown SubscriptionId={0}", subscriptionId);
             }
         }
 
@@ -4380,7 +4380,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Session: Unexpected rrror while raising Notification event.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Session: Unexpected rrror while raising Notification event.");
             }
         }
         #endregion

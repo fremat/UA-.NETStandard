@@ -82,7 +82,7 @@ namespace Opc.Ua.Sample
             {
                 VerifyPassword(userNameToken.UserName, userNameToken.DecryptedPassword);
                 args.Identity = new UserIdentity(userNameToken);
-                Utils.Trace("UserName Token Accepted: {0}", args.Identity.DisplayName);
+                if (Utils.IsTraceEnabled) Utils.Trace("UserName Token Accepted: {0}", args.Identity.DisplayName);
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace Opc.Ua.Sample
             {
                 VerifyCertificate(x509Token.Certificate);
                 args.Identity = new UserIdentity(x509Token);
-                Utils.Trace("X509 Token Accepted: {0}", args.Identity.DisplayName);
+                if (Utils.IsTraceEnabled) Utils.Trace("X509 Token Accepted: {0}", args.Identity.DisplayName);
                 return;
             }
         }

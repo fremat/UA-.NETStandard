@@ -106,7 +106,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace("Could not fetch node from server: NodeId={0}, Reason='{1}'.", nodeId, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not fetch node from server: NodeId={0}, Reason='{1}'.", nodeId, e.Message);
                 // m_nodes[nodeId] = null;
                 return null;
             }
@@ -658,7 +658,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace("Could not fetch references for valid node with NodeId = {0}. Error = {1}", nodeId, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not fetch references for valid node with NodeId = {0}. Error = {1}", nodeId, e.Message);
             }
 
             // add to cache.

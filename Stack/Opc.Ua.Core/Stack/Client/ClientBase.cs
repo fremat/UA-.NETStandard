@@ -403,7 +403,7 @@ namespace Opc.Ua
         {
             UpdateRequestHeader(request, useDefaults);
 
-            Utils.Trace(
+            if (Utils.IsTraceEnabled) Utils.Trace(
                 (int)Utils.TraceMasks.Service, 
                 "{0} Called. RequestHandle={1}, PendingRequestCount={2}",
                 serviceName,
@@ -441,7 +441,7 @@ namespace Opc.Ua
 
             if (statusCode != StatusCodes.Good)
             {
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     (int)Utils.TraceMasks.Service,
                     "{0} Completed. RequestHandle={1}, PendingRequestCount={3}, StatusCode={2}",
                     serviceName,
@@ -451,7 +451,7 @@ namespace Opc.Ua
             }
             else
             {
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     (int)Utils.TraceMasks.Service,
                     "{0} Completed. RequestHandle={1}, PendingRequestCount={2}",
                     serviceName,

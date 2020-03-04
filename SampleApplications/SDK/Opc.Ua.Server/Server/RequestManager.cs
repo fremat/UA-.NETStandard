@@ -206,7 +206,7 @@ namespace Opc.Ua.Server
                         }
                         catch (Exception e)
                         {
-                            Utils.Trace(e, "Unexpected error reporting RequestCancelled event.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error reporting RequestCancelled event.");
                         }                        
                     }
                 }
@@ -248,7 +248,7 @@ namespace Opc.Ua.Server
                         }
                         catch (Exception e)
                         {
-                            Utils.Trace(e, "Unexpected error reporting RequestCancelled event.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error reporting RequestCancelled event.");
                         }                        
                     }
                 }

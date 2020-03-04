@@ -368,7 +368,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Delete items for subscription failed.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Delete items for subscription failed.");
                 }
             }
         }
@@ -817,7 +817,7 @@ namespace Opc.Ua.Server
                 // check for missing notifications.
                 if (!keepAliveIfNoData && messages.Count == 0)
                 {
-                    Utils.Trace(
+                    if (Utils.IsTraceEnabled) Utils.Trace(
                         (int)Utils.TraceMasks.Error,
                         "Oops! MonitoredItems queued but no notifications availabled.");
                
@@ -860,7 +860,7 @@ namespace Opc.Ua.Server
             if (overflowCount > 0)
             {
                 
-                Utils.Trace(
+                if (Utils.IsTraceEnabled) Utils.Trace(
                     "WARNING: QUEUE OVERFLOW. Dropping {2} Messages. Increase MaxMessageQueueSize. SubId={0}, MaxMessageQueueSize={1}", 
                     m_id,
                     m_maxMessageCount,
@@ -2146,7 +2146,7 @@ namespace Opc.Ua.Server
                 buffer.AppendFormat(", MessageCount={0}", m_sentMessages.Count);
             }
 
-            Utils.Trace("{0}", buffer.ToString());
+            if (Utils.IsTraceEnabled) Utils.Trace("{0}", buffer.ToString());
         }
         #endregion
 
