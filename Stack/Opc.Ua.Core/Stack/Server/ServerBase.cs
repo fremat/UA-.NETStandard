@@ -437,7 +437,7 @@ namespace Opc.Ua
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Unexpected error closing a listener. {0}", listeners[ii].GetType().FullName);
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error closing a listener. {0}", listeners[ii].GetType().FullName);
                     }
                 }
 
@@ -789,7 +789,7 @@ namespace Opc.Ua
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Could not load UA-TCP Stack Listener.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not load UA-TCP Stack Listener.");
                     throw;
                 }
             }
@@ -932,7 +932,7 @@ namespace Opc.Ua
                     {
                         message += (" " + e.InnerException.Message);
                     }
-                    Utils.Trace(e, message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, message);
                 }
             }
 

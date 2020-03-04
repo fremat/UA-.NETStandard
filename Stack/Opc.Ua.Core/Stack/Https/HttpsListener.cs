@@ -293,7 +293,7 @@ namespace Opc.Ua.Bindings
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "HTTPSLISTENER - Unexpected error processing request.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "HTTPSLISTENER - Unexpected error processing request.");
                 context.Response.ContentLength = e.Message.Length;
                 context.Response.ContentType = "text/plain";
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;

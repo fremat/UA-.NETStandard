@@ -360,7 +360,7 @@ namespace Opc.Ua.Configuration
                 catch (Exception e)
                 {
                     ServiceResult error = ServiceResult.Create(e, StatusCodes.BadConfigurationError, "Could not start UA Service.");
-                    Utils.Trace((int)Utils.TraceMasks.Error, error.ToLongString());
+                    if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Error, error.ToLongString());
                 }
             }
             #endregion
@@ -678,14 +678,14 @@ namespace Opc.Ua.Configuration
         /// <param name="args">Additional arguments provided on the command line.</param>
         protected virtual async Task Install(bool silent, Dictionary<string, string> args)
         {
-            Utils.Trace(Utils.TraceMasks.Information, "Installing application.");
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Installing application.");
 
             // check the configuration.
             string filePath = Utils.GetAbsoluteFilePath(InstallConfig.ConfigurationFile, true, false, false);
 
             if (filePath == null)
             {
-                Utils.Trace("WARNING: Could not load config file specified in the installation configuration: {0}", InstallConfig.ConfigurationFile);
+                if (Utils.IsTraceEnabled) Utils.Trace("WARNING: Could not load config file specified in the installation configuration: {0}", InstallConfig.ConfigurationFile);
                 filePath = ApplicationConfiguration.GetFilePathFromAppConfig(ConfigSectionName);
                 InstallConfig.ConfigurationFile = filePath;
             }
@@ -750,7 +750,7 @@ namespace Opc.Ua.Configuration
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Could not save configuration file. FilePath={0}", configuration.SourceFilePath);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not save configuration file. FilePath={0}", configuration.SourceFilePath);
             }
 
             if (!NoGdsAgentAdmin)
@@ -774,13 +774,13 @@ namespace Opc.Ua.Configuration
                         using (FileStream ostrm = File.Open(agentPath + Path.DirectorySeparatorChar + configuration.ApplicationName + ".xml", FileMode.Create))
                         {
                             serializer.WriteObject(ostrm, export);
-                            Utils.Trace(Utils.TraceMasks.Information, "Created GDS agent configuration file.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Created GDS agent configuration file.");
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(Utils.TraceMasks.Error, "Could not create GDS agent configuration file: {0}", e.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Error, "Could not create GDS agent configuration file: {0}", e.Message);
                 }
             }
         }
@@ -797,7 +797,7 @@ namespace Opc.Ua.Configuration
 
             if (filePath == null)
             {
-                Utils.Trace("WARNING: Could not load config file specified in the installation configuration: {0}", InstallConfig.ConfigurationFile);
+                if (Utils.IsTraceEnabled) Utils.Trace("WARNING: Could not load config file specified in the installation configuration: {0}", InstallConfig.ConfigurationFile);
                 filePath = ApplicationConfiguration.GetFilePathFromAppConfig(ConfigSectionName);
                 InstallConfig.ConfigurationFile = filePath;
             }
@@ -822,7 +822,7 @@ namespace Opc.Ua.Configuration
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(Utils.TraceMasks.Error, "Could not create GDS agent configuration file: {0}", e.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Error, "Could not create GDS agent configuration file: {0}", e.Message);
                 }
             }
         }
@@ -854,7 +854,7 @@ namespace Opc.Ua.Configuration
             Type configurationType,
             bool applyTraceSettings)
         {
-            Utils.Trace(Utils.TraceMasks.Information, "Loading application configuration file. {0}", filePath);
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Loading application configuration file. {0}", filePath);
 
             try
             {
@@ -881,7 +881,7 @@ namespace Opc.Ua.Configuration
                     await MessageDlg.ShowAsync();
                 }
 
-                Utils.Trace(e, "Could not load configuration file. {0}", filePath);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not load configuration file. {0}", filePath);
                 return null;
             }
         }
@@ -932,7 +932,7 @@ namespace Opc.Ua.Configuration
             ushort minimumKeySize,
             ushort lifeTimeInMonths = CertificateFactory.defaultLifeTime)
         {
-            Utils.Trace(Utils.TraceMasks.Information, "Checking application instance certificate.");
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Checking application instance certificate.");
 
             ApplicationConfiguration configuration = null;
 
@@ -1045,12 +1045,12 @@ namespace Opc.Ua.Configuration
                     && e.Error != null && e.Error.Code == StatusCodes.BadCertificateUntrusted)
                 {
                     e.Accept = true;
-                    Utils.Trace((int)Utils.TraceMasks.Security, "Automatically accepted certificate: {0}", e.Certificate.Subject);
+                    if (Utils.IsTraceEnabled) Utils.Trace((int)Utils.TraceMasks.Security, "Automatically accepted certificate: {0}", e.Certificate.Subject);
                 }
             }
             catch (Exception exception)
             {
-                Utils.Trace(exception, "Error accepting certificate.");
+                if (Utils.IsTraceEnabled) Utils.Trace(exception, "Error accepting certificate.");
             }
         }
 
@@ -1068,7 +1068,7 @@ namespace Opc.Ua.Configuration
                 return false;
             }
 
-            Utils.Trace(Utils.TraceMasks.Information, "Checking application instance certificate. {0}", certificate.Subject);
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Checking application instance certificate. {0}", certificate.Subject);
 
             try
             {
@@ -1089,7 +1089,7 @@ namespace Opc.Ua.Configuration
                 }
                 else
                 {
-                    Utils.Trace(message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(message);
                     return false;
                 }
             }
@@ -1112,7 +1112,7 @@ namespace Opc.Ua.Configuration
                 }
                 else
                 {
-                    Utils.Trace(message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(message);
                     return false;
                 }
             }
@@ -1143,7 +1143,7 @@ namespace Opc.Ua.Configuration
                 }
                 else
                 {
-                    Utils.Trace(message);
+                    if (Utils.IsTraceEnabled) Utils.Trace(message);
                     return false;
                 }
             }
@@ -1166,7 +1166,7 @@ namespace Opc.Ua.Configuration
             X509Certificate2 certificate,
             bool silent)
         {
-            Utils.Trace(Utils.TraceMasks.Information, "Checking domains in certificate. {0}", certificate.Subject);
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Checking domains in certificate. {0}", certificate.Subject);
 
             bool valid = true;
             IList<string> serverDomainNames = configuration.GetServerDomainNames();
@@ -1233,7 +1233,7 @@ namespace Opc.Ua.Configuration
                     }
                 }
 
-                Utils.Trace(message);
+                if (Utils.IsTraceEnabled) Utils.Trace(message);
                 break;
             }
 
@@ -1253,7 +1253,7 @@ namespace Opc.Ua.Configuration
             ushort lifeTimeInMonths = CertificateFactory.defaultLifeTime
             )
         {
-            Utils.Trace(Utils.TraceMasks.Information, "Creating application instance certificate.");
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Creating application instance certificate.");
 
             // delete any existing certificate.
             await DeleteApplicationInstanceCertificate(configuration);
@@ -1301,7 +1301,7 @@ namespace Opc.Ua.Configuration
 
             await configuration.CertificateValidator.Update(configuration.SecurityConfiguration);
 
-            Utils.Trace(Utils.TraceMasks.Information, "Certificate created. Thumbprint={0}", certificate.Thumbprint);
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Certificate created. Thumbprint={0}", certificate.Thumbprint);
 
             // reload the certificate from disk.
             await configuration.SecurityConfiguration.ApplicationCertificate.LoadPrivateKey(null);
@@ -1315,7 +1315,7 @@ namespace Opc.Ua.Configuration
         /// <param name="configuration">The configuration instance that stores the configurable information for a UA application.</param>
         private static async Task DeleteApplicationInstanceCertificate(ApplicationConfiguration configuration)
         {
-            Utils.Trace(Utils.TraceMasks.Information, "Deleting application instance certificate.");
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Deleting application instance certificate.");
 
             // create a default certificate id none specified.
             CertificateIdentifier id = configuration.SecurityConfiguration.ApplicationCertificate;
@@ -1372,7 +1372,7 @@ namespace Opc.Ua.Configuration
 
             if (String.IsNullOrEmpty(storePath))
             {
-                Utils.Trace(Utils.TraceMasks.Information, "WARNING: Trusted peer store not specified.");
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "WARNING: Trusted peer store not specified.");
                 return;
             }
 
@@ -1382,7 +1382,7 @@ namespace Opc.Ua.Configuration
 
                 if (store == null)
                 {
-                    Utils.Trace("Could not open trusted peer store. StorePath={0}", storePath);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Could not open trusted peer store. StorePath={0}", storePath);
                     return;
                 }
 
@@ -1396,7 +1396,7 @@ namespace Opc.Ua.Configuration
                         return;
                     }
 
-                    Utils.Trace(Utils.TraceMasks.Information, "Adding certificate to trusted peer store. StorePath={0}", storePath);
+                    if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Adding certificate to trusted peer store. StorePath={0}", storePath);
 
                     List<string> subjectName = Utils.ParseDistinguishedName(certificate.Subject);
 
@@ -1428,7 +1428,7 @@ namespace Opc.Ua.Configuration
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Could not add certificate to trusted peer store. StorePath={0}", storePath);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not add certificate to trusted peer store. StorePath={0}", storePath);
             }
         }
         #endregion

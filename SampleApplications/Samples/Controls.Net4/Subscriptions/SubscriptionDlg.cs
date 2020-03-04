@@ -85,7 +85,7 @@ namespace Opc.Ua.Sample.Controls
             Subscription duplicateSubscription = session.Subscriptions.FirstOrDefault(s => s.Id != 0 && s.Id.Equals(subscription.Id) && s != subscription);
             if (duplicateSubscription != null)
             {
-                Utils.Trace("Duplicate subscription was created with the id: {0}", duplicateSubscription.Id);
+                if (Utils.IsTraceEnabled) Utils.Trace("Duplicate subscription was created with the id: {0}", duplicateSubscription.Id);
 
                 DialogResult result = MessageBox.Show("Duplicate subscription was created with the id: " + duplicateSubscription.Id + ". Do you want to keep it?", "Warning", MessageBoxButtons.YesNo);
                 if (result == System.Windows.Forms.DialogResult.No)

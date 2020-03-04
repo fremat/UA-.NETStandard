@@ -103,7 +103,7 @@ namespace Opc.Ua.Security
                 }
             }
 
-            Utils.Trace(Utils.TraceMasks.Security, buffer.ToString());
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Security, buffer.ToString());
         }
 
         
@@ -132,7 +132,7 @@ namespace Opc.Ua.Security
             buffer.Append(secureChannelId);
             buffer.Append("]");
 
-            Utils.Trace(Utils.TraceMasks.Security, buffer.ToString());
+            if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Security, buffer.ToString());
         }
     }
 }

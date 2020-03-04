@@ -187,7 +187,7 @@ namespace NetCoreConsoleClient
             }
             catch (Exception ex)
             {
-                Utils.Trace("ServiceResultException:" + ex.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("ServiceResultException:" + ex.Message);
                 Console.WriteLine("Exception: {0}", ex.Message);
                 return ExitCode;
             }

@@ -33,7 +33,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0}", m_status);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0}", m_status);
             }
         }
 
@@ -46,7 +46,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1}", m_status, message);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1}", m_status, message);
             }
         }
 
@@ -59,7 +59,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, e.Message);
             }
         }
 
@@ -72,7 +72,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, message);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, message);
             }
         }
 
@@ -85,7 +85,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0}", m_status);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0}", m_status);
             }
         }
 
@@ -98,7 +98,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1}", m_status, message);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1}", m_status, message);
             }
         }
 
@@ -111,7 +111,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, e.Message);
             }
         }
 
@@ -124,7 +124,7 @@ namespace Opc.Ua
 
             if ((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0)
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, message);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0} {1} {2}", m_status, e.GetType().Name, message);
             }
         }
 
@@ -145,7 +145,7 @@ namespace Opc.Ua
             // avoid false warnings in the log file when closing the channel.
             if (((Utils.TraceMask & Utils.TraceMasks.StackTrace) != 0) && (status == null || (status != null && status.Code != StatusCodes.BadSecureChannelClosed)))
             {
-                Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0}", m_status);
+                if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.StackTrace, "***EXCEPTION*** {0}", m_status);
             }
         }
         #endregion

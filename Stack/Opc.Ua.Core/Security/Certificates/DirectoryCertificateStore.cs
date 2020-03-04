@@ -342,7 +342,7 @@ namespace Opc.Ua
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Could not load private key for certificate " + subjectName);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not load private key for certificate " + subjectName);
                 }
             }
 
@@ -381,7 +381,7 @@ namespace Opc.Ua
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Could not parse CRL file.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not parse CRL file.");
                         continue;
                     }
 
@@ -642,7 +642,7 @@ namespace Opc.Ua
                                 }
                                 catch (Exception e)
                                 {
-                                    Utils.Trace(e, "Could not load private key certificate from file: {0}", entry.PrivateKeyFile.Name);
+                                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not load private key certificate from file: {0}", entry.PrivateKeyFile.Name);
                                 }
                             }
 
@@ -668,7 +668,7 @@ namespace Opc.Ua
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Could not load certificate from file: {0}", file.FullName);
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not load certificate from file: {0}", file.FullName);
                     }
                 }
 

@@ -1170,7 +1170,7 @@ namespace Opc.Ua.Client.Controls
             }
             catch (Exception e)
             {
-                Utils.Trace("Could not fetch endpoints from url: {0}. Reason={1}", discoveryUrl, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not fetch endpoints from url: {0}. Reason={1}", discoveryUrl, e.Message);
                 message = e.Message;
                 return false;
             }
@@ -1309,7 +1309,7 @@ namespace Opc.Ua.Client.Controls
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error updating endpoints.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error updating endpoints.");
             }
         }
 

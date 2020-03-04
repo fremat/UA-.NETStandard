@@ -443,7 +443,7 @@ namespace Opc.Ua.Client.Controls
                         }
                         catch (Exception exception)
                         {
-                            Utils.Trace(exception, "Error loading image.");
+                            if (Utils.IsTraceEnabled) Utils.Trace(exception, "Error loading image.");
                         }
                     }
 

@@ -223,6 +223,8 @@ namespace Opc.Ua
             get { return Tracing.Instance; }
         }
 
+        public static bool IsTraceEnabled => (s_traceMasks != 0 || s_traceOutput != 0 || Tracing.HasEventHandler);
+
         /// <summary>
         /// Writes a trace statement.
         /// </summary>
@@ -369,6 +371,8 @@ namespace Opc.Ua
         /// </summary>
         public static void Trace(Exception e, string format, bool handled, params object[] args)
         {
+            if (!IsTraceEnabled)
+                return;
             StringBuilder message = new StringBuilder();
 
             // format message.            
@@ -436,6 +440,9 @@ namespace Opc.Ua
         /// </summary>
         public static void Trace(Exception e, int traceMask, string format, bool handled, params object[] args)
         {
+            if (!IsTraceEnabled)
+                return;
+
             if (!handled)
             {
                 Tracing.Instance.RaiseTraceEvent(new TraceEventArgs(traceMask, format, string.Empty, e, args));
@@ -711,7 +718,7 @@ namespace Opc.Ua
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Could not create file: {0}", filePath);
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not create file: {0}", filePath);
 
                 if (throwOnError)
                 {
@@ -861,7 +868,7 @@ namespace Opc.Ua
 #if DEBUG
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Error disposing object: {0}", disposable.GetType().Name);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Error disposing object: {0}", disposable.GetType().Name);
                 }
 #else
                 catch (Exception)
@@ -2350,7 +2357,7 @@ namespace Opc.Ua
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace("Exception parsing extension: " + ex.Message);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Exception parsing extension: " + ex.Message);
                     throw;
                 }
                 finally
@@ -3310,10 +3317,12 @@ namespace Opc.Ua
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(ex, "Exception invoking Trace Event Handler", true, null);
+                    if (Utils.IsTraceEnabled) Utils.Trace(ex, "Exception invoking Trace Event Handler", true, null);
                 }
             }
         }
+
+        internal bool HasEventHandler => TraceEventHandler is object;
         #endregion
     }
 

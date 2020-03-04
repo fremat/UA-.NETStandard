@@ -50,7 +50,7 @@ namespace Opc.Ua.Sample
         /// </remarks>
         protected override void OnServerStarting(ApplicationConfiguration configuration)
         {
-            Utils.Trace("The server is starting.");
+            if (Utils.IsTraceEnabled) Utils.Trace("The server is starting.");
 
             base.OnServerStarting(configuration);
             

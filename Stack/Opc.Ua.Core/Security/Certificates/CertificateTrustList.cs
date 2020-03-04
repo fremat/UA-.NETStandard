@@ -69,7 +69,7 @@ namespace Opc.Ua
                 }
                 catch (Exception)
                 {
-                    Utils.Trace("Could not load certificates from store: {0}.", this.StorePath);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Could not load certificates from store: {0}.", this.StorePath);
                 }
             }
 

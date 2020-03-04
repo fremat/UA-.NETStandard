@@ -120,7 +120,7 @@ namespace Opc.Ua
                 if (!store.Certificates.Contains(certificate))
                 {
                     store.Add(certificate);
-                    Utils.Trace(Utils.TraceMasks.Information, "Added cert {0} to X509Store {1}.", certificate.ToString(), store.Name);
+                    if (Utils.IsTraceEnabled) Utils.Trace(Utils.TraceMasks.Information, "Added cert {0} to X509Store {1}.", certificate.ToString(), store.Name);
                 }
             }
 

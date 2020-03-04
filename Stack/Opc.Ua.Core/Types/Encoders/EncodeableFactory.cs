@@ -96,7 +96,7 @@ namespace Opc.Ua
             }
             catch (Exception)
             {
-                Utils.Trace("Could not load encodeable types from assembly: {0}", assemblyName);
+                if (Utils.IsTraceEnabled) Utils.Trace("Could not load encodeable types from assembly: {0}", assemblyName);
             }
         }
 		#endregion
@@ -231,7 +231,7 @@ namespace Opc.Ua
                 #if DEBUG
                 if (m_shared)
                 {
-                    Utils.Trace("WARNING: Adding type '{0}' to shared Factory #{1}.", systemType.Name, m_instanceId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("WARNING: Adding type '{0}' to shared Factory #{1}.", systemType.Name, m_instanceId);
                 }
                 #endif
                 
@@ -290,7 +290,7 @@ namespace Opc.Ua
                     #if DEBUG
                     if (m_shared)
                     {
-                        Utils.Trace("WARNING: Adding type '{0}' to shared Factory #{1}.", systemType.Name, m_instanceId);
+                        if (Utils.IsTraceEnabled) Utils.Trace("WARNING: Adding type '{0}' to shared Factory #{1}.", systemType.Name, m_instanceId);
                     }
                     #endif
 
@@ -320,7 +320,7 @@ namespace Opc.Ua
                 #if DEBUG
                 if (m_shared)
                 {
-                    Utils.Trace("WARNING: Adding types from assembly '{0}' to shared Factory #{1}.", assembly.FullName, m_instanceId);
+                    if (Utils.IsTraceEnabled) Utils.Trace("WARNING: Adding types from assembly '{0}' to shared Factory #{1}.", assembly.FullName, m_instanceId);
                 }
                 #endif
 

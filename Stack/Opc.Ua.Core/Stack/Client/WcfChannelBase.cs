@@ -656,7 +656,7 @@ namespace Opc.Ua
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error sending outgoing request.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error sending outgoing request.");
             }
         }
         #endif
@@ -917,7 +917,7 @@ namespace Opc.Ua
                 return;
             }
 
-            Utils.Trace("RECONNECT: Reconnecting to {0}.", m_settings.Description.EndpointUrl);
+            if (Utils.IsTraceEnabled) Utils.Trace("RECONNECT: Reconnecting to {0}.", m_settings.Description.EndpointUrl);
 
             // grap the existing channel.
             TChannel channel = m_channel;
@@ -1008,7 +1008,7 @@ namespace Opc.Ua
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Unexpected exception invoking WcfChannelAsyncResult callback function.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected exception invoking WcfChannelAsyncResult callback function.");
                 }
             }
 

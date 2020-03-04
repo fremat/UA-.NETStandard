@@ -654,39 +654,39 @@ namespace Opc.Ua.Sample.Controls
             {
                 if (reference.ReferenceTypeId.IsNullNodeId)
                 {
-                    Utils.Trace("Reference {0} has null reference type id", reference.DisplayName);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Reference {0} has null reference type id", reference.DisplayName);
                     continue;
                 }
 
                 ReferenceTypeNode typeNode = m_browser.Session.NodeCache.Find(reference.ReferenceTypeId) as ReferenceTypeNode;
                 if (typeNode == null)
                 {
-                    Utils.Trace("Reference {0} has invalid reference type id.", reference.DisplayName);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Reference {0} has invalid reference type id.", reference.DisplayName);
                     continue;
                 }
 
                 if (m_browser.BrowseDirection == BrowseDirection.Forward && !reference.IsForward
                     || m_browser.BrowseDirection == BrowseDirection.Inverse && reference.IsForward)
                 {
-                    Utils.Trace("Reference's IsForward value is: {0}, but the browse direction is: {1}; for reference {2}", reference.IsForward, m_browser.BrowseDirection, reference.DisplayName);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Reference's IsForward value is: {0}, but the browse direction is: {1}; for reference {2}", reference.IsForward, m_browser.BrowseDirection, reference.DisplayName);
                     continue;
                 }
 
                 if (reference.NodeId == null || reference.NodeId.IsNull)
                 {
-                    Utils.Trace("The node id of the reference {0} is NULL.", reference.DisplayName);
+                    if (Utils.IsTraceEnabled) Utils.Trace("The node id of the reference {0} is NULL.", reference.DisplayName);
                     continue;
                 }
 
                 if (reference.BrowseName == null || reference.BrowseName.Name == null)
                 {
-                    Utils.Trace("Browse name is empty for reference {0}", reference.DisplayName);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Browse name is empty for reference {0}", reference.DisplayName);
                     continue;
                 }
 
                 if (!Enum.IsDefined(typeof(Opc.Ua.NodeClass), reference.NodeClass) || reference.NodeClass == NodeClass.Unspecified)
                 {
-                    Utils.Trace("Node class is an unknown or unspecified value, for reference {0}", reference.DisplayName);
+                    if (Utils.IsTraceEnabled) Utils.Trace("Node class is an unknown or unspecified value, for reference {0}", reference.DisplayName);
                     continue;
                 }
                 
@@ -694,7 +694,7 @@ namespace Opc.Ua.Sample.Controls
                 {
                     if (reference.TypeDefinition == null || reference.TypeDefinition.IsNull)
                     {
-                        Utils.Trace("Type definition is null for reference {0}", reference.DisplayName);
+                        if (Utils.IsTraceEnabled) Utils.Trace("Type definition is null for reference {0}", reference.DisplayName);
                         continue;
                     }
                 }
@@ -754,7 +754,7 @@ namespace Opc.Ua.Sample.Controls
 
             if (reference.ReferenceTypeId.IsNullNodeId)
             {
-                Utils.Trace("NULL reference type id, for reference: {0}", reference.DisplayName);
+                if (Utils.IsTraceEnabled) Utils.Trace("NULL reference type id, for reference: {0}", reference.DisplayName);
                 return null;
             }
 
@@ -801,7 +801,7 @@ namespace Opc.Ua.Sample.Controls
                 return AddNode(parent, typeNode.NodeId, text, icon);
             }
 
-            Utils.Trace("Reference type id not found for: {0}", reference.ReferenceTypeId);
+            if (Utils.IsTraceEnabled) Utils.Trace("Reference type id not found for: {0}", reference.ReferenceTypeId);
 
             return null;
         }

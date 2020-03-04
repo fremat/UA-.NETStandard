@@ -122,7 +122,7 @@ namespace Opc.Ua.Sample
             }
             catch (Exception exception)
             {
-                Utils.Trace(exception, "Error stopping server.");
+                if (Utils.IsTraceEnabled) Utils.Trace(exception, "Error stopping server.");
             }
         }
 
@@ -143,7 +143,7 @@ namespace Opc.Ua.Sample
             }
             catch (Exception exception)
             {
-                Utils.Trace(exception, "Error getting server status.");
+                if (Utils.IsTraceEnabled) Utils.Trace(exception, "Error getting server status.");
             }
         }
         #endregion

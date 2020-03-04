@@ -328,7 +328,7 @@ namespace Opc.Ua.Bindings
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "ClientChannel: Unexpected error invoking AsyncCallback.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "ClientChannel: Unexpected error invoking AsyncCallback.");
                     }
                 }
             }

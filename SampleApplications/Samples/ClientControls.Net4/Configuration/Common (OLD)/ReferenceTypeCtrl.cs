@@ -242,7 +242,7 @@ namespace Opc.Ua.Client.Controls
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Ignoring unknown reference type.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Ignoring unknown reference type.");
                 return;
             }
         }

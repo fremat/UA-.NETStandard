@@ -310,7 +310,7 @@ namespace Opc.Ua.Bindings
             }
             catch (SocketException e)
             {
-                Utils.Trace("Name resolution failed for: {0} Error: {1}", endpointUrl.DnsSafeHost, e.Message);
+                if (Utils.IsTraceEnabled) Utils.Trace("Name resolution failed for: {0} Error: {1}", endpointUrl.DnsSafeHost, e.Message);
                 error = e.SocketErrorCode;
                 goto ErrorExit;
             }
@@ -421,7 +421,7 @@ namespace Opc.Ua.Bindings
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Unexpected error closing socket.");
+                        if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error closing socket.");
                     }
                     finally
                     {
@@ -495,7 +495,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(ex, "Unexpected error during OnReadComplete,");
+                    if (Utils.IsTraceEnabled) Utils.Trace(ex, "Unexpected error during OnReadComplete,");
                     error = ServiceResult.Create(ex, StatusCodes.BadTcpInternalError, ex.Message);
                 }
                 finally
@@ -563,7 +563,7 @@ namespace Opc.Ua.Bindings
 
                 if (m_incomingMessageSize <= 0 || m_incomingMessageSize > m_receiveBufferSize)
                 {
-                    Utils.Trace(
+                    if (Utils.IsTraceEnabled) Utils.Trace(
                         "BadTcpMessageTooLarge: BufferSize={0}; MessageSize={1}",
                         m_receiveBufferSize,
                         m_incomingMessageSize);
@@ -600,7 +600,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(ex, "Unexpected error invoking OnMessageReceived callback.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(ex, "Unexpected error invoking OnMessageReceived callback.");
                 }
             }
 

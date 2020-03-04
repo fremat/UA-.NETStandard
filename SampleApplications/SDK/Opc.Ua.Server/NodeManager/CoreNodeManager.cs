@@ -212,7 +212,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Unexpected error disposing a Node object.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error disposing a Node object.");
                 }
             }
         }
@@ -2475,7 +2475,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Error deleting node: {0}", nodeId);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Error deleting node: {0}", nodeId);
                 }
             }
             else
@@ -2584,7 +2584,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Error deleting references for node: {0}", current.Key);
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Error deleting references for node: {0}", current.Key);
                 }
             }            
         }
@@ -3171,7 +3171,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception e)
                 {
-                    Utils.Trace(e, "Unexpected error calling SubscribeToEvents on an EventSource.");
+                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error calling SubscribeToEvents on an EventSource.");
                 }
             }
     

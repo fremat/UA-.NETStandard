@@ -281,7 +281,7 @@ namespace Boiler
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error during boiler simulation.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Unexpected error during boiler simulation.");
             }
         }
         #endregion

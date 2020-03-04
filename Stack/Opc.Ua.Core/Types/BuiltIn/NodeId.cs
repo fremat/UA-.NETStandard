@@ -354,11 +354,11 @@ namespace Opc.Ua
         /// node1 = new NodeId(id1);
         /// 
         /// //now to compare the node to the ids using a simple comparisson and Equals:
-        /// Utils.Trace("Comparing NodeId to uint");
-        /// Utils.Trace("\tComparing 100 to 100 = [equals] {0}", node1.Equals(id1));
-        /// Utils.Trace("\tComparing 100 to 100 = [ ==   ] {0}", node1 == id1);
-        /// Utils.Trace("\tComparing 100 to 101 = [equals] {0}", node1.Equals(id2));
-        /// Utils.Trace("\tComparing 100 to 101 = [ ==   ] {0}", node1 == id2);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("Comparing NodeId to uint");
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing 100 to 100 = [equals] {0}", node1.Equals(id1));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing 100 to 100 = [ ==   ] {0}", node1 == id1);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing 100 to 101 = [equals] {0}", node1.Equals(id2));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing 100 to 101 = [ ==   ] {0}", node1 == id2);
         /// 
         /// </code>
         /// <code lang="Visual Basic">
@@ -372,11 +372,11 @@ namespace Opc.Ua
         /// node1 = new NodeId(id1)
         /// 
         /// 'now to compare the node to the ids using a simple comparisson and Equals:
-        /// Utils.Trace("Comparing NodeId to uint")
-        /// Utils.Trace( String.Format("   Comparing 100 to 100 = [equals] {0}", node1.Equals(id1)) )
-        /// Utils.Trace( String.Format("   Comparing 100 to 100 = [  =   ] {0}", node1 = id1) )
-        /// Utils.Trace( String.Format("   Comparing 100 to 101 = [equals] {0}", node1.Equals(id2)) )
-        /// Utils.Trace( String.Format("   Comparing 100 to 101 = [  =   ] {0}", node1 = id2) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace("Comparing NodeId to uint")
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("   Comparing 100 to 100 = [equals] {0}", node1.Equals(id1)) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("   Comparing 100 to 100 = [  =   ] {0}", node1 = id1) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("   Comparing 100 to 101 = [equals] {0}", node1.Equals(id2)) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("   Comparing 100 to 101 = [  =   ] {0}", node1 = id2) )
         /// 
         /// </code>
         /// <para>
@@ -412,11 +412,11 @@ namespace Opc.Ua
         /// NodeId node1 = new NodeId(id1);
         /// 
         /// //now to compare the node to the guids
-        /// Utils.Trace("\n\nComparing NodeId to GUID");
-        /// Utils.Trace("\tComparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1));
-        /// Utils.Trace("\tComparing {0} to {0} = [ ==   ] {2}", id1, id1, node1 == id1);
-        /// Utils.Trace("\tComparing {0} to {1} = [equals] {2}", id1, id2, node1.Equals(id2));
-        /// Utils.Trace("\tComparing {0} to {1} = [ ==   ] {2}", id1, id2, node1 == id2);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\n\nComparing NodeId to GUID");
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {0} = [ ==   ] {2}", id1, id1, node1 == id1);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {1} = [equals] {2}", id1, id2, node1.Equals(id2));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {1} = [ ==   ] {2}", id1, id2, node1 == id2);
         /// 
         /// </code>
         /// <code lang="Visual Basic">
@@ -427,11 +427,11 @@ namespace Opc.Ua
         /// Dim node1 As NodeId = new NodeId(id1)
         /// 
         /// 'now to compare the node to the guids
-        /// Utils.Trace("Comparing NodeId to GUID")
-        /// Utils.Trace( String.Format( "  Comparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1)) );
-        /// Utils.Trace( String.Format( "  Comparing {0} to {0} = [  =   ] {2}", id1, id1, node1 = id1) );
-        /// Utils.Trace( String.Format( "  Comparing {0} to {0} = [equals] {2}", id1, id2, node1.Equals(id2)) );
-        /// Utils.Trace( String.Format( "  Comparing {0} to {0} = [  =   ] {2}", id1, id2, node1 = id2) );
+        /// if (Utils.IsTraceEnabled) Utils.Trace("Comparing NodeId to GUID")
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format( "  Comparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1)) );
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format( "  Comparing {0} to {0} = [  =   ] {2}", id1, id1, node1 = id1) );
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format( "  Comparing {0} to {0} = [equals] {2}", id1, id2, node1.Equals(id2)) );
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format( "  Comparing {0} to {0} = [  =   ] {2}", id1, id2, node1 = id2) );
         /// 
         /// </code>
         /// <para>
@@ -472,11 +472,11 @@ namespace Opc.Ua
         /// string id2String = System.Text.ASCIIEncoding.ASCII.GetString(id2);
         /// 
         /// //now to compare the node to the guids
-        /// Utils.Trace("\n\nComparing NodeId to Byte[]");
-        /// Utils.Trace("\tComparing {0} to {0} = [equals] {2}", id1String, id1String, node1.Equals(id1));
-        /// Utils.Trace("\tComparing {0} to {0} = [  =   ] {2}", id1String, id1String, node1 == id1);
-        /// Utils.Trace("\tComparing {0} to {1} = [equals] {2}", id1String, id2String, node1.Equals(id2));
-        /// Utils.Trace("\tComparing {0} to {1} = [  =   ] {2}", id1String, id2String, node1 == id2);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\n\nComparing NodeId to Byte[]");
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {0} = [equals] {2}", id1String, id1String, node1.Equals(id1));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {0} = [  =   ] {2}", id1String, id1String, node1 == id1);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {1} = [equals] {2}", id1String, id2String, node1.Equals(id2));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {1} = [  =   ] {2}", id1String, id2String, node1 == id2);
         /// 
         /// </code>
         /// <code lang="Visual Basic">
@@ -491,11 +491,11 @@ namespace Opc.Ua
         /// Dim id2String As String = System.Text.ASCIIEncoding.ASCII.GetString(id2)
         /// 
         /// 'now to compare the node to the guids
-        /// Utils.Trace("Comparing NodeId to Byte()")
-        /// Utils.Trace( String.Format("Comparing {0} to {0} = [equals] {2}", id1String, id1String, node1.Equals(id1)) )
-        /// Utils.Trace( String.Format("Comparing {0} to {0} = [  =   ] {2}", id1String, id1String, node1 = id1) )
-        /// Utils.Trace( String.Format("Comparing {0} to {1} = [equals] {2}", id1String, id2String, node1.Equals(id2)) )
-        /// Utils.Trace( String.Format("Comparing {0} to {1} = [  =   ] {2}", id1String, id2String, node1 = id2) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace("Comparing NodeId to Byte()")
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("Comparing {0} to {0} = [equals] {2}", id1String, id1String, node1.Equals(id1)) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("Comparing {0} to {0} = [  =   ] {2}", id1String, id1String, node1 = id1) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("Comparing {0} to {1} = [equals] {2}", id1String, id2String, node1.Equals(id2)) )
+        /// if (Utils.IsTraceEnabled) Utils.Trace( String.Format("Comparing {0} to {1} = [  =   ] {2}", id1String, id2String, node1 = id2) )
         /// 
         /// </code>
         /// <para>
@@ -531,11 +531,11 @@ namespace Opc.Ua
         /// NodeId node1 = new NodeId(id1);
         /// 
         /// //now to compare the node to the guids
-        /// Utils.Trace("\n\nComparing NodeId to String");
-        /// Utils.Trace("\tComparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1));
-        /// Utils.Trace("\tComparing {0} to {0} = [ ==   ] {2}", id1, id1, node1 == id1);
-        /// Utils.Trace("\tComparing {0} to {1} = [equals] {2}", id1, id2, node1.Equals(id2));
-        /// Utils.Trace("\tComparing {0} to {1} = [ ==   ] {2}", id1, id2, node1 == id2);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\n\nComparing NodeId to String");
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {0} = [ ==   ] {2}", id1, id1, node1 == id1);
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {1} = [equals] {2}", id1, id2, node1.Equals(id2));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("\tComparing {0} to {1} = [ ==   ] {2}", id1, id2, node1 == id2);
         /// 
         /// 
         /// </code>
@@ -547,11 +547,11 @@ namespace Opc.Ua
         /// Dim node1 As NodeId = New NodeId(id1)
         /// 
         /// 'now to compare the node to the guids
-        /// Utils.Trace("Comparing NodeId to String");
-        /// Utils.Trace(String.Format("Comparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1)));
-        /// Utils.Trace(String.Format("Comparing {0} to {0} = [  =   ] {2}", id1, id1, node1 = id1));
-        /// Utils.Trace(String.Format("Comparing {0} to {1} = [equals] {2}", id1, id2, node1.Equals(id2)));
-        /// Utils.Trace(String.Format("Comparing {0} to {1} = [  =   ] {2}", id1, id2, node1 = id2));
+        /// if (Utils.IsTraceEnabled) Utils.Trace("Comparing NodeId to String");
+        /// if (Utils.IsTraceEnabled) Utils.Trace(String.Format("Comparing {0} to {0} = [equals] {2}", id1, id1, node1.Equals(id1)));
+        /// if (Utils.IsTraceEnabled) Utils.Trace(String.Format("Comparing {0} to {0} = [  =   ] {2}", id1, id1, node1 = id1));
+        /// if (Utils.IsTraceEnabled) Utils.Trace(String.Format("Comparing {0} to {1} = [equals] {2}", id1, id2, node1.Equals(id2)));
+        /// if (Utils.IsTraceEnabled) Utils.Trace(String.Format("Comparing {0} to {1} = [  =   ] {2}", id1, id2, node1 = id2));
         /// 
         /// </code>
         /// </example>

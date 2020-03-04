@@ -47,7 +47,7 @@ namespace Opc.Ua.Bindings
             token.CreatedAt = DateTime.UtcNow;
             token.Lifetime = (int)Quotas.SecurityTokenLifetime;
 
-            Utils.Trace("Token #{0} created. CreatedAt = {1:HH:mm:ss.fff} . Lifetime = {2}", token.TokenId, token.CreatedAt, token.Lifetime);
+            if (Utils.IsTraceEnabled) Utils.Trace("Token #{0} created. CreatedAt = {1:HH:mm:ss.fff} . Lifetime = {2}", token.TokenId, token.CreatedAt, token.Lifetime);
 
             return token;
         }
@@ -64,7 +64,7 @@ namespace Opc.Ua.Bindings
             m_currentToken = token;
             m_renewedToken = null;
 
-            Utils.Trace("Token #{0} activated. CreatedAt = {1:HH:mm:ss.fff} . Lifetime = {2}", token.TokenId, token.CreatedAt, token.Lifetime);
+            if (Utils.IsTraceEnabled) Utils.Trace("Token #{0} activated. CreatedAt = {1:HH:mm:ss.fff} . Lifetime = {2}", token.TokenId, token.CreatedAt, token.Lifetime);
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace Opc.Ua.Bindings
         {
             m_renewedToken = token;
 
-            Utils.Trace("RenewedToken #{0} set. CreatedAt = {1:HH:mm:ss.fff} . Lifetime = {2}", token.TokenId, token.CreatedAt, token.Lifetime);
+            if (Utils.IsTraceEnabled) Utils.Trace("RenewedToken #{0} set. CreatedAt = {1:HH:mm:ss.fff} . Lifetime = {2}", token.TokenId, token.CreatedAt, token.Lifetime);
         }
 
         /// <summary>
@@ -480,7 +480,7 @@ namespace Opc.Ua.Bindings
             {
                 ActivateToken(RenewedToken);
 
-                Utils.Trace("Token #{0} activated forced.", CurrentToken.TokenId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Token #{0} activated forced.", CurrentToken.TokenId);
             }
 
             // check for valid token.
@@ -538,7 +538,7 @@ namespace Opc.Ua.Bindings
                 // verify the signature.
                 if (!Verify(token, signature, new ArraySegment<byte>(buffer.Array, buffer.Offset, buffer.Count - SymmetricSignatureSize), isRequest))
                 {
-                    Utils.Trace("Could not verify signature on message.");
+                    if (Utils.IsTraceEnabled) Utils.Trace("Could not verify signature on message.");
                     throw ServiceResultException.Create(StatusCodes.BadSecurityChecksFailed, "Could not verify the signature on the message.");
                 }
             }
@@ -726,7 +726,7 @@ namespace Opc.Ua.Bindings
                     string expectedSignature = Utils.ToHexString(computedSignature);
                     string actualSignature = Utils.ToHexString(signature);
 
-                    Utils.Trace(
+                    if (Utils.IsTraceEnabled) Utils.Trace(
                         "Could not validate signature.\r\nChannelId={0}, TokenId={1}, MessageType={2}, Length={3}\r\nExpectedSignature={4}\r\nActualSignature  ={5}",
                         token.ChannelId,
                         token.TokenId,

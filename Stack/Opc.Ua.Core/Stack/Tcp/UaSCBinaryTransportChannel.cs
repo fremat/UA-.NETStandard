@@ -170,7 +170,7 @@ namespace Opc.Ua.Bindings
         /// </remarks>
         public void Reconnect()
         {
-            Utils.Trace("TransportChannel RECONNECT: Reconnecting to {0}.", m_url);
+            if (Utils.IsTraceEnabled) Utils.Trace("TransportChannel RECONNECT: Reconnecting to {0}.", m_url);
 
             lock (m_lock)
             {

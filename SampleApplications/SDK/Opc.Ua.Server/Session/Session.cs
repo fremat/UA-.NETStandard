@@ -890,7 +890,7 @@ namespace Opc.Ua.Server
                 }
             }
 
-            Utils.Trace("{0}", buffer.ToString());
+            if (Utils.IsTraceEnabled) Utils.Trace("{0}", buffer.ToString());
         }
 
         /// <summary>
