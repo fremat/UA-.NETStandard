@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
@@ -371,17 +372,19 @@ namespace Opc.Ua.Bindings
                 encoder.WriteUInt32(null, (uint)MaxResponseMessageSize);
                 encoder.WriteUInt32(null, (uint)MaxResponseChunkCount);
 
-                byte[] endpointUrl = s_utf8NoBom.GetBytes(m_url.ToString());
-
-                if (endpointUrl.Length > TcpMessageLimits.MaxEndpointUrlLength)
+                string url = m_url.ToString();
+                int endpointUrlLength = s_utf8NoBom.GetByteCount(url);
+                var endpointUrl = ArrayPool<byte>.Shared.Rent(endpointUrlLength);
+                try
                 {
-                    byte[] truncatedUrl = new byte[TcpMessageLimits.MaxEndpointUrlLength];
-                    Array.Copy(endpointUrl, truncatedUrl, TcpMessageLimits.MaxEndpointUrlLength);
-                    endpointUrl = truncatedUrl;
+                    s_utf8NoBom.GetBytes(url, 0, url.Length, endpointUrl, 0);
+                    endpointUrlLength = Math.Min(endpointUrlLength, TcpMessageLimits.MaxEndpointUrlLength);
+                    encoder.WriteByteString(null, endpointUrl, 0, endpointUrlLength);
                 }
-
-                encoder.WriteByteString(null, endpointUrl);
-
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(endpointUrl);
+                }
                 int size = encoder.Close();
                 UpdateMessageSize(buffer, 0, size);
 
