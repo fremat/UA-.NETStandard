@@ -361,7 +361,8 @@ namespace Opc.Ua.Client
                     }
                     else
                     {   // strip domain names from hostname
-                        hostname = dnsHostName.Split('.')[0];
+                        var dotIndex = dnsHostName.IndexOf('.');
+                        hostname = dnsHostName.Substring(0, dotIndex);
                     }
                 }
                 else
@@ -4371,10 +4372,9 @@ namespace Opc.Ua.Client
                 // raise the notification.
                 lock (m_eventLock)
                 {
-                    NotificationEventArgs args = new NotificationEventArgs(subscription, notificationMessage, responseHeader.StringTable);
-
                     if (m_Publish != null)
                     {
+                        NotificationEventArgs args = new NotificationEventArgs(subscription, notificationMessage, responseHeader.StringTable);
                         Task.Run(() =>
                         {
                             OnRaisePublishNotification(args);
