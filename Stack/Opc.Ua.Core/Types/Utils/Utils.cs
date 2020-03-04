@@ -922,7 +922,9 @@ namespace Opc.Ua
 
         public static string GetHostName()
         {
-            return Dns.GetHostName().Split('.')[0].ToLowerInvariant();
+            string hostName = Dns.GetHostName();
+            var dotIndex = hostName.IndexOf('.');
+            return hostName.Substring(0,dotIndex).ToLowerInvariant();
         }
 
         public static string GetFullQualifiedDomainName()

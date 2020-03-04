@@ -206,8 +206,8 @@ namespace Opc.Ua.Client.ComplexTypes
                 var tempName = uri.IsAbsoluteUri ? uri.AbsolutePath : uri.ToString();
 
                 tempName = tempName.Replace("/", "");
-                var splitName = tempName.Split(':');
-                moduleName = splitName.Last();
+                var dividerIndex = tempName.LastIndexOf(':');
+                moduleName = tempName.Substring(dividerIndex + 1);
             }
             return moduleName;
         }
