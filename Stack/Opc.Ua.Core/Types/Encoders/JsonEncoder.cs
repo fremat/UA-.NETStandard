@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 
@@ -1295,6 +1296,31 @@ namespace Opc.Ua
         public void WriteEnumerated(string fieldName, Enum value)
         {
             int numeric = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            var numericString = numeric.ToString();
+            if (UseReversibleEncoding)
+            {
+                WriteSimpleField(fieldName, numericString, false);
+            }
+            else
+            {
+                var valueString = value.ToString();
+                if (valueString == numericString)
+                {
+                    WriteSimpleField(fieldName, numericString, true);
+                }
+                else
+                {
+                    WriteSimpleField(fieldName, Utils.Format("{0}_{1}", value.ToString(), numeric), true);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Writes an enumerated value to the stream.
+        /// </summary>
+        public void WriteEnumerated<T>(string fieldName, T value) where T : struct, Enum
+        {
+            int numeric = Unsafe.As<T,int>(ref value);
             var numericString = numeric.ToString();
             if (UseReversibleEncoding)
             {

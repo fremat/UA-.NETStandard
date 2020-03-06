@@ -923,7 +923,7 @@ namespace Opc.Ua
         {
             if ((attributesToLoad & AttributesToSave.NodeClass) != 0)
             {
-                m_nodeClass = (NodeClass)decoder.ReadEnumerated(null, typeof(NodeClass));
+                m_nodeClass = decoder.ReadEnumerated<NodeClass>(null);
             }
 
             if ((attributesToLoad & AttributesToSave.SymbolicName) != 0)
@@ -963,12 +963,12 @@ namespace Opc.Ua
 
             if ((attributesToLoad & AttributesToSave.WriteMask) != 0)
             {
-                m_writeMask = (AttributeWriteMask)decoder.ReadEnumerated(null, typeof(AttributeWriteMask));
+                m_writeMask = decoder.ReadEnumerated<AttributeWriteMask>(null);
             }
 
             if ((attributesToLoad & AttributesToSave.UserWriteMask) != 0)
             {
-                m_userWriteMask = (AttributeWriteMask)decoder.ReadEnumerated(null, typeof(AttributeWriteMask));
+                m_userWriteMask = decoder.ReadEnumerated<AttributeWriteMask>(null);
             }
         }
 
@@ -1037,7 +1037,7 @@ namespace Opc.Ua
             string symbolicName = null;
             QualifiedName browseName = null;
 
-            nodeClass = (NodeClass)decoder.ReadEnumerated(null, typeof(NodeClass));
+            nodeClass = decoder.ReadEnumerated<NodeClass>(null);
             attributesToLoad &= ~AttributesToSave.NodeClass;
 
             if ((attributesToLoad & AttributesToSave.SymbolicName) != 0)
@@ -1107,7 +1107,7 @@ namespace Opc.Ua
             string symbolicName = null;
             QualifiedName browseName = null;
 
-            nodeClass = (NodeClass)decoder.ReadEnumerated(null, typeof(NodeClass));
+            nodeClass = decoder.ReadEnumerated<NodeClass>(null);
             attributesToLoad &= ~AttributesToSave.NodeClass;
 
             if ((attributesToLoad & AttributesToSave.SymbolicName) != 0)
@@ -1378,7 +1378,7 @@ namespace Opc.Ua
 
             if (decoder.Peek("NodeClass"))
             {
-                NodeClass nodeClass = (NodeClass)decoder.ReadEnumerated("NodeClass", typeof(NodeClass));
+                NodeClass nodeClass = decoder.ReadEnumerated<NodeClass>("NodeClass");
 
                 if (NodeClass != NodeClass.Unspecified && nodeClass != NodeClass)
                 {
@@ -1423,12 +1423,12 @@ namespace Opc.Ua
 
             if (decoder.Peek("WriteMask"))
             {
-                WriteMask = (AttributeWriteMask)decoder.ReadEnumerated("WriteMask", typeof(AttributeWriteMask));
+                WriteMask = decoder.ReadEnumerated<AttributeWriteMask>("WriteMask");
             }
 
             if (decoder.Peek("UserWriteMask"))
             {
-                UserWriteMask = (AttributeWriteMask)decoder.ReadEnumerated("UserWriteMask", typeof(AttributeWriteMask));
+                UserWriteMask = decoder.ReadEnumerated<AttributeWriteMask>("UserWriteMask");
             }
 
             decoder.PopNamespace();
@@ -1632,7 +1632,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Namespaces.OpcUaXsd);
 
             // pre-fetch enough information to know what type of node to create.
-            NodeClass nodeClass = (NodeClass)decoder.ReadEnumerated("NodeClass", typeof(NodeClass));
+            NodeClass nodeClass = decoder.ReadEnumerated<NodeClass>("NodeClass");
             NodeId nodeId = decoder.ReadNodeId("NodeId");
             QualifiedName browseName = decoder.ReadQualifiedName("BrowseName");
 
@@ -1766,13 +1766,13 @@ namespace Opc.Ua
 
             if ((attributesToLoad & AttributesToSave.WriteMask) != 0)
             {
-                writeMask = (AttributeWriteMask)decoder.ReadEnumerated(null, typeof(AttributeWriteMask));
+                writeMask = decoder.ReadEnumerated<AttributeWriteMask>(null);
                 attributesToLoad &= ~AttributesToSave.WriteMask;
             }
 
             if ((attributesToLoad & AttributesToSave.UserWriteMask) != 0)
             {
-                writeMask = (AttributeWriteMask)decoder.ReadEnumerated(null, typeof(AttributeWriteMask));
+                writeMask = decoder.ReadEnumerated<AttributeWriteMask>(null);
                 attributesToLoad &= ~AttributesToSave.UserWriteMask;
             }
 
@@ -1913,7 +1913,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Namespaces.OpcUaXsd);
 
             // pre-fetch enough information to know what type of node to create.
-            NodeClass nodeClass = (NodeClass)decoder.ReadEnumerated("NodeClass", typeof(NodeClass));
+            NodeClass nodeClass = decoder.ReadEnumerated<NodeClass>("NodeClass");
 
             decoder.PopNamespace();
 
@@ -2012,8 +2012,8 @@ namespace Opc.Ua
                 description = decoder.ReadLocalizedText("Description");
             }
 
-            AttributeWriteMask writeMask = (AttributeWriteMask)decoder.ReadEnumerated("WriteMask", typeof(AttributeWriteMask));
-            AttributeWriteMask userWriteMask = (AttributeWriteMask)decoder.ReadEnumerated("UserWriteMask", typeof(AttributeWriteMask));
+            AttributeWriteMask writeMask = decoder.ReadEnumerated<AttributeWriteMask>("WriteMask");
+            AttributeWriteMask userWriteMask = decoder.ReadEnumerated<AttributeWriteMask>("UserWriteMask");
             NodeId referenceTypeId = decoder.ReadNodeId("ReferenceTypeId");
             NodeId typeDefinitionId = decoder.ReadNodeId("TypeDefinitionId");
 

@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 
@@ -866,6 +867,19 @@ namespace Opc.Ua
                     m_writer.WriteString(Utils.Format("{0}_{1}", value.ToString(), Convert.ToInt32(value, CultureInfo.InvariantCulture)));
                 }
 
+                EndField(fieldName);
+            }
+        }
+
+        /// <summary>
+        /// Writes an enumerated value array to the stream.
+        /// </summary>
+        public void WriteEnumerated<T>(string fieldName, T value) where T : struct, Enum
+        {
+            if (BeginField(fieldName, false, true))
+            {
+                int enumValue = Unsafe.As<T, int>(ref value);
+                m_writer.WriteString(Utils.Format("{0}_{1}", value.ToString(), enumValue));
                 EndField(fieldName);
             }
         }
@@ -1994,7 +2008,7 @@ namespace Opc.Ua
         private XmlWriter m_writer;
         private Stack<string> m_namespaces;
         private XmlQualifiedName m_root;
-        private ServiceMessageContext m_context;
+        private readonly ServiceMessageContext m_context;
         private ushort[] m_namespaceMappings;
         private ushort[] m_serverMappings;
         private uint m_nestingLevel;

@@ -16,6 +16,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Xml;
+using System.Runtime.CompilerServices;
 
 namespace Opc.Ua
 {
@@ -1537,6 +1538,38 @@ namespace Opc.Ua
                     else
                     {
                         value = (Enum)Enum.Parse(enumType, xml, false);
+                    }
+                }
+
+                EndField(fieldName);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        ///  Reads an enumerated value from the stream.
+        /// </summary>
+        public T ReadEnumerated<T>(string fieldName) where T : struct, Enum
+        {
+            T value = (T)Enum.GetValues(typeof(T)).GetValue(0); // possibly default(T)
+
+            if (BeginField(fieldName, true))
+            {
+                string xml = ReadString();
+
+                if (!String.IsNullOrEmpty(xml))
+                {
+                    int index = xml.LastIndexOf('_');
+
+                    if (index != -1)
+                    {
+                        int numericValue = Int32.Parse(xml.Substring(index + 1), CultureInfo.InvariantCulture);
+                        value = Unsafe.As<int,T>(ref numericValue);
+                    }
+                    else
+                    {
+                        value = (T)Enum.Parse(typeof(T), xml, false);
                     }
                 }
 
