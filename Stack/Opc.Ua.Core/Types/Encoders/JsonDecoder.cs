@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using Newtonsoft.Json;
@@ -1644,6 +1645,15 @@ namespace Opc.Ua
             }
 
             return (Enum)Enum.ToObject(enumType, ReadInt32(fieldName));
+        }
+
+        /// <summary>
+        ///  Reads an enumerated value from the stream.
+        /// </summary>
+        public T ReadEnumerated<T>(string fieldName) where T : struct, Enum
+        {
+            int value = ReadInt32(fieldName);
+            return Unsafe.As<int,T>(ref value);
         }
 
         private bool ReadArrayField(string fieldName, out List<object> array)

@@ -221,7 +221,7 @@ namespace Opc.Ua.Gds
 
             ApplicationId = decoder.ReadNodeId("ApplicationId");
             ApplicationUri = decoder.ReadString("ApplicationUri");
-            ApplicationType = (ApplicationType)decoder.ReadEnumerated("ApplicationType", typeof(ApplicationType));
+            ApplicationType = decoder.ReadEnumerated<ApplicationType>("ApplicationType");
             ApplicationNames = decoder.ReadLocalizedTextArray("ApplicationNames");
             ProductUri = decoder.ReadString("ProductUri");
             DiscoveryUrls = decoder.ReadStringArray("DiscoveryUrls");

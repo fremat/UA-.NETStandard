@@ -587,7 +587,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             EndpointUrl = decoder.ReadString("EndpointUrl");
-            SecurityMode = (MessageSecurityMode)decoder.ReadEnumerated("SecurityMode", typeof(MessageSecurityMode));
+            SecurityMode = decoder.ReadEnumerated<MessageSecurityMode>("SecurityMode");
             SecurityPolicyUri = decoder.ReadString("SecurityPolicyUri");
             TransportProfileUri = decoder.ReadString("TransportProfileUri");
 
@@ -3122,7 +3122,7 @@ namespace Opc.Ua
         {
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
-            CriteriaType = (IdentityCriteriaType)decoder.ReadEnumerated("CriteriaType", typeof(IdentityCriteriaType));
+            CriteriaType = decoder.ReadEnumerated<IdentityCriteriaType>("CriteriaType");
             Criteria = decoder.ReadString("Criteria");
 
             decoder.PopNamespace();
@@ -8759,7 +8759,7 @@ namespace Opc.Ua
 
             Name = decoder.ReadString("Name");
             Enabled = decoder.ReadBoolean("Enabled");
-            SecurityMode = (MessageSecurityMode)decoder.ReadEnumerated("SecurityMode", typeof(MessageSecurityMode));
+            SecurityMode = decoder.ReadEnumerated<MessageSecurityMode>("SecurityMode");
             SecurityGroupId = decoder.ReadString("SecurityGroupId");
             SecurityKeyServices = (EndpointDescriptionCollection)decoder.ReadEncodeableArray("SecurityKeyServices", typeof(EndpointDescription));
             MaxNetworkMessageSize = decoder.ReadUInt32("MaxNetworkMessageSize");
@@ -11666,7 +11666,7 @@ namespace Opc.Ua
             MessageReceiveTimeout = decoder.ReadDouble("MessageReceiveTimeout");
             KeyFrameCount = decoder.ReadUInt32("KeyFrameCount");
             HeaderLayoutUri = decoder.ReadString("HeaderLayoutUri");
-            SecurityMode = (MessageSecurityMode)decoder.ReadEnumerated("SecurityMode", typeof(MessageSecurityMode));
+            SecurityMode = decoder.ReadEnumerated<MessageSecurityMode>("SecurityMode");
             SecurityGroupId = decoder.ReadString("SecurityGroupId");
             SecurityKeyServices = (EndpointDescriptionCollection)decoder.ReadEncodeableArray("SecurityKeyServices", typeof(EndpointDescription));
             DataSetReaderProperties = (KeyValuePairCollection)decoder.ReadEncodeableArray("DataSetReaderProperties", typeof(KeyValuePair));
@@ -12850,7 +12850,7 @@ namespace Opc.Ua
             TargetNodeId = decoder.ReadNodeId("TargetNodeId");
             AttributeId = decoder.ReadUInt32("AttributeId");
             WriteIndexRange = decoder.ReadString("WriteIndexRange");
-            OverrideValueHandling = (OverrideValueHandling)decoder.ReadEnumerated("OverrideValueHandling", typeof(OverrideValueHandling));
+            OverrideValueHandling = decoder.ReadEnumerated<OverrideValueHandling>("OverrideValueHandling");
             OverrideValue = decoder.ReadVariant("OverrideValue");
 
             decoder.PopNamespace();
@@ -14034,7 +14034,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             GroupVersion = decoder.ReadUInt32("GroupVersion");
-            DataSetOrdering = (DataSetOrderingType)decoder.ReadEnumerated("DataSetOrdering", typeof(DataSetOrderingType));
+            DataSetOrdering = decoder.ReadEnumerated<DataSetOrderingType>("DataSetOrdering");
             NetworkMessageContentMask = decoder.ReadUInt32("NetworkMessageContentMask");
             SamplingOffset = decoder.ReadDouble("SamplingOffset");
             PublishingOffset = decoder.ReadDoubleArray("PublishingOffset");
@@ -16768,7 +16768,7 @@ namespace Opc.Ua
             QueueName = decoder.ReadString("QueueName");
             ResourceUri = decoder.ReadString("ResourceUri");
             AuthenticationProfileUri = decoder.ReadString("AuthenticationProfileUri");
-            RequestedDeliveryGuarantee = (BrokerTransportQualityOfService)decoder.ReadEnumerated("RequestedDeliveryGuarantee", typeof(BrokerTransportQualityOfService));
+            RequestedDeliveryGuarantee = decoder.ReadEnumerated<BrokerTransportQualityOfService>("RequestedDeliveryGuarantee");
 
             decoder.PopNamespace();
         }
@@ -17052,7 +17052,7 @@ namespace Opc.Ua
             QueueName = decoder.ReadString("QueueName");
             ResourceUri = decoder.ReadString("ResourceUri");
             AuthenticationProfileUri = decoder.ReadString("AuthenticationProfileUri");
-            RequestedDeliveryGuarantee = (BrokerTransportQualityOfService)decoder.ReadEnumerated("RequestedDeliveryGuarantee", typeof(BrokerTransportQualityOfService));
+            RequestedDeliveryGuarantee = decoder.ReadEnumerated<BrokerTransportQualityOfService>("RequestedDeliveryGuarantee");
             MetaDataQueueName = decoder.ReadString("MetaDataQueueName");
             MetaDataUpdateTime = decoder.ReadDouble("MetaDataUpdateTime");
 
@@ -17334,7 +17334,7 @@ namespace Opc.Ua
             QueueName = decoder.ReadString("QueueName");
             ResourceUri = decoder.ReadString("ResourceUri");
             AuthenticationProfileUri = decoder.ReadString("AuthenticationProfileUri");
-            RequestedDeliveryGuarantee = (BrokerTransportQualityOfService)decoder.ReadEnumerated("RequestedDeliveryGuarantee", typeof(BrokerTransportQualityOfService));
+            RequestedDeliveryGuarantee = decoder.ReadEnumerated<BrokerTransportQualityOfService>("RequestedDeliveryGuarantee");
             MetaDataQueueName = decoder.ReadString("MetaDataQueueName");
 
             decoder.PopNamespace();
@@ -19022,7 +19022,7 @@ namespace Opc.Ua
 
             DefaultEncodingId = decoder.ReadNodeId("DefaultEncodingId");
             BaseDataType = decoder.ReadNodeId("BaseDataType");
-            StructureType = (StructureType)decoder.ReadEnumerated("StructureType", typeof(StructureType));
+            StructureType = decoder.ReadEnumerated<StructureType>("StructureType");
             Fields = (StructureFieldCollection)decoder.ReadEncodeableArray("Fields", typeof(StructureField));
 
             decoder.PopNamespace();
@@ -19629,7 +19629,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             NodeId = decoder.ReadNodeId("NodeId");
-            NodeClass = (NodeClass)decoder.ReadEnumerated("NodeClass", typeof(NodeClass));
+            NodeClass = decoder.ReadEnumerated<NodeClass>("NodeClass");
             BrowseName = decoder.ReadQualifiedName("BrowseName");
             DisplayName = decoder.ReadLocalizedText("DisplayName");
             Description = decoder.ReadLocalizedText("Description");
@@ -23264,7 +23264,7 @@ namespace Opc.Ua
             ApplicationUri = decoder.ReadString("ApplicationUri");
             ProductUri = decoder.ReadString("ProductUri");
             ApplicationName = decoder.ReadLocalizedText("ApplicationName");
-            ApplicationType = (ApplicationType)decoder.ReadEnumerated("ApplicationType", typeof(ApplicationType));
+            ApplicationType = decoder.ReadEnumerated<ApplicationType>("ApplicationType");
             GatewayServerUri = decoder.ReadString("GatewayServerUri");
             DiscoveryProfileUri = decoder.ReadString("DiscoveryProfileUri");
             DiscoveryUrls = decoder.ReadStringArray("DiscoveryUrls");
@@ -25664,7 +25664,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             PolicyId = decoder.ReadString("PolicyId");
-            TokenType = (UserTokenType)decoder.ReadEnumerated("TokenType", typeof(UserTokenType));
+            TokenType = decoder.ReadEnumerated<UserTokenType>("TokenType");
             IssuedTokenType = decoder.ReadString("IssuedTokenType");
             IssuerEndpointUrl = decoder.ReadString("IssuerEndpointUrl");
             SecurityPolicyUri = decoder.ReadString("SecurityPolicyUri");
@@ -25997,7 +25997,7 @@ namespace Opc.Ua
             EndpointUrl = decoder.ReadString("EndpointUrl");
             Server = (ApplicationDescription)decoder.ReadEncodeable("Server", typeof(ApplicationDescription));
             ServerCertificate = decoder.ReadByteString("ServerCertificate");
-            SecurityMode = (MessageSecurityMode)decoder.ReadEnumerated("SecurityMode", typeof(MessageSecurityMode));
+            SecurityMode = decoder.ReadEnumerated<MessageSecurityMode>("SecurityMode");
             SecurityPolicyUri = decoder.ReadString("SecurityPolicyUri");
             UserIdentityTokens = (UserTokenPolicyCollection)decoder.ReadEncodeableArray("UserIdentityTokens", typeof(UserTokenPolicy));
             TransportProfileUri = decoder.ReadString("TransportProfileUri");
@@ -26730,7 +26730,7 @@ namespace Opc.Ua
             ServerUri = decoder.ReadString("ServerUri");
             ProductUri = decoder.ReadString("ProductUri");
             ServerNames = decoder.ReadLocalizedTextArray("ServerNames");
-            ServerType = (ApplicationType)decoder.ReadEnumerated("ServerType", typeof(ApplicationType));
+            ServerType = decoder.ReadEnumerated<ApplicationType>("ServerType");
             GatewayServerUri = decoder.ReadString("GatewayServerUri");
             DiscoveryUrls = decoder.ReadStringArray("DiscoveryUrls");
             SemaphoreFilePath = decoder.ReadString("SemaphoreFilePath");
@@ -28241,8 +28241,8 @@ namespace Opc.Ua
 
             RequestHeader = (RequestHeader)decoder.ReadEncodeable("RequestHeader", typeof(RequestHeader));
             ClientProtocolVersion = decoder.ReadUInt32("ClientProtocolVersion");
-            RequestType = (SecurityTokenRequestType)decoder.ReadEnumerated("RequestType", typeof(SecurityTokenRequestType));
-            SecurityMode = (MessageSecurityMode)decoder.ReadEnumerated("SecurityMode", typeof(MessageSecurityMode));
+            RequestType = decoder.ReadEnumerated<SecurityTokenRequestType>("RequestType");
+            SecurityMode = decoder.ReadEnumerated<MessageSecurityMode>("SecurityMode");
             ClientNonce = decoder.ReadByteString("ClientNonce");
             RequestedLifetime = decoder.ReadUInt32("RequestedLifetime");
 
@@ -33791,7 +33791,7 @@ namespace Opc.Ua
             ReferenceTypeId = decoder.ReadNodeId("ReferenceTypeId");
             RequestedNewNodeId = decoder.ReadExpandedNodeId("RequestedNewNodeId");
             BrowseName = decoder.ReadQualifiedName("BrowseName");
-            NodeClass = (NodeClass)decoder.ReadEnumerated("NodeClass", typeof(NodeClass));
+            NodeClass = decoder.ReadEnumerated<NodeClass>("NodeClass");
             NodeAttributes = decoder.ReadExtensionObject("NodeAttributes");
             TypeDefinition = decoder.ReadExpandedNodeId("TypeDefinition");
 
@@ -34690,7 +34690,7 @@ namespace Opc.Ua
             IsForward = decoder.ReadBoolean("IsForward");
             TargetServerUri = decoder.ReadString("TargetServerUri");
             TargetNodeId = decoder.ReadExpandedNodeId("TargetNodeId");
-            TargetNodeClass = (NodeClass)decoder.ReadEnumerated("TargetNodeClass", typeof(NodeClass));
+            TargetNodeClass = decoder.ReadEnumerated<NodeClass>("TargetNodeClass");
 
             decoder.PopNamespace();
         }
@@ -36915,7 +36915,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             NodeId = decoder.ReadNodeId("NodeId");
-            BrowseDirection = (BrowseDirection)decoder.ReadEnumerated("BrowseDirection", typeof(BrowseDirection));
+            BrowseDirection = decoder.ReadEnumerated<BrowseDirection>("BrowseDirection");
             ReferenceTypeId = decoder.ReadNodeId("ReferenceTypeId");
             IncludeSubtypes = decoder.ReadBoolean("IncludeSubtypes");
             NodeClassMask = decoder.ReadUInt32("NodeClassMask");
@@ -37269,7 +37269,7 @@ namespace Opc.Ua
             NodeId = decoder.ReadExpandedNodeId("NodeId");
             BrowseName = decoder.ReadQualifiedName("BrowseName");
             DisplayName = decoder.ReadLocalizedText("DisplayName");
-            NodeClass = (NodeClass)decoder.ReadEnumerated("NodeClass", typeof(NodeClass));
+            NodeClass = decoder.ReadEnumerated<NodeClass>("NodeClass");
             TypeDefinition = decoder.ReadExpandedNodeId("TypeDefinition");
 
             decoder.PopNamespace();
@@ -42230,7 +42230,7 @@ namespace Opc.Ua
         {
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
-            FilterOperator = (FilterOperator)decoder.ReadEnumerated("FilterOperator", typeof(FilterOperator));
+            FilterOperator = decoder.ReadEnumerated<FilterOperator>("FilterOperator");
             FilterOperands = decoder.ReadExtensionObjectArray("FilterOperands");
 
             decoder.PopNamespace();
@@ -45524,7 +45524,7 @@ namespace Opc.Ua
 
             RequestHeader = (RequestHeader)decoder.ReadEncodeable("RequestHeader", typeof(RequestHeader));
             MaxAge = decoder.ReadDouble("MaxAge");
-            TimestampsToReturn = (TimestampsToReturn)decoder.ReadEnumerated("TimestampsToReturn", typeof(TimestampsToReturn));
+            TimestampsToReturn = decoder.ReadEnumerated<TimestampsToReturn>("TimestampsToReturn");
             NodesToRead = (ReadValueIdCollection)decoder.ReadEncodeableArray("NodesToRead", typeof(ReadValueId));
 
             decoder.PopNamespace();
@@ -47581,7 +47581,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             ModificationTime = decoder.ReadDateTime("ModificationTime");
-            UpdateType = (HistoryUpdateType)decoder.ReadEnumerated("UpdateType", typeof(HistoryUpdateType));
+            UpdateType = decoder.ReadEnumerated<HistoryUpdateType>("UpdateType");
             UserName = decoder.ReadString("UserName");
 
             decoder.PopNamespace();
@@ -48172,7 +48172,7 @@ namespace Opc.Ua
 
             RequestHeader = (RequestHeader)decoder.ReadEncodeable("RequestHeader", typeof(RequestHeader));
             HistoryReadDetails = decoder.ReadExtensionObject("HistoryReadDetails");
-            TimestampsToReturn = (TimestampsToReturn)decoder.ReadEnumerated("TimestampsToReturn", typeof(TimestampsToReturn));
+            TimestampsToReturn = decoder.ReadEnumerated<TimestampsToReturn>("TimestampsToReturn");
             ReleaseContinuationPoints = decoder.ReadBoolean("ReleaseContinuationPoints");
             NodesToRead = (HistoryReadValueIdCollection)decoder.ReadEncodeableArray("NodesToRead", typeof(HistoryReadValueId));
 
@@ -49373,7 +49373,7 @@ namespace Opc.Ua
 
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
-            PerformInsertReplace = (PerformUpdateType)decoder.ReadEnumerated("PerformInsertReplace", typeof(PerformUpdateType));
+            PerformInsertReplace = decoder.ReadEnumerated<PerformUpdateType>("PerformInsertReplace");
             UpdateValues = decoder.ReadDataValueArray("UpdateValues");
 
             decoder.PopNamespace();
@@ -49538,7 +49538,7 @@ namespace Opc.Ua
 
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
-            PerformInsertReplace = (PerformUpdateType)decoder.ReadEnumerated("PerformInsertReplace", typeof(PerformUpdateType));
+            PerformInsertReplace = decoder.ReadEnumerated<PerformUpdateType>("PerformInsertReplace");
             UpdateValues = decoder.ReadDataValueArray("UpdateValues");
 
             decoder.PopNamespace();
@@ -49727,7 +49727,7 @@ namespace Opc.Ua
 
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
-            PerformInsertReplace = (PerformUpdateType)decoder.ReadEnumerated("PerformInsertReplace", typeof(PerformUpdateType));
+            PerformInsertReplace = decoder.ReadEnumerated<PerformUpdateType>("PerformInsertReplace");
             Filter = (EventFilter)decoder.ReadEncodeable("Filter", typeof(EventFilter));
             EventData = (HistoryEventFieldListCollection)decoder.ReadEncodeableArray("EventData", typeof(HistoryEventFieldList));
 
@@ -52138,7 +52138,7 @@ namespace Opc.Ua
 
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
-            Trigger = (DataChangeTrigger)decoder.ReadEnumerated("Trigger", typeof(DataChangeTrigger));
+            Trigger = decoder.ReadEnumerated<DataChangeTrigger>("Trigger");
             DeadbandType = decoder.ReadUInt32("DeadbandType");
             DeadbandValue = decoder.ReadDouble("DeadbandValue");
 
@@ -53581,7 +53581,7 @@ namespace Opc.Ua
             decoder.PushNamespace(Opc.Ua.Namespaces.OpcUaXsd);
 
             ItemToMonitor = (ReadValueId)decoder.ReadEncodeable("ItemToMonitor", typeof(ReadValueId));
-            MonitoringMode = (MonitoringMode)decoder.ReadEnumerated("MonitoringMode", typeof(MonitoringMode));
+            MonitoringMode = decoder.ReadEnumerated<MonitoringMode>("MonitoringMode");
             RequestedParameters = (MonitoringParameters)decoder.ReadEncodeable("RequestedParameters", typeof(MonitoringParameters));
 
             decoder.PopNamespace();
@@ -54138,7 +54138,7 @@ namespace Opc.Ua
 
             RequestHeader = (RequestHeader)decoder.ReadEncodeable("RequestHeader", typeof(RequestHeader));
             SubscriptionId = decoder.ReadUInt32("SubscriptionId");
-            TimestampsToReturn = (TimestampsToReturn)decoder.ReadEnumerated("TimestampsToReturn", typeof(TimestampsToReturn));
+            TimestampsToReturn = decoder.ReadEnumerated<TimestampsToReturn>("TimestampsToReturn");
             ItemsToCreate = (MonitoredItemCreateRequestCollection)decoder.ReadEncodeableArray("ItemsToCreate", typeof(MonitoredItemCreateRequest));
 
             decoder.PopNamespace();
@@ -55046,7 +55046,7 @@ namespace Opc.Ua
 
             RequestHeader = (RequestHeader)decoder.ReadEncodeable("RequestHeader", typeof(RequestHeader));
             SubscriptionId = decoder.ReadUInt32("SubscriptionId");
-            TimestampsToReturn = (TimestampsToReturn)decoder.ReadEnumerated("TimestampsToReturn", typeof(TimestampsToReturn));
+            TimestampsToReturn = decoder.ReadEnumerated<TimestampsToReturn>("TimestampsToReturn");
             ItemsToModify = (MonitoredItemModifyRequestCollection)decoder.ReadEncodeableArray("ItemsToModify", typeof(MonitoredItemModifyRequest));
 
             decoder.PopNamespace();
@@ -55450,7 +55450,7 @@ namespace Opc.Ua
 
             RequestHeader = (RequestHeader)decoder.ReadEncodeable("RequestHeader", typeof(RequestHeader));
             SubscriptionId = decoder.ReadUInt32("SubscriptionId");
-            MonitoringMode = (MonitoringMode)decoder.ReadEnumerated("MonitoringMode", typeof(MonitoringMode));
+            MonitoringMode = decoder.ReadEnumerated<MonitoringMode>("MonitoringMode");
             MonitoredItemIds = decoder.ReadUInt32Array("MonitoredItemIds");
 
             decoder.PopNamespace();
@@ -61749,7 +61749,7 @@ namespace Opc.Ua
 
             ServerId = decoder.ReadString("ServerId");
             ServiceLevel = decoder.ReadByte("ServiceLevel");
-            ServerState = (ServerState)decoder.ReadEnumerated("ServerState", typeof(ServerState));
+            ServerState = decoder.ReadEnumerated<ServerState>("ServerState");
 
             decoder.PopNamespace();
         }
@@ -63059,7 +63059,7 @@ namespace Opc.Ua
 
             StartTime = decoder.ReadDateTime("StartTime");
             CurrentTime = decoder.ReadDateTime("CurrentTime");
-            State = (ServerState)decoder.ReadEnumerated("State", typeof(ServerState));
+            State = decoder.ReadEnumerated<ServerState>("State");
             BuildInfo = (BuildInfo)decoder.ReadEncodeable("BuildInfo", typeof(BuildInfo));
             SecondsTillShutdown = decoder.ReadUInt32("SecondsTillShutdown");
             ShutdownReason = decoder.ReadLocalizedText("ShutdownReason");
@@ -64548,7 +64548,7 @@ namespace Opc.Ua
             AuthenticationMechanism = decoder.ReadString("AuthenticationMechanism");
             Encoding = decoder.ReadString("Encoding");
             TransportProtocol = decoder.ReadString("TransportProtocol");
-            SecurityMode = (MessageSecurityMode)decoder.ReadEnumerated("SecurityMode", typeof(MessageSecurityMode));
+            SecurityMode = decoder.ReadEnumerated<MessageSecurityMode>("SecurityMode");
             SecurityPolicyUri = decoder.ReadString("SecurityPolicyUri");
             ClientCertificate = decoder.ReadByteString("ClientCertificate");
 
@@ -67036,7 +67036,7 @@ namespace Opc.Ua
             EngineeringUnits = (EUInformation)decoder.ReadEncodeable("EngineeringUnits", typeof(EUInformation));
             EURange = (Range)decoder.ReadEncodeable("EURange", typeof(Range));
             Title = decoder.ReadLocalizedText("Title");
-            AxisScaleType = (AxisScaleEnumeration)decoder.ReadEnumerated("AxisScaleType", typeof(AxisScaleEnumeration));
+            AxisScaleType = decoder.ReadEnumerated<AxisScaleEnumeration>("AxisScaleType");
             AxisSteps = decoder.ReadDoubleArray("AxisSteps");
 
             decoder.PopNamespace();

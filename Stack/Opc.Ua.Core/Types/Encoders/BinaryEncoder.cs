@@ -15,6 +15,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 
@@ -25,8 +26,6 @@ namespace Opc.Ua
     /// </summary>
     public class BinaryEncoder : IEncoder, IDisposable
     {
-        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
-
         #region Constructor
         /// <summary>
         /// Creates an encoder that writes to a memory buffer.
@@ -1099,7 +1098,14 @@ namespace Opc.Ua
 
             WriteInt32(null, Convert.ToInt32(value, CultureInfo.InvariantCulture));
         }
-
+        /// <summary>
+        /// Writes an enumerated value array to the stream.
+        /// </summary>
+        public void WriteEnumerated<T>(string fieldName, T value) where T : struct, Enum
+        {
+            var i = Unsafe.As<T, int>(ref value);
+            WriteInt32(null, i);
+        }
         /// <summary>
         /// Writes a boolean array to the stream.
         /// </summary>
@@ -1944,9 +1950,10 @@ namespace Opc.Ua
         #endregion
 
         #region Private Fields
-        private Stream m_ostrm;
-        private BinaryWriter m_writer;
-        private ServiceMessageContext m_context;
+        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
+        private readonly Stream m_ostrm;
+        private readonly BinaryWriter m_writer;
+        private readonly ServiceMessageContext m_context;
         private ushort[] m_namespaceMappings;
         private ushort[] m_serverMappings;
         private uint m_nestingLevel;

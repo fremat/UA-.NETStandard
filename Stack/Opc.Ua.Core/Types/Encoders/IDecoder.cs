@@ -183,6 +183,11 @@ namespace Opc.Ua
         Enum ReadEnumerated(string fieldName, System.Type enumType);
 
         /// <summary>
+        ///  Reads an enumerated value from the stream.
+        /// </summary>
+        T ReadEnumerated<T>(string fieldName) where T : struct, Enum;
+
+        /// <summary>
         /// Reads a boolean array from the stream.
         /// </summary>
         BooleanCollection ReadBooleanArray(string fieldName);

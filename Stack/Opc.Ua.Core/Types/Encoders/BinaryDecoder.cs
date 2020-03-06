@@ -15,6 +15,7 @@ using System.Text;
 using System.Xml;
 using System.IO;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 
 namespace Opc.Ua
 {
@@ -844,6 +845,15 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        ///  Reads an enumerated value from the stream.
+        /// </summary>
+        public T ReadEnumerated<T>(string fieldName) where T : struct, Enum
+        {
+            int value = m_reader.ReadInt32();
+            return Unsafe.As<int, T>(ref value);
+        }
+
+        /// <summary>
         /// Reads a boolean array from the stream.
         /// </summary>
         public BooleanCollection ReadBooleanArray(string fieldName)
@@ -1542,7 +1552,7 @@ namespace Opc.Ua
             }
 
             // read encoding.
-            ExtensionObjectEncoding encoding = (ExtensionObjectEncoding)Enum.ToObject(typeof(ExtensionObjectEncoding), m_reader.ReadByte());
+            ExtensionObjectEncoding encoding = (ExtensionObjectEncoding)m_reader.ReadByte();
 
             // nothing more to do for empty bodies.
             if (encoding == ExtensionObjectEncoding.None)
