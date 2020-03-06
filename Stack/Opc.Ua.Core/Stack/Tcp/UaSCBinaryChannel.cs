@@ -210,16 +210,20 @@ namespace Opc.Ua.Bindings
         /// </summary>
         protected void ChannelStateChanged(TcpChannelState state, ServiceResult reason)
         {
-            Task.Run(() => {
-                try
-                {
-                    m_StateChanged?.Invoke(this, state, reason);
-                }
-                catch (Exception ex)
-                {
-                    if (Utils.IsTraceEnabled) Utils.Trace(ex, "Exception invoking State Changed Handler", true, null);
-                }
-            });
+            var stateChanged = m_StateChanged;
+            if (stateChanged != null)
+            {
+                Task.Run(() => {
+                    try
+                    {
+                        stateChanged(this, state, reason);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (Utils.IsTraceEnabled) Utils.Trace(ex, "Exception invoking State Changed Handler", true, null);
+                    }
+                });
+            }
         }
 
         /// <summary>
