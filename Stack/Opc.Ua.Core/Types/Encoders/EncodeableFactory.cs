@@ -221,7 +221,7 @@ namespace Opc.Ua
                     return;
                 }
 
-                IEncodeable encodeable = Activator.CreateInstance(systemType) as IEncodeable;
+                IEncodeable encodeable = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
 
                 if (encodeable == null)
                 {

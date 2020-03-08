@@ -1612,7 +1612,7 @@ namespace Opc.Ua
                 return null;
             }
 
-            IEncodeable value = Activator.CreateInstance(systemType) as IEncodeable;
+            IEncodeable value = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
 
             if (value == null)
             {

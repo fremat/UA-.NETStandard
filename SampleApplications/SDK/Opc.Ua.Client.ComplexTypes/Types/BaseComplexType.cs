@@ -106,7 +106,7 @@ namespace Opc.Ua.Client.ComplexTypes
         public new virtual object MemberwiseClone()
         {
             Type thisType = this.GetType();
-            BaseComplexType clone = Activator.CreateInstance(thisType) as BaseComplexType;
+            BaseComplexType clone = Opc.Ua.Core.ObjectFactory.CreateInstance(thisType) as BaseComplexType;
 
             clone.TypeId = TypeId;
             clone.BinaryEncodingId = BinaryEncodingId;

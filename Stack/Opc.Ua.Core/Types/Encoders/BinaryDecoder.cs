@@ -17,6 +17,7 @@ using System.Xml;
 using System.IO;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Opc.Ua
 {
@@ -795,7 +796,7 @@ namespace Opc.Ua
         {
             if (systemType == null) throw new ArgumentNullException(nameof(systemType));
 
-            IEncodeable encodeable = Activator.CreateInstance(systemType) as IEncodeable;
+            IEncodeable encodeable = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
 
             if (encodeable == null)
             {
@@ -1583,7 +1584,7 @@ namespace Opc.Ua
 
             if (systemType != null)
             {
-                encodeable = Activator.CreateInstance(systemType) as IEncodeable;
+                encodeable = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
 
                 // set type identifier for custom complex data types before decode.
                 IComplexTypeInstance complexTypeInstance = encodeable as IComplexTypeInstance;
