@@ -369,7 +369,7 @@ namespace Opc.Ua
                 return extension.Body;
             }
 
-            IEncodeable instance = Activator.CreateInstance(targetType) as IEncodeable;
+            IEncodeable instance = Opc.Ua.Core.ObjectFactory.CreateInstance(targetType) as IEncodeable;
 
             if (instance != null)
             {

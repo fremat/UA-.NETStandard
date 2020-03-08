@@ -1075,7 +1075,7 @@ namespace Opc.Ua
             if (value == null)
             {
                 if (systemType == null) throw new ArgumentNullException(nameof(systemType));
-                value = Activator.CreateInstance(systemType) as IEncodeable;
+                value = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
             }
 
             m_nestingLevel++;

@@ -1479,7 +1479,7 @@ namespace Opc.Ua
         {
             if (systemType == null) throw new ArgumentNullException(nameof(systemType));
             
-            IEncodeable value = Activator.CreateInstance(systemType) as IEncodeable;
+            IEncodeable value = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
             
             if (value == null)
             {               
