@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.Reflection;
 using System.Xml;
 
@@ -836,48 +837,52 @@ namespace Opc.Ua
                 {
                     return typeInfo;
                 }
-
+                
                 // have to do it the hard way and check each element.
-                int[] dimensions = new int[array.Rank];
-
-                for (int ii = 0; ii < dimensions.Length; ii++)
+                int[] dimensions = ArrayPool<int>.Shared.Rent(array.Rank);
+                try
                 {
-                    dimensions[ii] = array.GetLength(ii);
+                    for (int ii = 0; ii < array.Rank; ii++)
+                    {
+                        dimensions[ii] = array.GetLength(ii);
+                    }
+
+                    int[] indexes = new int[array.Rank];
+                    for (int ii = 0; ii < array.Length; ii++)
+                    {
+                        int divisor = array.Length;
+
+                        for (int jj = 0; jj < indexes.Length; jj++)
+                        {
+                            divisor /= dimensions[jj];
+                            indexes[jj] = (ii / divisor) % dimensions[jj];
+                        }
+
+                        object element = array.GetValue(indexes);
+
+                        if (actualElementType == BuiltInType.Variant)
+                        {
+                            element = ((Variant)element).Value;
+                        }
+
+                        TypeInfo elementInfo = TypeInfo.IsInstanceOfDataType(
+                            element,
+                            expectedDataTypeId,
+                            ValueRanks.Scalar,
+                            namespaceUris,
+                            typeTree);
+
+                        // give up at the first invalid element.
+                        if (elementInfo == null)
+                        {
+                            return null;
+                        }
+                    }
                 }
-
-                int[] indexes = new int[dimensions.Length];
-
-                for (int ii = 0; ii < array.Length; ii++)
+                finally
                 {
-                    int divisor = array.Length;
-
-                    for (int jj = 0; jj < indexes.Length; jj++)
-                    {
-                        divisor /= dimensions[jj];
-                        indexes[jj] = (ii / divisor) % dimensions[jj];
-                    }
-
-                    object element = array.GetValue(indexes);
-
-                    if (actualElementType == BuiltInType.Variant)
-                    {
-                        element = ((Variant)element).Value;
-                    }
-
-                    TypeInfo elementInfo = TypeInfo.IsInstanceOfDataType(
-                        element,
-                        expectedDataTypeId,
-                        ValueRanks.Scalar,
-                        namespaceUris,
-                        typeTree);
-
-                    // give up at the first invalid element.
-                    if (elementInfo == null)
-                    {
-                        return null;
-                    }
+                    ArrayPool<int>.Shared.Return(dimensions);
                 }
-
                 // all elements valid.
                 return typeInfo;
             }
@@ -1551,47 +1556,53 @@ namespace Opc.Ua
             }
 
             // do it the hard way for multidimensional arrays.
-            int[] dimensions = new int[src.Rank];
-
-            for (int ii = 0; ii < dimensions.Length; ii++)
+            int[] dimensions = ArrayPool<int>.Shared.Rent(src.Rank);
+            try
             {
-                dimensions[ii] = src.GetLength(ii);
+                for (int ii = 0; ii < src.Rank; ii++)
+                {
+                    dimensions[ii] = src.GetLength(ii);
+                }
+
+                int length = dst.Length;
+                int[] indexes = new int[src.Rank];
+
+                for (int ii = 0; ii < length; ii++)
+                {
+                    int divisor = dst.Length;
+
+                    for (int jj = 0; jj < indexes.Length; jj++)
+                    {
+                        divisor /= dimensions[jj];
+                        indexes[jj] = (ii / divisor) % dimensions[jj];
+                    }
+
+                    object element = src.GetValue(indexes);
+
+                    if (element != null)
+                    {
+                        if (isSrcVariant)
+                        {
+                            element = ((Variant)element).Value;
+                        }
+
+                        if (convertor != null)
+                        {
+                            element = convertor(element, srcType, dstType);
+                        }
+
+                        if (isDstVariant)
+                        {
+                            element = new Variant(element);
+                        }
+
+                        dst.SetValue(element, indexes);
+                    }
+                }
             }
-
-            int length = dst.Length;
-            int[] indexes = new int[dimensions.Length];
-
-            for (int ii = 0; ii < length; ii++)
+            finally
             {
-                int divisor = dst.Length;
-
-                for (int jj = 0; jj < indexes.Length; jj++)
-                {
-                    divisor /= dimensions[jj];
-                    indexes[jj] = (ii / divisor) % dimensions[jj];
-                }
-
-                object element = src.GetValue(indexes);
-
-                if (element != null)
-                {
-                    if (isSrcVariant)
-                    {
-                        element = ((Variant)element).Value;
-                    }
-
-                    if (convertor != null)
-                    {
-                        element = convertor(element, srcType, dstType);
-                    }
-
-                    if (isDstVariant)
-                    {
-                        element = new Variant(element);
-                    }
-
-                    dst.SetValue(element, indexes);
-                }
+                ArrayPool<int>.Shared.Return(dimensions);
             }
         }
 

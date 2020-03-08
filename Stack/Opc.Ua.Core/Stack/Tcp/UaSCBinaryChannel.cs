@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -400,8 +401,10 @@ namespace Opc.Ua.Bindings
                 ServiceResult error = ServiceResult.Good;
                 try
                 {
-                    Utils.TraceDebug("Bytes written: {0}", e.BytesTransferred);
-
+#if DEBUG
+                    if (Utils.IsTraceEnabled)
+                        Utils.TraceDebug("Bytes written: {0}", e.BytesTransferred);
+#endif
                     if (e.BytesTransferred == 0)
                     {
                         error = ServiceResult.Create(StatusCodes.BadConnectionClosed, "The socket was closed by the remote application.");
@@ -547,14 +550,20 @@ namespace Opc.Ua.Bindings
 
             if (reasonLength > 0 && reasonLength < TcpMessageLimits.MaxErrorReasonLength)
             {
-                byte[] reasonBytes = new byte[reasonLength];
-
-                for (int ii = 0; ii < reasonLength; ii++)
+                byte[] reasonBytes = ArrayPool<byte>.Shared.Rent(reasonLength);
+                try
                 {
-                    reasonBytes[ii] = decoder.ReadByte(null);
-                }
+                    for (int ii = 0; ii < reasonLength; ii++)
+                    {
+                        reasonBytes[ii] = decoder.ReadByte(null);
+                    }
 
-                reason = s_utf8NoBom.GetString(reasonBytes, 0, reasonLength);
+                    reason = s_utf8NoBom.GetString(reasonBytes, 0, reasonLength);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(reasonBytes);
+                }
             }
 
             return ServiceResult.Create(statusCode, "Error received from remote host: {0}", reason);

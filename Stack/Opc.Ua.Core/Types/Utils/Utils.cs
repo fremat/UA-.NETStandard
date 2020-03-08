@@ -25,7 +25,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Net;
-
+using System.Buffers;
 
 namespace Opc.Ua
 {
@@ -223,7 +223,7 @@ namespace Opc.Ua
             get { return Tracing.Instance; }
         }
 
-        public static bool IsTraceEnabled => (s_traceMasks != 0 || s_traceOutput != 0 || Tracing.HasEventHandler);
+        public static bool IsTraceEnabled => (s_traceMasks != 0 && s_traceOutput != 0) || Tracing.HasEventHandler;
 
         /// <summary>
         /// Writes a trace statement.
@@ -1224,32 +1224,38 @@ namespace Opc.Ua
             Array flatArray = Array.CreateInstance(array.GetType().GetElementType(), array.Length);
 
             int[] indexes = new int[array.Rank];
-            int[] dimensions = new int[array.Rank];
-
-            for (int jj = array.Rank - 1; jj >= 0; jj--)
+            int[] dimensions = ArrayPool<int>.Shared.Rent(array.Rank);
+            try
             {
-                dimensions[jj] = array.GetLength(array.Rank - jj - 1);
-            }
 
-            for (int ii = 0; ii < array.Length; ii++)
-            {
-                indexes[array.Rank - 1] = ii % dimensions[0];
-
-                for (int jj = 1; jj < array.Rank; jj++)
+                for (int jj = array.Rank - 1; jj >= 0; jj--)
                 {
-                    int multiplier = 1;
-
-                    for (int kk = 0; kk < jj; kk++)
-                    {
-                        multiplier *= dimensions[kk];
-                    }
-
-                    indexes[array.Rank - jj - 1] = (ii / multiplier) % dimensions[jj];
+                    dimensions[jj] = array.GetLength(array.Rank - jj - 1);
                 }
 
-                flatArray.SetValue(array.GetValue(indexes), ii);
-            }
+                for (int ii = 0; ii < array.Length; ii++)
+                {
+                    indexes[array.Rank - 1] = ii % dimensions[0];
 
+                    for (int jj = 1; jj < array.Rank; jj++)
+                    {
+                        int multiplier = 1;
+
+                        for (int kk = 0; kk < jj; kk++)
+                        {
+                            multiplier *= dimensions[kk];
+                        }
+
+                        indexes[array.Rank - jj - 1] = (ii / multiplier) % dimensions[jj];
+                    }
+
+                    flatArray.SetValue(array.GetValue(indexes), ii);
+                }
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(dimensions);
+            }
             return flatArray;
         }
 
