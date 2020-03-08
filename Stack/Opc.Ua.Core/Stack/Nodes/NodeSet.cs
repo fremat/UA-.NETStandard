@@ -16,6 +16,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
+using System.Buffers;
 
 namespace Opc.Ua
 {    
@@ -152,45 +153,51 @@ namespace Opc.Ua
             {
                 return;
             }
-
-            int[] dimensions = new int[array.Rank];
-
-            for (int ii = 0; ii < dimensions.Length; ii++)
-            {
-                dimensions[ii] = array.GetLength(ii);
-            }
             
-            int length = array.Length;
-            int[] indexes = new int[dimensions.Length];
-
-            for (int ii = 0; ii < length; ii++)
+            int[] dimensions = ArrayPool<int>.Shared.Rent(array.Rank);
+            try
             {
-                int divisor = length;
-
-                for (int jj = 0; jj < indexes.Length; jj++)
+                for (int ii = 0; ii < array.Rank; ii++)
                 {
-                    divisor /= dimensions[jj];
-                    indexes[jj] = (ii/divisor)%dimensions[jj];
+                    dimensions[ii] = array.GetLength(ii);
                 }
-                
-                object element = array.GetValue(indexes);
-                        
-                if (element != null)
+
+                int length = array.Length;
+                int[] indexes = new int[array.Rank];
+
+                for (int ii = 0; ii < length; ii++)
                 {
-                    if (elementType == BuiltInType.Variant)
+                    int divisor = length;
+
+                    for (int jj = 0; jj < indexes.Length; jj++)
                     {
-                        element = ((Variant)element).Value;
+                        divisor /= dimensions[jj];
+                        indexes[jj] = (ii/divisor)%dimensions[jj];
                     }
 
-                    element = TranslateValue(element, namespaceUris, serverUris);
-                    
-                    if (elementType == BuiltInType.Variant)
-                    {
-                        element = new Variant(element);
-                    }
+                    object element = array.GetValue(indexes);
 
-                    array.SetValue(element, indexes);
+                    if (element != null)
+                    {
+                        if (elementType == BuiltInType.Variant)
+                        {
+                            element = ((Variant)element).Value;
+                        }
+
+                        element = TranslateValue(element, namespaceUris, serverUris);
+
+                        if (elementType == BuiltInType.Variant)
+                        {
+                            element = new Variant(element);
+                        }
+
+                        array.SetValue(element, indexes);
+                    }
                 }
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(dimensions);
             }
         }
 

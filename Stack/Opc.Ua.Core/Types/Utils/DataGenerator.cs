@@ -16,6 +16,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Xml;
+using System.Buffers;
 
 namespace Opc.Ua.Test
 {
@@ -679,9 +680,16 @@ namespace Opc.Ua.Test
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public uint GetRandomUInt32()
         {
-            byte[] bytes = new byte[4];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return BitConverter.ToUInt32(bytes, 0);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(4);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 4);
+                return BitConverter.ToUInt32(bytes, 0);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
         #endregion
 
@@ -690,9 +698,16 @@ namespace Opc.Ua.Test
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public long GetRandomInt64()
         {
-            byte[] bytes = new byte[8];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return BitConverter.ToInt64(bytes, 0);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(8);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 8);
+                return BitConverter.ToInt64(bytes, 0);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
         #endregion
 
@@ -701,9 +716,16 @@ namespace Opc.Ua.Test
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public ulong GetRandomUInt64()
         {
-            byte[] bytes = new byte[8];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return BitConverter.ToUInt64(bytes, 0);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(8);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 8);
+                return BitConverter.ToUInt64(bytes, 0);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
         #endregion
 
@@ -712,9 +734,16 @@ namespace Opc.Ua.Test
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public float GetRandomFloat()
         {
-            byte[] bytes = new byte[4];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return BitConverter.ToSingle(bytes, 0);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(4);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 4);
+                return BitConverter.ToSingle(bytes, 0);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
         #endregion
 
@@ -723,9 +752,16 @@ namespace Opc.Ua.Test
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public double GetRandomDouble()
         {
-            byte[] bytes = new byte[8];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return BitConverter.ToSingle(bytes, 0);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(8);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 8);
+                return BitConverter.ToSingle(bytes, 0);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
         #endregion
 
@@ -773,18 +809,32 @@ namespace Opc.Ua.Test
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public Guid GetRandomGuid()
         {
-            byte[] bytes = new byte[16];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return new Guid(bytes);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(16);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 16);
+                return new Guid(bytes);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
 
         /// <summary cref="GetRandom(Type)" />
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public Uuid GetRandomUuid()
         {
-            byte[] bytes = new byte[16];
-            m_random.NextBytes(bytes, 0, bytes.Length);
-            return new Uuid(new Guid(bytes));
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(16);
+            try
+            {
+                m_random.NextBytes(bytes, 0, 16);
+                return new Uuid(new Guid(bytes));
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
         }
         #endregion
 
