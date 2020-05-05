@@ -31,14 +31,20 @@ namespace Opc.Ua.Core
 
     public static class ObjectFactory
     {
-        private static readonly ConcurrentDictionary<Type, Func<object>> s_typeDelegates = new ConcurrentDictionary<Type, Func<object>>();
+        private static readonly ConcurrentDictionary<Type, ObjectActivator> s_typeDelegates = new ConcurrentDictionary<Type, ObjectActivator>();
+
+        public delegate object ObjectActivator();
 
         public static object CreateInstance(Type type)
         {
-            var func = s_typeDelegates.GetOrAdd(type, t => {
-                var ex = new Expression[] { Expression.New(t) };
-                var block = Expression.Block(t, ex);
-                return (Func<object>)Expression.Lambda(block).Compile();
+            var func = s_typeDelegates.GetOrAdd(type, t =>
+            {
+                // Create a lambda with the New expression as body and our param object[] as arg
+                var newExp = Expression.New(t);
+                LambdaExpression lambda = t.IsValueType
+                    ? Expression.Lambda(typeof(ObjectActivator), Expression.Convert(newExp, typeof(object)))
+                    : Expression.Lambda(typeof(ObjectActivator), newExp);
+                return (ObjectActivator)lambda.Compile();
             });
             return func();
         }
