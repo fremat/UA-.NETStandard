@@ -1317,6 +1317,67 @@ namespace Opc.Ua.Client
         }
 
         /// <summary>
+        /// Updates the local copy of the server's namespace uri and server uri tables.
+        /// </summary>
+        public async Task FetchNamespaceTablesAsync()
+        {
+            ReadValueIdCollection nodesToRead = new ReadValueIdCollection();
+
+            // request namespace array.
+            ReadValueId valueId = new ReadValueId();
+
+            valueId.NodeId = Variables.Server_NamespaceArray;
+            valueId.AttributeId = Attributes.Value;
+
+            nodesToRead.Add(valueId);
+
+            // request server array.
+            valueId = new ReadValueId();
+
+            valueId.NodeId = Variables.Server_ServerArray;
+            valueId.AttributeId = Attributes.Value;
+
+            nodesToRead.Add(valueId);
+
+            // read from server.
+            DataValueCollection values = null;
+            DiagnosticInfoCollection diagnosticInfos = null;
+
+            ReadResponse response = await this.ReadAsync(
+                null,
+                0,
+                TimestampsToReturn.Both,
+                nodesToRead);
+
+            ValidateResponse(response.Results, nodesToRead);
+            ValidateDiagnosticInfos(response.DiagnosticInfos, nodesToRead);
+
+            // validate namespace array.
+            ServiceResult result = ValidateDataValue(values[0], typeof(string[]), 0, diagnosticInfos, response.ResponseHeader);
+
+            if (ServiceResult.IsBad(result))
+            {
+                Utils.Trace("FetchNamespaceTables: Cannot read NamespaceArray node: {0} " + result.StatusCode);
+            }
+            else
+            {
+                m_namespaceUris.Update((string[])values[0].Value);
+            }
+
+            // validate server array.
+            result = ValidateDataValue(values[1], typeof(string[]), 1, diagnosticInfos, response.ResponseHeader);
+
+            if (ServiceResult.IsBad(result))
+            {
+                Utils.Trace("FetchNamespaceTables: Cannot read ServerArray node: {0} " + result.StatusCode);
+            }
+            else
+            {
+                m_serverUris.Update((string[])values[1].Value);
+            }
+        }
+
+        /// <summary>
         /// Updates the cache with the type and its subtypes.
         /// </summary>
         /// <remarks>
@@ -3073,6 +3134,14 @@ namespace Opc.Ua.Client
         }
 
         /// <summary>
+        /// Disconnects from the server and frees any network resources.
+        /// </summary>
+        public override Task<StatusCode> CloseAsync()
+        {
+            return CloseAsync(m_keepAliveInterval);
+        }
+
+        /// <summary>
         /// Disconnects from the server and frees any network resources with the specified timeout.
         /// </summary>
         public virtual StatusCode Close(int timeout)
@@ -3124,6 +3193,84 @@ namespace Opc.Ua.Client
                     this.OperationTimeout = existingTimeout;
 
                     CloseChannel();
+
+                    // raised notification indicating the session is closed.
+                    SessionCreated(null, null);
+                }
+                catch (Exception e)
+                {
+                    // dont throw errors on disconnect, but return them
+                    // so the caller can log the error.
+                    if (e is ServiceResultException)
+                    {
+                        result = ((ServiceResultException)e).StatusCode;
+                    }
+                    else
+                    {
+                        result = StatusCodes.Bad;
+                    }
+
+                    Utils.Trace("Session close error: " + result);
+                }
+            }
+
+            // clean up.
+            Dispose();
+            return result;
+        }
+
+        /// <summary>
+        /// Disconnects from the server and frees any network resources with the specified timeout.
+        /// </summary>
+        public async virtual Task<StatusCode> CloseAsync(int timeout)
+        {
+            // check if already called.
+            if (Disposed)
+            {
+                return StatusCodes.Good;
+            }
+
+            StatusCode result = StatusCodes.Good;
+
+            // stop the keep alive timer.
+            if (m_keepAliveTimer != null)
+            {
+                m_keepAliveTimer.Dispose();
+                m_keepAliveTimer = null;
+            }
+
+            // check if currectly connected.
+            bool connected = Connected;
+
+            // halt all background threads.
+            if (connected)
+            {
+                if (m_SessionClosing != null)
+                {
+                    try
+                    {
+                        m_SessionClosing(this, null);
+                    }
+                    catch (Exception e)
+                    {
+                        Utils.Trace(e, "Session: Unexpected eror raising SessionClosing event.");
+                    }
+                }
+            }
+
+            // close the session with the server.
+            if (connected && !KeepAliveStopped)
+            {
+                int existingTimeout = this.OperationTimeout;
+
+                try
+                {
+                    // close the session and delete all subscriptions.
+                    this.OperationTimeout = timeout;
+                    await CloseSessionAsync(null, true).ConfigureAwait(false);
+                    this.OperationTimeout = existingTimeout;
+
+                    await CloseChannelAsync().ConfigureAwait(false);
 
                     // raised notification indicating the session is closed.
                     SessionCreated(null, null);

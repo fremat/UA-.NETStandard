@@ -14,6 +14,7 @@ using System;
 using System.Collections;
 using System.Threading;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Opc.Ua
 {
@@ -262,6 +263,21 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        /// Closes the channel.
+        /// </summary>
+        public async virtual Task<StatusCode> CloseAsync()
+        {
+            if (m_channel != null)
+            {
+                await m_channel.CloseAsync().ConfigureAwait(false);
+                m_channel = null;
+            }
+
+            m_authenticationToken = null;
+            return StatusCodes.Good;
+        }
+
+        /// <summary>
         /// Whether the object has been disposed.
         /// </summary>
         /// <value><c>true</c> if disposed; otherwise, <c>false</c>.</value>
@@ -299,6 +315,18 @@ namespace Opc.Ua
                     // ignore errors.
                 }
 
+                DisposeChannel();
+            }
+        }
+
+        /// <summary>
+        /// Closes the channel.
+        /// </summary>
+        protected async Task CloseChannelAsync()
+        {
+            if (m_channel != null)
+            {
+                await m_channel.CloseAsync().ConfigureAwait(false);
                 DisposeChannel();
             }
         }

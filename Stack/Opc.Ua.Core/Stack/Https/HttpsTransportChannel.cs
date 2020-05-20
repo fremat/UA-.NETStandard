@@ -131,6 +131,15 @@ namespace Opc.Ua.Bindings
             }
         }
 
+        public Task CloseAsync()
+        {
+            if (m_client != null)
+            {
+                m_client.Dispose();
+            }
+            return Task.CompletedTask;
+        }
+
         private class AsyncResult : AsyncResultBase
         {
             public IServiceRequest Request;
@@ -253,6 +262,11 @@ namespace Opc.Ua.Bindings
         {
             IAsyncResult result = BeginSendRequest(request, null, null);
             return EndSendRequest(result);
+        }
+
+        public Task<IServiceResponse> SendRequestAsync(IServiceRequest request)
+        {
+            return Task.Factory.FromAsync(BeginSendRequest(request, null, null), iar => EndSendRequest(iar));
         }
 
         private void SaveSettings(Uri url, TransportChannelSettings settings)

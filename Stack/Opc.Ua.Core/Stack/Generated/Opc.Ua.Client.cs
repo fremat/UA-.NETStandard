@@ -29,6 +29,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Utilities;
 
 namespace Opc.Ua
 {
@@ -450,6 +454,24 @@ namespace Opc.Ua
             }
 
             return response.ResponseHeader;
+        }
+
+        /// <summary>
+        /// Invokes the CloseSession service.
+        /// </summary>
+        /// <exception cref="ServiceResultException"/>
+        public async Task<ResponseHeader> CloseSessionAsync(RequestHeader requestHeader, bool deleteSubscriptions)
+        {
+            var tcs = new TaskCompletionSource<ResponseHeader>();
+            BeginCloseSession(requestHeader, deleteSubscriptions, iar => {
+                var s = iar.AsyncState as TaskCompletionSource<ResponseHeader>;
+                try
+                {
+                    s.SetResult(EndCloseSession(iar));
+                }
+                catch (Exception exc) { s.SetException(exc); }
+            }, tcs);
+            return await tcs.Task;
         }
 
         /// <summary>
@@ -1232,6 +1254,36 @@ namespace Opc.Ua
             }
 
             return response.ResponseHeader;
+        }
+
+        public Task<BrowseResponse> BrowseAsync(
+            RequestHeader requestHeader,
+            ViewDescription view,
+            uint requestedMaxReferencesPerNode,
+            BrowseDescriptionCollection nodesToBrowse)
+        {
+            // make the call to the server.
+            var tcs = new TaskCompletionSource<BrowseResponse>();
+            BeginBrowse(
+                requestHeader,
+                view,
+                requestedMaxReferencesPerNode,
+                nodesToBrowse, iar => {
+                    BrowseResultCollection res;
+                    DiagnosticInfoCollection diagInfo;
+                    var s = iar.AsyncState as TaskCompletionSource<BrowseResponse>;
+                    try
+                    {
+                        var resHeader = EndBrowse(iar, out res, out diagInfo);
+                        BrowseResponse response = new BrowseResponse();
+                        response.ResponseHeader = resHeader;
+                        response.Results = res;
+                        response.DiagnosticInfos = diagInfo;
+                        s.SetResult(response);
+                    }
+                    catch (Exception exc) { s.SetException(exc); }
+                }, tcs);
+            return tcs.Task;
         }
 
         /// <summary>
@@ -2181,6 +2233,35 @@ namespace Opc.Ua
             }
 
             return response.ResponseHeader;
+        }
+
+        /// <summary>
+        /// Begins an asynchronous invocation of the Read service.
+        /// </summary>
+        public async virtual Task<ReadResponse> ReadAsync(
+            RequestHeader requestHeader,
+            double maxAge,
+            TimestampsToReturn timestampsToReturn,
+            ReadValueIdCollection nodesToRead)
+        {
+            var tcs = new TaskCompletionSource<ReadResponse>();
+            BeginRead(requestHeader, maxAge, timestampsToReturn, nodesToRead, iar => {
+                DataValueCollection results;
+                DiagnosticInfoCollection diagnosticsInfos;
+                var s = iar.AsyncState as TaskCompletionSource<ReadResponse>;
+                try {
+                    var responseHeader = EndRead(iar, out results, out diagnosticsInfos);
+                    //TODO: Would be better to get the ReadResponse from EndRead but dont want to change a public method.
+                    // We can also return a ValueTuple with ResponseHeader, DataValueCollection and DiagnosticInfoCollection
+                    var response = new ReadResponse();
+                    response.ResponseHeader = responseHeader;
+                    response.Results = results;
+                    response.DiagnosticInfos = diagnosticsInfos;
+                    s.SetResult(response);
+                }
+                catch(Exception ex) { s.SetException(ex); }
+            }, tcs);
+            return await tcs.Task;
         }
 
         /// <summary>

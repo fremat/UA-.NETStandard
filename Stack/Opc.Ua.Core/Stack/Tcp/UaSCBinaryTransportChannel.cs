@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Threading.Tasks;
 
 namespace Opc.Ua.Bindings
 {
@@ -257,6 +258,16 @@ namespace Opc.Ua.Bindings
         }
 
         /// <summary>
+        /// Closes the secure channel.
+        /// </summary>
+        /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
+        public Task CloseAsync()
+        {
+            Close();
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Begins an asynchronous operation to close the secure channel.
         /// </summary>
         /// <param name="callback">The callback to call when the operation completes.</param>
@@ -292,6 +303,17 @@ namespace Opc.Ua.Bindings
         {
             IAsyncResult result = BeginSendRequest(request, null, null);
             return EndSendRequest(result);
+        }
+
+        /// <summary>
+        /// Sends a request over the secure channel.
+        /// </summary>
+        /// <param name="request">The request to send.</param>
+        /// <returns>The response returned by the server.</returns>
+        /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
+        public Task<IServiceResponse> SendRequestAsync(IServiceRequest request)
+        {
+            return Task.Factory.FromAsync(BeginSendRequest(request, null, null), iar => EndSendRequest(iar));
         }
 
         /// <summary>

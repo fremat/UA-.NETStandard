@@ -14,6 +14,7 @@ using System;
 using System.ServiceModel;
 using Opc.Ua.Bindings;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace Opc.Ua
 {
@@ -352,6 +353,14 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        /// Closes any existing secure channel.
+        /// </summary>
+        public Task CloseAsync()
+        {
+            return Task.Factory.FromAsync(BeginClose(null, null), iar => EndClose(iar));
+        }
+
+        /// <summary>
         /// Begins an asynchronous operation to close the secure channel.
         /// </summary>
         public IAsyncResult BeginClose(AsyncCallback callback, object callbackData)
@@ -394,6 +403,17 @@ namespace Opc.Ua
             byte[] requestMessage = BinaryEncoder.EncodeMessage(request, m_messageContext);
             InvokeServiceResponseMessage responseMessage = InvokeService(new InvokeServiceMessage(requestMessage));
             return (IServiceResponse)BinaryDecoder.DecodeMessage(responseMessage.InvokeServiceResponse, null, m_messageContext);            
+        }
+
+        /// <summary>
+        /// Sends a request over the secure channel.
+        /// </summary>
+        /// <param name="request">The request to send.</param>
+        /// <returns>The response returned by the server.</returns>
+        /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
+        public Task<IServiceResponse> SendRequestAsync(IServiceRequest request)
+        {
+            return Task.Factory.FromAsync(BeginSendRequest(request, null, null), iar => EndSendRequest(iar));
         }
 
         /// <summary>

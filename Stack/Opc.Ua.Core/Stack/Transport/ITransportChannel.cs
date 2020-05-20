@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Opc.Ua.Bindings;
 
 namespace Opc.Ua
@@ -134,6 +135,13 @@ namespace Opc.Ua
         /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
         void Close();
 
+
+        /// <summary>
+        /// Closes the secure channel.
+        /// </summary>
+        /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
+        Task CloseAsync();
+
         /// <summary>
         /// Begins an asynchronous operation to close the secure channel.
         /// </summary>
@@ -159,6 +167,14 @@ namespace Opc.Ua
         /// <returns>The response returned by the server.</returns>
         /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
         IServiceResponse SendRequest(IServiceRequest request);
+
+        /// <summary>
+        /// Sends a request asynchronously over the secure channel.
+        /// </summary>
+        /// <param name="request">The request to send.</param>
+        /// <returns>The response returned by the server.</returns>
+        /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
+        Task<IServiceResponse> SendRequestAsync(IServiceRequest request);
 
         /// <summary>
         /// Begins an asynchronous operation to send a request over the secure channel.
