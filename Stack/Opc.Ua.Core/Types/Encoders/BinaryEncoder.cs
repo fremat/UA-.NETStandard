@@ -450,7 +450,7 @@ namespace Opc.Ua
             var bytes = ArrayPool<byte>.Shared.Rent(length);
             try
             {
-                Encoding.UTF8.GetBytes(value, 0, length, bytes, 0);
+                s_utf8NoBom.GetBytes(value, 0, value.Length, bytes, 0);
                 WriteByteString(null, bytes, 0, length);
             }
             finally
