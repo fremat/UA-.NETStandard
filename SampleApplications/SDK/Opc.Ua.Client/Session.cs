@@ -4411,7 +4411,7 @@ namespace Opc.Ua.Client
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Session: Unexpected error while raising Notification event.");
+                if (Utils.IsTraceEnabled) Utils.Trace(e, "Session: Unexpected error while raising Notification event.");
             }
         }
 

@@ -886,6 +886,19 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        /// Writes an enumerated value array to the stream.
+        /// </summary>
+        public void WriteEnumerated<T>(string fieldName, T value) where T : struct, Enum
+        {
+            if (BeginField(fieldName, false, true))
+            {
+                int enumValue = Unsafe.As<T, int>(ref value);
+                m_writer.WriteString(Utils.Format("{0}_{1}", value.ToString(), enumValue));
+                EndField(fieldName);
+            }
+        }
+
+        /// <summary>
         /// Writes a boolean array to the stream.
         /// </summary>
         public void WriteBooleanArray(string fieldName, IList<bool> values)
