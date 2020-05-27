@@ -951,7 +951,7 @@ namespace Opc.Ua
         {
             string hostName = Dns.GetHostName();
             var dotIndex = hostName.IndexOf('.');
-            return hostName.Substring(0,dotIndex).ToLowerInvariant();
+            return (dotIndex == -1) ? hostName.ToLowerInvariant() : hostName.Substring(0,dotIndex).ToLowerInvariant();
         }
 
         public static string GetFullQualifiedDomainName()
