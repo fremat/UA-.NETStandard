@@ -71,10 +71,7 @@ namespace Opc.Ua.Bindings
         {
             if (endpoint != null && endpoint.SecurityMode != MessageSecurityMode.None)
             {
-                if (clientCertificate == null)
-                {
-                    throw new ArgumentNullException(nameof(clientCertificate));
-                }
+                if (clientCertificate == null) throw new ArgumentNullException(nameof(clientCertificate));
 
                 if (clientCertificate.RawData.Length > TcpMessageLimits.MaxCertificateSize)
                 {
@@ -125,15 +122,8 @@ namespace Opc.Ua.Bindings
         /// </summary>
         public IAsyncResult BeginConnect(Uri url, int timeout, AsyncCallback callback, object state)
         {
-            if (url == null)
-            {
-                throw new ArgumentNullException(nameof(url));
-            }
-
-            if (timeout <= 0)
-            {
-                throw new ArgumentException("Timeout must be greater than zero.", nameof(timeout));
-            }
+            if (url == null) throw new ArgumentNullException(nameof(url));
+            if (timeout <= 0) throw new ArgumentException("Timeout must be greater than zero.", nameof(timeout));
 
             Task task;
             lock (DataLock)
@@ -159,9 +149,19 @@ namespace Opc.Ua.Bindings
                 m_handshakeOperation = operation;
 
                 State = TcpChannelState.Connecting;
-                Socket = m_socketFactory.Create(this, BufferManager, Quotas.MaxBufferSize);
-
-                task = Task.Run(async () => await Socket.BeginConnect(m_via, m_ConnectCallback, operation));
+                if (Socket != null)
+                {
+                    // send the hello message.
+                    SendHelloMessage(operation);
+                }
+                else
+                {
+                    Socket = m_socketFactory.Create(this, BufferManager, Quotas.MaxBufferSize);
+                    task = Task.Run(async () =>
+                        await Socket.BeginConnect(
+                            m_via, m_ConnectCallback, operation,
+                            new CancellationTokenSource(timeout).Token));
+                }
             }
 
             return m_handshakeOperation;
@@ -172,12 +172,8 @@ namespace Opc.Ua.Bindings
         /// </summary>
         public void EndConnect(IAsyncResult result)
         {
-            WriteOperation operation = result as WriteOperation;
-
-            if (operation == null)
-            {
-                throw new ArgumentNullException(nameof(result));
-            }
+            var operation = result as WriteOperation;
+            if (operation == null) throw new ArgumentNullException(nameof(result));
 
             try
             {
@@ -240,15 +236,15 @@ namespace Opc.Ua.Bindings
                     {
                         case StatusCodes.BadRequestInterrupted:
                         case StatusCodes.BadSecureChannelClosed:
-                            {
-                                break;
-                            }
+                        {
+                            break;
+                        }
 
                         default:
-                            {
-                                if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not gracefully close the channel.");
-                                break;
-                            }
+                        {
+                            if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not gracefully close the channel.");
+                            break;
+                        }
                     }
                 }
                 catch (Exception e)
@@ -681,10 +677,7 @@ namespace Opc.Ua.Bindings
         /// <summary>
         /// Handles a socket error.
         /// </summary>
-        protected override void HandleSocketError(ServiceResult result)
-        {
-            ForceReconnect(result);
-        }
+        protected override void HandleSocketError(ServiceResult result) => ForceReconnect(result);
 
         /// <summary>
         /// Called when a write operation completes.
@@ -812,7 +805,7 @@ namespace Opc.Ua.Bindings
         {
             try
             {
-                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Scheduled Handshake Starting: TokenId={1}", ChannelId, CurrentToken.TokenId);
+                if (Utils.IsTraceEnabled) Utils.Trace("Channel {0}: Scheduled Handshake Starting: TokenId={1}", ChannelId, CurrentToken?.TokenId);
 
                 Task task;
                 lock (DataLock)
@@ -868,7 +861,10 @@ namespace Opc.Ua.Bindings
 
                     State = TcpChannelState.Connecting;
                     Socket = m_socketFactory.Create(this, BufferManager, Quotas.MaxBufferSize);
-                    task = Task.Run(async () => await Socket.BeginConnect(m_via, m_ConnectCallback, m_handshakeOperation));
+                    task = Task.Run(async () =>
+                        await Socket.BeginConnect(m_via, m_ConnectCallback, m_handshakeOperation,
+                            CancellationToken.None).ConfigureAwait(false)
+                            );
                 }
             }
             catch (Exception e)

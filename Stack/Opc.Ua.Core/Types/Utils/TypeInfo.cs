@@ -155,6 +155,12 @@ namespace Opc.Ua
         /// </summary>
         DiagnosticInfo = 25,
 
+        /// <remarks>
+        /// The following BuiltInTypes are for coding convenience
+        /// internally used in the .NET Standard library.
+        /// The types can not be used for encoding/decoding.
+        /// </remarks>
+
         /// <summary>
         /// Any numeric value.
         /// </summary>
@@ -1180,7 +1186,7 @@ namespace Opc.Ua
                 {
                     Type[] argTypes = systemType.GetGenericArguments();
 
-                    if (argTypes != null || argTypes.Length == 1)
+                    if (argTypes != null && argTypes.Length == 1)
                     {
                         TypeInfo typeInfo = Construct(argTypes[0]);
 
@@ -3036,6 +3042,39 @@ namespace Opc.Ua
             }
 
             throw new FormatException(Utils.Format("Invalid format string: '{0}'.", format));
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Determines if the specified object is equal to the object.
+        /// </summary>
+        /// <remarks>
+        /// Determines if the specified object is equal to the object.
+        /// </remarks>
+        public override bool Equals(object obj)
+        {
+            if (Object.ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            TypeInfo typeInfo = obj as TypeInfo;
+            if (typeInfo != null)
+            {
+                return (m_builtInType == typeInfo.BuiltInType &&
+                    m_valueRank == typeInfo.ValueRank);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns a suitable hash code.
+        /// </summary>
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
         #endregion
     }
