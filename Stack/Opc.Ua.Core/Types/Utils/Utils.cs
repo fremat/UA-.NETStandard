@@ -38,6 +38,11 @@ namespace Opc.Ua
         /// <summary>
         /// The URI scheme for the HTTPS protocol. 
         /// </summary>
+        public const string UriSchemeHttp = "http";
+
+        /// <summary>
+        /// The URI scheme for the HTTPS protocol. 
+        /// </summary>
         public const string UriSchemeHttps = "https";
 
         /// <summary>
@@ -880,6 +885,26 @@ namespace Opc.Ua
         private static readonly DateTime s_TimeBase = new DateTime(1601, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         /// <summary>
+        /// Normalize a DateTime to Opc Ua UniversalTime.
+        /// </summary>
+        public static DateTime ToOpcUaUniversalTime(DateTime value)
+        {
+            if (value <= DateTime.MinValue)
+            {
+                return DateTime.MinValue;
+            }
+            if (value >= DateTime.MaxValue)
+            {
+                return DateTime.MaxValue;
+            }
+            if (value.Kind != DateTimeKind.Utc)
+            {
+                return value.ToUniversalTime();
+            }
+            return value;
+        }
+
+        /// <summary>
         /// Returns an absolute deadline for a timeout.
         /// </summary>
         public static DateTime GetDeadline(TimeSpan timeSpan)
@@ -928,9 +953,7 @@ namespace Opc.Ua
             string domainName = null;
             try
             {
-#if !NETSTANDARD1_4 && !NETSTANDARD1_3
                 domainName = Dns.GetHostEntry("localhost").HostName;
-#endif
             }
             catch
             {
@@ -1905,7 +1928,7 @@ namespace Opc.Ua
             // check for DateTime objects
             if (value1 is DateTime)
             {
-                return ((DateTime)value1).ToUniversalTime().CompareTo(((DateTime)value2).ToUniversalTime()) == 0;
+                return (Utils.ToOpcUaUniversalTime((DateTime)value1).CompareTo(Utils.ToOpcUaUniversalTime((DateTime)value2))) == 0;
             }
 
             // check for compareable objects.
@@ -2054,7 +2077,7 @@ namespace Opc.Ua
             }
             else
             {
-                if (target.ToUpperInvariant() == pattern.ToUpperInvariant())
+                if (String.Equals(target, pattern, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -2624,7 +2647,7 @@ namespace Opc.Ua
             return result == 0;
         }
 
-        public class Nonce
+        public static class Nonce
         {
             static RandomNumberGenerator m_rng = RandomNumberGenerator.Create();
 

@@ -28,7 +28,6 @@ namespace Opc.Ua
         /// </summary>
         /// <returns> the transport channel</returns>
         ITransportChannel Create();
-
     }
 
     /// <summary>
@@ -74,6 +73,13 @@ namespace Opc.Ua
         /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
         void Initialize(
             Uri url,
+            TransportChannelSettings settings);
+
+        /// <summary>
+        /// Initializes a secure channel with the endpoint identified by the URL.
+        /// </summary>
+        void Initialize(
+            ITransportWaitingConnection connection,
             TransportChannelSettings settings);
 
         /// <summary>

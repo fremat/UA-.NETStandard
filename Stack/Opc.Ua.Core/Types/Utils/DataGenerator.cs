@@ -153,11 +153,10 @@ namespace Opc.Ua.Test
             }
 
             // load the localized tokens.
-            m_tokenValues = LoadStringData("Opc.Ua.Core.Types.Utils.LocalizedData.txt");
-
+            m_tokenValues = LoadStringData("Opc.Ua.Types.Utils.LocalizedData.txt");
             if (m_tokenValues.Count == 0)
             {
-                m_tokenValues = LoadStringData("Opc.Ua.Core.Utils.LocalizedData.txt");
+                m_tokenValues = LoadStringData("Opc.Ua.Utils.LocalizedData.txt");
             }
 
             // index the available locales.
@@ -1221,12 +1220,13 @@ namespace Opc.Ua.Test
         /// </summary>
         private object GetRandom(Type expectedType)
         {
-            object value = GetRandom(TypeInfo.Construct(expectedType).BuiltInType);
+            var builtInType = TypeInfo.Construct(expectedType).BuiltInType;
+            object value = GetRandom(builtInType);
 
-            if (expectedType == typeof(Uuid) &&
-                value.GetType() == typeof(Guid))
+            if (builtInType == BuiltInType.Guid &&
+                expectedType == typeof(Guid))
             {
-                return new Uuid((Guid)value);
+                return (Guid)(Uuid)value;
             }
 
             return value;

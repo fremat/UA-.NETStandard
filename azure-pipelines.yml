@@ -1,19 +1,47 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Azure pipeline
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- master
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - '*'
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+- stage: build
+  displayName: 'Build .Net Core Samples'
+  jobs:
+  - template: .azurepipelines/ci.yml
+- stage: buildnohttps
+  dependsOn: []
+  displayName: 'Build NoHttps .Net Core Samples'
+  jobs:
+  - template: .azurepipelines/ci.yml
+    parameters:
+      buildoption: '-p:NoHttps=true'
+      agents: '@{ linux = "ubuntu-18.04" }'
+- stage: solutions
+  dependsOn: []
+  displayName: 'Build Solutions'
+  jobs:
+  - template: .azurepipelines/sln.yml
+- stage: testrelease
+  dependsOn: []
+  displayName: 'Test Core and SDK Release'
+  jobs:
+  - template: .azurepipelines/test.yml
+    parameters:
+      configuration: Release
+      agents: '@{ windows = "vs2017-win2016"; mac = "macOS-10.15" }'
+  - template: .azurepipelines/testcc.yml
+    parameters:
+      configuration: Release
+      poolImage: 'ubuntu-18.04'
+- stage: testdebug
+  dependsOn: []
+  displayName: 'Test Core and SDK Debug'
+  jobs:
+  - template: .azurepipelines/test.yml
+    parameters:
+      configuration: Debug
