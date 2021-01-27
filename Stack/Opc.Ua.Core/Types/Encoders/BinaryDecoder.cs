@@ -16,7 +16,6 @@ using System.Xml;
 using System.IO;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Opc.Ua
 {

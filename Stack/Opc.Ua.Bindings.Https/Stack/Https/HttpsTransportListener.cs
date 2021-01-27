@@ -31,7 +31,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
-
+using Opc.Ua.Core;
 
 namespace Opc.Ua.Bindings
 {
