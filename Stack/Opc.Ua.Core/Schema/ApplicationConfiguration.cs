@@ -1,4 +1,4 @@
-/* Copyright (c) 1996-2019 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
      - RCL: for OPC Foundation members in good-standing
      - GPL V2: everybody else
@@ -42,8 +42,9 @@ namespace Opc.Ua
 
             m_securityConfiguration = new SecurityConfiguration();
             m_transportConfigurations = new TransportConfigurationCollection();
-            m_disableHiResClock = true;
+            m_disableHiResClock = false;
             m_properties = new Dictionary<string, object>();
+            m_certificateValidator = new CertificateValidator();
         }
 
         /// <summary>
@@ -222,7 +223,7 @@ namespace Opc.Ua
         /// <summary>
         /// Disabling / enabling high resolution clock 
         /// </summary>
-        /// <value><c>true</c> if high resolutioin clock is disabled; otherwise, <c>false</c>.</value>
+        /// <value><c>true</c> if high resolution clock is disabled; otherwise, <c>false</c>.</value>
         [DataMember(IsRequired = false, EmitDefaultValue = false, Order = 12)]
         public bool DisableHiResClock
         {
@@ -1005,7 +1006,9 @@ namespace Opc.Ua
         /// Gets or sets a value indicating whether the server nonce validation errors should be suppressed.
         /// </summary>
         /// <remarks>
+        /// Allows client interoperability with legacy servers which do not comply with the specification for nonce usage.
         /// If set to true the server nonce validation errors are suppressed.
+        /// Please set this flag to true only in close and secured networks since it can cause security vulnerabilities.
         /// </remarks>
         [DataMember(IsRequired = false, EmitDefaultValue = false, Order = 19)]
         public bool SuppressNonceValidationErrors
@@ -1893,6 +1896,9 @@ namespace Opc.Ua
         #endregion
 
         #region Public Properties
+        /// <summary>
+        /// A collection of reverse connect clients.
+        /// </summary>
         [DataMember(Order = 10)]
         public ReverseConnectClientCollection Clients { get; set; }
 
@@ -1900,20 +1906,20 @@ namespace Opc.Ua
         /// The interval after which a new reverse connection is attempted.
         /// </summary>
         [DataMember(Order = 20)]
-        public int ConnectInterval { get; set; }
+        public int ConnectInterval { get; set; } = 15000;
 
         /// <summary>
         /// The default timeout to wait for a response to a reverse connection.
         /// </summary>
         [DataMember(Order = 30)]
-        public int ConnectTimeout { get; set; }
+        public int ConnectTimeout { get; set; } = 30000;
 
         /// <summary>
         /// The timeout to wait to establish a new reverse
         /// connection after a rejected attempt.
         /// </summary>
         [DataMember(Order = 40)]
-        public int RejectTimeout { get; set; }
+        public int RejectTimeout { get; set; } = 60000;
         #endregion
     }
     #endregion
@@ -1945,6 +1951,7 @@ namespace Opc.Ua
         /// </summary>
         private void Initialize()
         {
+            Enabled = true;
         }
         #endregion
 
@@ -1961,11 +1968,30 @@ namespace Opc.Ua
         /// </summary>
         [DataMember(Order = 20)]
         public int Timeout { get; set; }
+
+        /// <summary>
+        /// The maximum count of active reverse connect sessions.
+        ///  0 or undefined means unlimited number of sessions.
+        ///  1 means a single connection is created at a time.
+        ///  n disables reverse hello once the total number of sessions
+        ///  in the server reaches n.
+        /// </summary>
+        [DataMember(Order = 30)]
+        public int MaxSessionCount { get; set; }
+
+        /// <summary>
+        /// Specifies whether the sending of reverse connect attempts is enabled.
+        /// </summary>
+        [DataMember(Order = 40)]
+        public bool Enabled { get; set; } = true;
         #endregion
     }
     #endregion
 
     #region ReverseConnectClientCollection Class
+    /// <summary>
+    /// A collection of reverse connect clients.
+    /// </summary>
     [CollectionDataContract(Name = "ListOfReverseConnectClient", Namespace = Namespaces.OpcUaConfig, ItemName = "ReverseConnectClient")]
     public class ReverseConnectClientCollection : List<ReverseConnectClient>
     {
@@ -2161,8 +2187,24 @@ namespace Opc.Ua
         #endregion
 
         #region Public Properties
-        [DataMember(Order = 1, IsRequired = false)]
+        /// <summary>
+        /// A collection of reverse connect client endpoints.
+        /// </summary>
+        [DataMember(Order = 10, IsRequired = false)]
         public ReverseConnectClientEndpointCollection ClientEndpoints { get; set; }
+
+        /// <summary>
+        /// The time a reverse hello port is held open to wait for a
+        /// reverse connection until the request is rejected.
+        /// </summary>
+        [DataMember(Order = 20, IsRequired = false)]
+        public int HoldTime { get; set; } = 15000;
+
+        /// <summary>
+        /// The timeout to wait for a reverse hello message.
+        /// </summary>
+        [DataMember(Order = 30, IsRequired = false)]
+        public int WaitTimeout { get; set; } = 20000;
         #endregion
     }
     #endregion
@@ -2198,6 +2240,9 @@ namespace Opc.Ua
         #endregion
 
         #region Persistent Properties
+        /// <summary>
+        /// The endpoint Url of a reverse connect client.
+        /// </summary>
         [DataMember(Order = 1, IsRequired = false)]
         public string EndpointUrl { get; set; }
         #endregion
@@ -2205,6 +2250,9 @@ namespace Opc.Ua
     #endregion
 
     #region ReverseConnectClientEndpointCollection Class
+    /// <summary>
+    /// A collection of reverse connect client endpoints.
+    /// </summary>
     [CollectionDataContract(Name = "ListOfReverseConnectClientEndpoint", Namespace = Namespaces.OpcUaConfig, ItemName = "ClientEndpoint")]
     public class ReverseConnectClientEndpointCollection : List<ReverseConnectClientEndpoint>
     {

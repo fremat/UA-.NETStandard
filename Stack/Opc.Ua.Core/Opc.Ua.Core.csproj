@@ -1,19 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);NET_STANDARD</DefineConstants>
-    <LangVersion>7.3</LangVersion>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <LangVersion>8</LangVersion>
     <AssemblyName>Opc.Ua.Core</AssemblyName>
-    <PackageId>Opc.Ua.Core</PackageId>
+    <PackageId>OPCFoundation.NetStandard.Opc.Ua.Core</PackageId>
     <RootNamespace>Opc.Ua</RootNamespace>
     <Description>OPC UA Core Class Library</Description>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DefineConstants Condition=" '$(NoHttps)' == 'true' ">$(DefineConstants);NO_HTTPS</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageId>$(PackageId).Debug</PackageId>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(SignAssembly)' == 'true'">
     <DefineConstants>$(DefineConstants);SIGNASSEMBLY</DefineConstants>
   </PropertyGroup>
@@ -28,7 +30,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Schema\Opc.Ua.NodeSet2.xml" />
     <EmbeddedResource Include="Schema\Opc.Ua.Types.bsd" />
-    <EmbeddedResource Include="Stack\Generated\Opc.Ua.PredefinedNodes.uanodes;Types\Utils\LocalizedData.txt;Schema\ServerCapabilities.csv" />
+    <EmbeddedResource Include="Stack\Generated\Opc.Ua.PredefinedNodes.uanodes" />
+    <EmbeddedResource Include="Types\Utils\LocalizedData.txt" />
+    <EmbeddedResource Include="Schema\ServerCapabilities.csv" />
     <EmbeddedResource Include="Types\Schemas\BuiltInTypes.bsd" />
     <EmbeddedResource Include="Types\Schemas\StandardTypes.bsd" />
   </ItemGroup>
@@ -36,33 +40,31 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.6.7" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <Reference Include="System.IdentityModel" />
-    <Reference Include="System.IdentityModel.Selectors" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Net.Http" />
-  </ItemGroup>
-  
-  <ItemGroup Condition="$(DefineConstants.Contains('NO_HTTPS'))=='false'">
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets" Version="2.2.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Https" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Data.Common" Version="4.3.0" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.5.3" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.0" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.4.0" />
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
-    
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Data.Common" Version="4.3.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.0" />
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\Opc.Ua.Security.Certificates\Opc.Ua.Security.Certificates.csproj" />
   </ItemGroup>
   
   <Target Name="GetPackagingOutputs" />

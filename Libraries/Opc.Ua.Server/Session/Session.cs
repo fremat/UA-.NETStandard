@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -936,7 +936,8 @@ namespace Opc.Ua.Server
             policy = null;
 
             // check for empty token.
-            if (identityToken == null || identityToken.Body == null)
+            if (identityToken == null || identityToken.Body == null ||
+                identityToken.Body.GetType() == typeof(Opc.Ua.AnonymousIdentityToken))
             {
                 // not changing the token if already activated.
                 if (m_activated)

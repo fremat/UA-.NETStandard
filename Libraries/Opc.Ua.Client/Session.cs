@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -37,6 +37,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Opc.Ua.Security.Certificates;
 
 namespace Opc.Ua.Client
 {
@@ -47,7 +48,7 @@ namespace Opc.Ua.Client
     {
         #region Constructors
         /// <summary>
-        /// Constructs a new instance of the session.
+        /// Constructs a new instance of the <see cref="Session"/> class.
         /// </summary>
         /// <param name="channel">The channel used to communicate with the server.</param>
         /// <param name="configuration">The configuration for the client application.</param>
@@ -62,41 +63,35 @@ namespace Opc.Ua.Client
         }
 
         /// <summary>
-        /// Constructs a new instance of the session.
+        /// Constructs a new instance of the <see cref="Session"/> class.
         /// </summary>
         /// <param name="channel">The channel used to communicate with the server.</param>
         /// <param name="configuration">The configuration for the client application.</param>
-        /// <param name="endpoint">The endpoint use to initialize the channel.</param>
+        /// <param name="endpoint">The endpoint used to initialize the channel.</param>
         /// <param name="clientCertificate">The certificate to use for the client.</param>
+        /// <param name="availableEndpoints">The list of available endpoints returned by server in GetEndpoints() response.</param>
+        /// <param name="discoveryProfileUris">The value of profileUris used in GetEndpoints() request.</param>
         /// <remarks>
         /// The application configuration is used to look up the certificate if none is provided.
         /// The clientCertificate must have the private key. This will require that the certificate
         /// be loaded from a certicate store. Converting a DER encoded blob to a X509Certificate2
         /// will not include a private key.
+        /// The <i>availableEndpoints</i> and <i>discoveryProfileUris</i> parameters are used to validate
+        /// that the list of EndpointDescriptions returned at GetEndpoints matches the list returned at CreateSession.
         /// </remarks>
         public Session(
             ITransportChannel channel,
             ApplicationConfiguration configuration,
             ConfiguredEndpoint endpoint,
-            X509Certificate2 clientCertificate)
-        :
-            base(channel)
-        {
-            Initialize(channel, configuration, endpoint, clientCertificate);
-        }
-
-        public Session(
-            ITransportChannel channel,
-            ApplicationConfiguration configuration,
-            ConfiguredEndpoint endpoint,
             X509Certificate2 clientCertificate,
-            EndpointDescriptionCollection availableEndpoints)
+            EndpointDescriptionCollection availableEndpoints = null,
+            StringCollection discoveryProfileUris = null)
             :
                 base(channel)
         {
             Initialize(channel, configuration, endpoint, clientCertificate);
-
-            m_expectedServerEndpoints = availableEndpoints;
+            m_discoveryServerEndpoints = availableEndpoints;
+            m_discoveryProfileUris = discoveryProfileUris;
         }
 
         /// <summary>
@@ -308,7 +303,12 @@ namespace Opc.Ua.Client
         /// <summary>
         /// Validates the server nonce and security parameters of user identity.
         /// </summary>
-        private void ValidateServerNonce(IUserIdentity identity, byte[] serverNonce, string securityPolicyUri, byte[] previousServerNonce)
+        private void ValidateServerNonce(
+            IUserIdentity identity,
+            byte[] serverNonce,
+            string securityPolicyUri,
+            byte[] previousServerNonce,
+            MessageSecurityMode channelSecurityMode = MessageSecurityMode.None)
         {
             // skip validation if server nonce is not used for encryption.
             if (String.IsNullOrEmpty(securityPolicyUri) || securityPolicyUri == SecurityPolicies.None)
@@ -321,13 +321,26 @@ namespace Opc.Ua.Client
                 // the server nonce should be validated if the token includes a secret.
                 if (!Utils.Nonce.ValidateNonce(serverNonce, MessageSecurityMode.SignAndEncrypt, (uint)m_configuration.SecurityConfiguration.NonceLength))
                 {
-                    throw ServiceResultException.Create(StatusCodes.BadNonceInvalid, "Server nonce is not the correct length or not random enough.");
+                    if (channelSecurityMode == MessageSecurityMode.SignAndEncrypt ||
+                        m_configuration.SecurityConfiguration.SuppressNonceValidationErrors)
+                    {
+                        Utils.Trace((int)Utils.TraceMasks.Security, "Warning: The server nonce has not the correct length or is not random enough. The error is suppressed by user setting or because the channel is encrypted.");
+                    }
+                    else
+                    {
+                        throw ServiceResultException.Create(StatusCodes.BadNonceInvalid, "The server nonce has not the correct length or is not random enough.");
+                    }
                 }
 
                 // check that new nonce is different from the previously returned server nonce.
                 if (previousServerNonce != null && Utils.CompareNonce(serverNonce, previousServerNonce))
                 {
-                    if (!m_configuration.SecurityConfiguration.SuppressNonceValidationErrors)
+                    if (channelSecurityMode == MessageSecurityMode.SignAndEncrypt ||
+                        m_configuration.SecurityConfiguration.SuppressNonceValidationErrors)
+                    {
+                        Utils.Trace((int)Utils.TraceMasks.Security, "Warning: The Server nonce is equal with previously returned nonce. The error is suppressed by user setting or because the channel is encrypted.");
+                    }
+                    else
                     {
                         throw ServiceResultException.Create(StatusCodes.BadNonceInvalid, "Server nonce is equal with previously returned nonce.");
                     }
@@ -335,67 +348,6 @@ namespace Opc.Ua.Client
             }
         }
 
-        private static void CheckCertificateDomain(ConfiguredEndpoint endpoint)
-        {
-            bool domainFound = false;
-
-            X509Certificate2 serverCertificate = new X509Certificate2(endpoint.Description.ServerCertificate);
-
-            // check the certificate domains.
-            IList<string> domains = Utils.GetDomainsFromCertficate(serverCertificate);
-
-            if (domains != null)
-            {
-                string hostname;
-                string dnsHostName = hostname = endpoint.EndpointUrl.DnsSafeHost;
-                bool isLocalHost = false;
-                if (endpoint.EndpointUrl.HostNameType == UriHostNameType.Dns)
-                {
-                    if (String.Equals(dnsHostName, "localhost", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        isLocalHost = true;
-                    }
-                    else
-                    {   // strip domain names from hostname
-                        var dotIndex = dnsHostName.IndexOf('.');
-                        hostname = dnsHostName.Substring(0, dotIndex);
-                    }
-                }
-                else
-                {   // dnsHostname is a IPv4 or IPv6 address
-                    // normalize ip addresses, cert parser returns normalized addresses
-                    hostname = Utils.NormalizedIPAddress(dnsHostName);
-                    if (hostname == "127.0.0.1" || hostname == "::1")
-                    {
-                        isLocalHost = true;
-                    }
-                }
-
-                if (isLocalHost)
-                {
-                    dnsHostName = Utils.GetFullQualifiedDomainName();
-                    hostname = Utils.GetHostName();
-                }
-
-                for (int ii = 0; ii < domains.Count; ii++)
-                {
-                    if (String.Equals(hostname, domains[ii], StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(dnsHostName, domains[ii], StringComparison.OrdinalIgnoreCase))
-                    {
-                        domainFound = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!domainFound)
-            {
-                string message = Utils.Format(
-                    "The domain '{0}' is not listed in the server certificate.",
-                    endpoint.EndpointUrl.DnsSafeHost);
-                throw new ServiceResultException(StatusCodes.BadCertificateHostNameInvalid, message);
-            }
-        }
         #endregion
 
         #region IDisposable Members
@@ -868,9 +820,14 @@ namespace Opc.Ua.Client
             }
 
             // checks the domains in the certificate.
-            if (checkDomain && endpoint.Description.ServerCertificate != null && endpoint.Description.ServerCertificate.Length > 0)
+            if (checkDomain &&
+                endpoint.Description.ServerCertificate != null &&
+                endpoint.Description.ServerCertificate.Length > 0)
             {
-                CheckCertificateDomain(endpoint);
+                configuration.CertificateValidator?.ValidateDomains(
+                    new X509Certificate2(endpoint.Description.ServerCertificate),
+                    endpoint);
+                checkDomain = false;
             }
 
             X509Certificate2 clientCertificate = null;
@@ -923,6 +880,70 @@ namespace Opc.Ua.Client
         }
 
         /// <summary>
+        /// Creates a new communication session with a server using a reverse connect manager.
+        /// </summary>
+        /// <param name="configuration">The configuration for the client application.</param>
+        /// <param name="reverseConnectManager">The reverse connect manager for the client connection.</param>
+        /// <param name="endpoint">The endpoint for the server.</param>
+        /// <param name="updateBeforeConnect">If set to <c>true</c> the discovery endpoint is used to update the endpoint description before connecting.</param>
+        /// <param name="checkDomain">If set to <c>true</c> then the domain in the certificate must match the endpoint used.</param>
+        /// <param name="sessionName">The name to assign to the session.</param>
+        /// <param name="sessionTimeout">The timeout period for the session.</param>
+        /// <param name="userIdentity">The user identity to associate with the session.</param>
+        /// <param name="preferredLocales">The preferred locales.</param>
+        /// <param name="ct">The cancellation token.</param>
+        /// <returns>The new session object.</returns>
+        public static async Task<Session> Create(
+            ApplicationConfiguration configuration,
+            ReverseConnectManager reverseConnectManager,
+            ConfiguredEndpoint endpoint,
+            bool updateBeforeConnect,
+            bool checkDomain,
+            string sessionName,
+            uint sessionTimeout,
+            IUserIdentity userIdentity,
+            IList<string> preferredLocales,
+            CancellationToken ct = default(CancellationToken)
+            )
+        {
+            if (reverseConnectManager == null)
+            {
+                return await Create(configuration, endpoint, updateBeforeConnect,
+                    checkDomain, sessionName, sessionTimeout, userIdentity, preferredLocales);
+            }
+
+            ITransportWaitingConnection connection = null;
+            do
+            {
+                connection = await reverseConnectManager.WaitForConnection(
+                    endpoint.EndpointUrl,
+                    endpoint.ReverseConnect.ServerUri,
+                    ct);
+
+                if (updateBeforeConnect)
+                {
+                    await endpoint.UpdateFromServerAsync(
+                        endpoint.EndpointUrl, connection,
+                        endpoint.Description.SecurityMode,
+                        endpoint.Description.SecurityPolicyUri);
+                    updateBeforeConnect = false;
+                    connection = null;
+                }
+            } while (connection == null);
+
+            return await Create(
+                configuration,
+                connection,
+                endpoint,
+                false,
+                checkDomain,
+                sessionName,
+                sessionTimeout,
+                userIdentity,
+                preferredLocales);
+        }
+
+        /// <summary>
         /// Recreates a session based on a specified template.
         /// </summary>
         /// <param name="template">The Session object to use as template</param>
@@ -935,6 +956,56 @@ namespace Opc.Ua.Client
             // create the channel object used to connect to the server.
             ITransportChannel channel = SessionChannel.Create(
                 template.m_configuration,
+                template.m_endpoint.Description,
+                template.m_endpoint.Configuration,
+                template.m_instanceCertificate,
+                template.m_configuration.SecurityConfiguration.SendCertificateChain ?
+                    template.m_instanceCertificateChain : null,
+                messageContext);
+
+            // create the session object.
+            Session session = new Session(channel, template, true);
+
+            try
+            {
+                // open the session.
+                session.Open(
+                    template.m_sessionName,
+                    (uint)template.m_sessionTimeout,
+                    template.m_identity,
+                    template.m_preferredLocales,
+                    template.m_checkDomain);
+
+                // create the subscriptions.
+                foreach (Subscription subscription in session.Subscriptions)
+                {
+                    subscription.Create();
+                }
+            }
+            catch (Exception e)
+            {
+                session.Dispose();
+                throw ServiceResultException.Create(StatusCodes.BadCommunicationError, e, "Could not recreate session. {0}", template.m_sessionName);
+            }
+
+            return session;
+        }
+
+        /// <summary>
+        /// Recreates a session based on a specified template.
+        /// </summary>
+        /// <param name="template">The Session object to use as template</param>
+        /// <param name="connection">The waiting reverse connection.</param>
+        /// <returns>The new session object.</returns>
+        public static Session Recreate(Session template, ITransportWaitingConnection connection)
+        {
+            ServiceMessageContext messageContext = template.m_configuration.CreateMessageContext();
+            messageContext.Factory = template.Factory;
+
+            // create the channel object used to connect to the server.
+            ITransportChannel channel = SessionChannel.Create(
+                template.m_configuration,
+                connection,
                 template.m_endpoint.Description,
                 template.m_endpoint.Configuration,
                 template.m_instanceCertificate,
@@ -995,6 +1066,14 @@ namespace Opc.Ua.Client
         /// </summary>
         public void Reconnect()
         {
+            Reconnect(null);
+        }
+
+        /// <summary>
+        /// Reconnects to the server after a network failure using a waiting connection.
+        /// </summary>
+        public void Reconnect(ITransportWaitingConnection connection)
+        {
             try
             {
                 lock (SyncRoot)
@@ -1052,7 +1131,12 @@ namespace Opc.Ua.Client
                 }
 
                 // validate server nonce and security parameters for user identity.
-                ValidateServerNonce(m_identity, m_serverNonce, securityPolicyUri, m_previousServerNonce);
+                ValidateServerNonce(
+                    m_identity,
+                    m_serverNonce,
+                    securityPolicyUri,
+                    m_previousServerNonce,
+                    m_endpoint.Description.SecurityMode);
 
                 // sign data with user token.
                 UserIdentityToken identityToken = m_identity.GetIdentityToken();
@@ -1067,24 +1151,50 @@ namespace Opc.Ua.Client
 
                 if (Utils.IsTraceEnabled) Utils.Trace("Session REPLACING channel.");
 
-                // check if the channel supports reconnect.
-                if ((TransportChannel.SupportedFeatures & TransportChannelFeatures.Reconnect) != 0)
+                if (connection != null)
                 {
-                    TransportChannel.Reconnect();
+                    // check if the channel supports reconnect.
+                    if ((TransportChannel.SupportedFeatures & TransportChannelFeatures.Reconnect) != 0)
+                    {
+                        TransportChannel.Reconnect(connection);
+                    }
+                    else
+                    {
+                        // initialize the channel which will be created with the server.
+                        ITransportChannel channel = SessionChannel.Create(
+                            m_configuration,
+                            connection,
+                            m_endpoint.Description,
+                            m_endpoint.Configuration,
+                            m_instanceCertificate,
+                            m_configuration.SecurityConfiguration.SendCertificateChain ? m_instanceCertificateChain : null,
+                            MessageContext);
+
+                        // disposes the existing channel.
+                        TransportChannel = channel;
+                    }
                 }
                 else
                 {
-                    // initialize the channel which will be created with the server.
-                    ITransportChannel channel = SessionChannel.Create(
-                        m_configuration,
-                        m_endpoint.Description,
-                        m_endpoint.Configuration,
-                        m_instanceCertificate,
-                        m_configuration.SecurityConfiguration.SendCertificateChain ? m_instanceCertificateChain : null,
-                        MessageContext);
+                    // check if the channel supports reconnect.
+                    if ((TransportChannel.SupportedFeatures & TransportChannelFeatures.Reconnect) != 0)
+                    {
+                        TransportChannel.Reconnect();
+                    }
+                    else
+                    {
+                        // initialize the channel which will be created with the server.
+                        ITransportChannel channel = SessionChannel.Create(
+                            m_configuration,
+                            m_endpoint.Description,
+                            m_endpoint.Configuration,
+                            m_instanceCertificate,
+                            m_configuration.SecurityConfiguration.SendCertificateChain ? m_instanceCertificateChain : null,
+                            MessageContext);
 
-                    // disposes the existing channel.
-                    TransportChannel = channel;
+                        // disposes the existing channel.
+                        TransportChannel = channel;
+                    }
                 }
 
                 // reactivate session.
@@ -1428,8 +1538,9 @@ namespace Opc.Ua.Client
         /// <summary>
         ///  Returns the data dictionary that contains the description.
         /// </summary>
-        /// <param name="dictionaryId">The dictionary id.</param>
-        /// <returns></returns>
+        /// <param name="dictionaryNode">The dictionary id.</param>
+        /// <param name="forceReload"></param>
+        /// <returns>The dictionary.</returns>
         public async Task<DataDictionary> LoadDataDictionary(ReferenceDescription dictionaryNode, bool forceReload = false)
         {
             // check if the dictionary has already been loaded.
@@ -2251,11 +2362,13 @@ namespace Opc.Ua.Client
 
                 if (requireEncryption)
                 {
-                    m_configuration.CertificateValidator.Validate(serverCertificateChain);
-
                     if (checkDomain)
                     {
-                        CheckCertificateDomain(m_endpoint);
+                        m_configuration.CertificateValidator.Validate(serverCertificateChain, m_endpoint);
+                    }
+                    else
+                    {
+                        m_configuration.CertificateValidator.Validate(serverCertificateChain);
                     }
                     // save for reconnect
                     m_checkDomain = checkDomain;
@@ -2358,7 +2471,6 @@ namespace Opc.Ua.Client
                         out serverSoftwareCertificates,
                         out serverSignature,
                         out m_maxRequestMessageSize);
-
             }
             // save session id.
             lock (SyncRoot)
@@ -2406,20 +2518,43 @@ namespace Opc.Ua.Client
                     //    "Server signature is null or empty.");
                 }
 
-                if (m_expectedServerEndpoints != null && m_expectedServerEndpoints.Count > 0)
+                if (m_discoveryServerEndpoints != null && m_discoveryServerEndpoints.Count > 0)
                 {
-                    // verify that the list of endpoints returned by CreateSession matches the list returned at GetEndpoints.
-                    if (m_expectedServerEndpoints.Count != serverEndpoints.Count)
+                    // Compare EndpointDescriptions returned at GetEndpoints with values returned at CreateSession
+                    EndpointDescriptionCollection expectedServerEndpoints = null;
+
+                    if (serverEndpoints != null &&
+                        m_discoveryProfileUris != null && m_discoveryProfileUris.Count > 0)
+                    {
+                        // Select EndpointDescriptions with a transportProfileUri that matches the
+                        // profileUris specified in the original GetEndpoints() request.
+                        expectedServerEndpoints = new EndpointDescriptionCollection();
+
+                        foreach (EndpointDescription serverEndpoint in serverEndpoints)
+                        {
+                            if (m_discoveryProfileUris.Contains(serverEndpoint.TransportProfileUri))
+                            {
+                                expectedServerEndpoints.Add(serverEndpoint);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        expectedServerEndpoints = serverEndpoints;
+                    }
+
+                    if (expectedServerEndpoints == null ||
+                        m_discoveryServerEndpoints.Count != expectedServerEndpoints.Count)
                     {
                         throw ServiceResultException.Create(
                             StatusCodes.BadSecurityChecksFailed,
                             "Server did not return a number of ServerEndpoints that matches the one from GetEndpoints.");
                     }
 
-                    for (int ii = 0; ii < serverEndpoints.Count; ii++)
+                    for (int ii = 0; ii < expectedServerEndpoints.Count; ii++)
                     {
-                        EndpointDescription serverEndpoint = serverEndpoints[ii];
-                        EndpointDescription expectedServerEndpoint = m_expectedServerEndpoints[ii];
+                        EndpointDescription serverEndpoint = expectedServerEndpoints[ii];
+                        EndpointDescription expectedServerEndpoint = m_discoveryServerEndpoints[ii];
 
                         if (serverEndpoint.SecurityMode != expectedServerEndpoint.SecurityMode ||
                             serverEndpoint.SecurityPolicyUri != expectedServerEndpoint.SecurityPolicyUri ||
@@ -2562,7 +2697,12 @@ namespace Opc.Ua.Client
                 }
 
                 // validate server nonce and security parameters for user identity.
-                ValidateServerNonce(identity, serverNonce, securityPolicyUri, previousServerNonce);
+                ValidateServerNonce(
+                    identity,
+                    serverNonce,
+                    securityPolicyUri,
+                    previousServerNonce,
+                    m_endpoint.Description.SecurityMode);
 
                 // sign data with user token.
                 SignatureData userTokenSignature = identityToken.Sign(dataToSign, securityPolicyUri);
@@ -2726,7 +2866,12 @@ namespace Opc.Ua.Client
             }
 
             // validate server nonce and security parameters for user identity.
-            ValidateServerNonce(identity, serverNonce, securityPolicyUri, m_previousServerNonce);
+            ValidateServerNonce(
+                identity,
+                serverNonce,
+                securityPolicyUri,
+                m_previousServerNonce,
+                m_endpoint.Description.SecurityMode);
 
             // sign data with user token.
             identityToken = identity.GetIdentityToken();
@@ -4348,8 +4493,7 @@ namespace Opc.Ua.Client
                 // Delete abandoned subscription from server.
                 if (Utils.IsTraceEnabled) Utils.Trace("Received Publish Response for Unknown SubscriptionId={0}", subscriptionId);
 
-                Task.Run(() =>
-                {
+                Task.Run(() => {
                     DeleteSubscription(subscriptionId);
                 });
             }
@@ -4491,7 +4635,8 @@ namespace Opc.Ua.Client
         private bool m_reconnecting;
         private LinkedList<AsyncRequestState> m_outstandingRequests;
 
-        private EndpointDescriptionCollection m_expectedServerEndpoints;
+        private EndpointDescriptionCollection m_discoveryServerEndpoints;
+        private StringCollection m_discoveryProfileUris;
 
         private class AsyncRequestState
         {

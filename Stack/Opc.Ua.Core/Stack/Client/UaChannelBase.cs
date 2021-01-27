@@ -1,4 +1,4 @@
-/* Copyright (c) 1996-2019 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
      - RCL: for OPC Foundation members in good-standing
      - GPL V2: everybody else
@@ -317,6 +317,16 @@ namespace Opc.Ua
         /// Calling this method will cause outstanding requests over the current secure channel to fail.
         /// </remarks>
         public abstract void Reconnect();
+
+        /// <summary>
+        /// Closes any existing secure channel and opens a new one using an existing channel.
+        /// </summary>
+        /// <param name="connection">The reverse transport connection for the Reconnect.</param>
+        /// <exception cref="ServiceResultException">Thrown if any communication error occurs.</exception>
+        /// <remarks>
+        /// Calling this method will cause outstanding requests over the current secure channel to fail.
+        /// </remarks>
+        public abstract void Reconnect(ITransportWaitingConnection connection);
 
         /// <summary>
         /// Begins an asynchronous operation to close the existing secure channel and open a new one.
@@ -682,28 +692,14 @@ namespace Opc.Ua
             X509Certificate2Collection clientCertificateChain,
             ServiceMessageContext messageContext)
         {
-            bool useUaTcp = description.EndpointUrl.StartsWith(Utils.UriSchemeOpcTcp);
-            bool useHttps = description.EndpointUrl.StartsWith(Utils.UriSchemeHttps);
-
             // initialize the channel which will be created with the server.
-            ITransportChannel channel = null;
-
-            if (useUaTcp)
-            {
-                channel = new TcpTransportChannel();
-            }
-#if !NO_HTTPS
-            else if (useHttps)
-            {
-                channel = new HttpsTransportChannel();
-            }
-#endif
-
+            string uriScheme = new Uri(description.EndpointUrl).Scheme;
+            ITransportChannel channel = TransportBindings.Channels.GetChannel(uriScheme);
             if (channel == null)
             {
                 throw ServiceResultException.Create(
                     StatusCodes.BadProtocolVersionUnsupported,
-                    "Unsupported transport profile\r\n");
+                    "Unsupported transport profile for scheme {0}.", uriScheme);
             }
 
             // create a UA channel.
@@ -770,42 +766,37 @@ namespace Opc.Ua
             X509Certificate2Collection clientCertificateChain,
             ServiceMessageContext messageContext)
         {
-            bool useUaTcp = description.EndpointUrl.StartsWith(Utils.UriSchemeOpcTcp);
-            bool useHttps = description.EndpointUrl.StartsWith(Utils.UriSchemeHttps);
+            string uriScheme = new Uri(description.EndpointUrl).Scheme;
 
             switch (description.TransportProfileUri)
             {
                 case Profiles.UaTcpTransport:
                 {
-                    useUaTcp = true;
+                    uriScheme = Utils.UriSchemeOpcTcp;
                     break;
                 }
 
                 case Profiles.HttpsBinaryTransport:
                 {
-                    useHttps = true;
+                    uriScheme = Utils.UriSchemeHttps;
                     break;
                 }
+
+                case Profiles.UaWssTransport:
+                {
+                    uriScheme = Utils.UriSchemeOpcWss;
+                    break;
+                }
+
             }
 
             // initialize the channel which will be created with the server.
-            ITransportChannel channel = null;
-            if (useUaTcp)
-            {
-                channel = new TcpTransportChannel();
-            }
-#if !NO_HTTPS
-            else if (useHttps)
-            {
-                channel = new HttpsTransportChannel();
-            }
-#endif
-
+            ITransportChannel channel = TransportBindings.Channels.GetChannel(uriScheme);
             if (channel == null)
             {
                 throw ServiceResultException.Create(
                     StatusCodes.BadProtocolVersionUnsupported,
-                    "Unsupported transport profile\r\n");
+                    "Unsupported transport profile for scheme {0}.", uriScheme);
             }
 
             // create a UA-TCP channel.
@@ -986,7 +977,7 @@ namespace Opc.Ua
                         communicationObject.Close();
                     }
                 }
-                catch (Exception)
+                catch
                 {
                     // ignore errors.
                 }
@@ -999,6 +990,12 @@ namespace Opc.Ua
             {
                 communicationObject.Opened += new EventHandler(InnerChannel_Opened);
             }
+        }
+
+        /// <inheritdoc/>
+        public override void Reconnect(ITransportWaitingConnection connection)
+        {
+            throw new NotImplementedException("Reconnect for waiting connections is not supported for this channel");
         }
         #endregion
 

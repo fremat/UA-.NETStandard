@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -150,7 +150,7 @@ namespace Opc.Ua.Gds.Server
                 UserNameIdentityToken userNameToken = securityToken as UserNameIdentityToken;
                 if (userNameToken != null)
                 {
-                    lock (m_lock)
+                    lock (Lock)
                     {
                         m_contexts.Add(context.RequestId, new ImpersonationContext());
                     }
@@ -167,7 +167,7 @@ namespace Opc.Ua.Gds.Server
         {
             ImpersonationContext impersonationContext = null;
 
-            lock (m_lock)
+            lock (Lock)
             {
                 if (m_contexts.TryGetValue(context.RequestId, out impersonationContext))
                 {

@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -69,8 +69,17 @@ namespace Quickstarts.ReferenceServer
                 // start the server.
                 application.Start(new ReferenceServer()).Wait();
 
+                // check whether the invalid certificates dialog should be displayed.
+                bool showCertificateValidationDialog = false;
+                ReferenceServerConfiguration refServerconfiguration = application.ApplicationConfiguration.ParseExtension<ReferenceServerConfiguration>();
+
+                if (refServerconfiguration != null)
+                {
+                    showCertificateValidationDialog = refServerconfiguration.ShowCertificateValidationDialog;
+                }
+
                 // run the application interactively.
-                Application.Run(new ServerForm(application));
+                Application.Run(new ServerForm(application, showCertificateValidationDialog));
             }
             catch (Exception e)
             {

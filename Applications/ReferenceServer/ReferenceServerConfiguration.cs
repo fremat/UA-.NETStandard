@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -68,9 +68,19 @@ namespace Quickstarts.ReferenceServer
         #endregion
 
         #region Public Properties
+        /// <summary>
+        /// Whether the user dialog for accepting invalid certificates should be displayed.
+        /// </summary>
+        [DataMember(Order = 1)]
+        public bool ShowCertificateValidationDialog
+        {
+            get { return m_showCertificateValidationDialog; }
+            set { m_showCertificateValidationDialog = value; }
+        }
         #endregion
 
         #region Private Members
+        private bool m_showCertificateValidationDialog;
         #endregion
     }
 }

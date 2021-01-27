@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -114,8 +114,7 @@ namespace Opc.Ua.Server
                 // start thread to monitor sessions.
                 m_shutdownEvent.Reset();
 
-                Task.Run(() =>
-                {
+                Task.Run(() => {
                     MonitorSessions(m_minSessionTimeout);
                 });
             }
@@ -331,7 +330,7 @@ namespace Opc.Ua.Server
                 // parse the token manually if the identity is not provided.
                 if (identity == null)
                 {
-                    identity = new UserIdentity(newIdentity);
+                    identity = newIdentity != null ? new UserIdentity(newIdentity) : new UserIdentity();
                 }
 
                 // use the identity as the effectiveIdentity if not provided.
@@ -636,7 +635,7 @@ namespace Opc.Ua.Server
         #endregion
 
         #region ISessionManager Members
-        /// <summary cref="ISessionManager.SessionCreated" />
+        /// <inheritdoc/>
         public event SessionEventHandler SessionCreated
         {
             add
@@ -656,7 +655,7 @@ namespace Opc.Ua.Server
             }
         }
 
-        /// <summary cref="ISessionManager.SessionActivated" />
+        /// <inheritdoc/>
         public event SessionEventHandler SessionActivated
         {
             add
@@ -676,7 +675,7 @@ namespace Opc.Ua.Server
             }
         }
 
-        /// <summary cref="ISessionManager.SessionClosing" />
+        /// <inheritdoc/>
         public event SessionEventHandler SessionClosing
         {
             add
@@ -696,7 +695,7 @@ namespace Opc.Ua.Server
             }
         }
 
-        /// <summary cref="ISessionManager.ImpersonateUser" />
+        /// <inheritdoc/>
         public event ImpersonateEventHandler ImpersonateUser
         {
             add
@@ -716,6 +715,7 @@ namespace Opc.Ua.Server
             }
         }
 
+        /// <inheritdoc/>
         public event EventHandler<ValidateSessionLessRequestEventArgs> ValidateSessionLessRequest
         {
             add
@@ -735,10 +735,7 @@ namespace Opc.Ua.Server
             }
         }
 
-        /// <summary>
-        /// Returns all of the sessions known to the session manager.
-        /// </summary>
-        /// <returns>A list of the sessions.</returns>
+        /// <inheritdoc/>
         public IList<Session> GetSessions()
         {
             lock (m_lock)
@@ -778,7 +775,7 @@ namespace Opc.Ua.Server
         event ImpersonateEventHandler ImpersonateUser;
 
         /// <summary>
-        /// Raised before the user identity for a session is changed.
+        /// Raised to validate a session-less request.
         /// </summary>
         event EventHandler<ValidateSessionLessRequestEventArgs> ValidateSessionLessRequest;
 
