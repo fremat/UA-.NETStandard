@@ -902,7 +902,7 @@ namespace Opc.Ua
             if (value == null)
             {
                 WriteNodeId(null, NodeId.Null);
-                WriteByte(null, Convert.ToByte(ExtensionObjectEncoding.None, CultureInfo.InvariantCulture));
+                WriteByte(null, (byte)ExtensionObjectEncoding.None);
                 return;
             }
 
@@ -942,18 +942,18 @@ namespace Opc.Ua
             WriteNodeId(null, localTypeId);
 
             // determine the encoding type.
-            byte encoding = Convert.ToByte(value.Encoding, CultureInfo.InvariantCulture);
+            byte encoding = (byte)value.Encoding;
 
             if (value.Encoding == ExtensionObjectEncoding.EncodeableObject)
             {
-                encoding = Convert.ToByte(ExtensionObjectEncoding.Binary, CultureInfo.InvariantCulture);
+                encoding = (byte)ExtensionObjectEncoding.Binary;
             }
 
             object body = value.Body;
 
             if (body == null)
             {
-                encoding = Convert.ToByte(ExtensionObjectEncoding.None, CultureInfo.InvariantCulture);
+                encoding = (byte)ExtensionObjectEncoding.None;
             }
 
             // write the encoding type.
@@ -2125,7 +2125,7 @@ namespace Opc.Ua
                 }
             }
 
-            return Convert.ToByte(encoding, CultureInfo.InvariantCulture);
+            return (byte)encoding;
         }
 
         /// <summary>
