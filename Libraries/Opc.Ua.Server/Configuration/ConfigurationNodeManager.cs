@@ -308,7 +308,7 @@ namespace Opc.Ua.Server
                 NamespacesState serverNamespacesNode = FindPredefinedNode(ObjectIds.Server_Namespaces, typeof(NamespacesState)) as NamespacesState;
                 if (serverNamespacesNode == null)
                 {
-                    Utils.Trace("Cannot create NamespaceMetadataState for namespace '{0}'.", namespaceUri);
+                    Utils.LogError("Cannot create NamespaceMetadataState for namespace '{0}'.", namespaceUri);
                     return null;
                 }
 
@@ -407,13 +407,13 @@ namespace Opc.Ua.Server
             }
 
             // validate new subject matches the previous subject
-            if (!X509Utils.CompareDistinguishedName(certificateGroup.ApplicationCertificate.SubjectName, newCert.SubjectName.Name))
+            if (!X509Utils.CompareDistinguishedName(certificateGroup.ApplicationCertificate.Certificate.SubjectName, newCert.SubjectName))
             {
                 throw new ServiceResultException(StatusCodes.BadSecurityChecksFailed, "Subject Name of new certificate doesn't match the application.");
             }
 
             // self signed
-            bool selfSigned = X509Utils.CompareDistinguishedName(newCert.Subject, newCert.Issuer);
+            bool selfSigned = X509Utils.IsSelfSigned(newCert);
             if (selfSigned && newIssuerCollection.Count != 0)
             {
                 throw new ServiceResultException(StatusCodes.BadCertificateInvalid, "Issuer list not empty for self signed certificate.");
@@ -444,25 +444,25 @@ namespace Opc.Ua.Server
             var updateCertificate = new UpdateCertificateData();
             try
             {
-                string password = String.Empty;
+                var passwordProvider = m_configuration.SecurityConfiguration.CertificatePasswordProvider;
                 switch (privateKeyFormat)
                 {
                     case null:
                     case "":
                     {
-                        X509Certificate2 certWithPrivateKey = certificateGroup.ApplicationCertificate.LoadPrivateKey(password).Result;
+                        X509Certificate2 certWithPrivateKey = certificateGroup.ApplicationCertificate.LoadPrivateKeyEx(passwordProvider).Result;
                         updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPrivateKey(newCert, certWithPrivateKey);
                         break;
                     }
                     case "PFX":
                     {
-                        X509Certificate2 certWithPrivateKey = X509Utils.CreateCertificateFromPKCS12(privateKey, password);
+                        X509Certificate2 certWithPrivateKey = X509Utils.CreateCertificateFromPKCS12(privateKey, passwordProvider?.GetPassword(certificateGroup.ApplicationCertificate));
                         updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPrivateKey(newCert, certWithPrivateKey);
                         break;
                     }
                     case "PEM":
                     {
-                        updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPEMPrivateKey(newCert, privateKey, password);
+                        updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPEMPrivateKey(newCert, privateKey, passwordProvider?.GetPassword(certificateGroup.ApplicationCertificate));
                         break;
                     }
                 }
@@ -481,12 +481,13 @@ namespace Opc.Ua.Server
             {
                 try
                 {
-                    using (ICertificateStore appStore = CertificateStoreIdentifier.OpenStore(certificateGroup.ApplicationCertificate.StorePath))
+                    using (ICertificateStore appStore = certificateGroup.ApplicationCertificate.OpenStore())
                     {
-                        Utils.Trace(Utils.TraceMasks.Security, "Delete application certificate {0}", certificateGroup.ApplicationCertificate.Thumbprint);
+                        Utils.LogCertificate(Utils.TraceMasks.Security, "Delete application certificate: ", certificateGroup.ApplicationCertificate.Certificate);
                         appStore.Delete(certificateGroup.ApplicationCertificate.Thumbprint).Wait();
-                        Utils.Trace(Utils.TraceMasks.Security, "Add new application certificate {0}", updateCertificate.CertificateWithPrivateKey);
-                        appStore.Add(updateCertificate.CertificateWithPrivateKey).Wait();
+                        Utils.LogCertificate(Utils.TraceMasks.Security, "Add new application certificate: ", updateCertificate.CertificateWithPrivateKey);
+                        var passwordProvider = m_configuration.SecurityConfiguration.CertificatePasswordProvider;
+                        appStore.Add(updateCertificate.CertificateWithPrivateKey, passwordProvider?.GetPassword(certificateGroup.ApplicationCertificate)).Wait();
                         // keep only track of cert without private key
                         var certOnly = new X509Certificate2(updateCertificate.CertificateWithPrivateKey.RawData);
                         updateCertificate.CertificateWithPrivateKey.Dispose();
@@ -498,7 +499,7 @@ namespace Opc.Ua.Server
                         {
                             try
                             {
-                                Utils.Trace(Utils.TraceMasks.Security, "Add new issuer certificate {0}", issuer);
+                                Utils.LogCertificate(Utils.TraceMasks.Security, "Add new issuer certificate: ", issuer);
                                 issuerStore.Add(issuer).Wait();
                             }
                             catch (ArgumentException)
@@ -510,7 +511,7 @@ namespace Opc.Ua.Server
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(Utils.TraceMasks.Security, ServiceResult.BuildExceptionTrace(ex));
+                    Utils.LogError(Utils.TraceMasks.Security, ServiceResult.BuildExceptionTrace(ex));
                     throw new ServiceResultException(StatusCodes.BadSecurityChecksFailed, "Failed to update certificate.", ex);
                 }
             }
@@ -535,14 +536,15 @@ namespace Opc.Ua.Server
 
             if (!String.IsNullOrEmpty(subjectName))
             {
-                throw new ArgumentException(nameof(subjectName));
+                throw new ArgumentNullException(nameof(subjectName));
             }
 
             // TODO: implement regeneratePrivateKey
             // TODO: use nonce for generating the private key
 
-            string password = String.Empty;
-            X509Certificate2 certWithPrivateKey = certificateGroup.ApplicationCertificate.LoadPrivateKey(password).Result;
+            var passwordProvider = m_configuration.SecurityConfiguration.CertificatePasswordProvider;
+            X509Certificate2 certWithPrivateKey = certificateGroup.ApplicationCertificate.LoadPrivateKeyEx(passwordProvider).Result;
+            Utils.LogCertificate(Utils.TraceMasks.Security, "Create signing request: ", certWithPrivateKey);
             certificateRequest = CertificateFactory.CreateSigningRequest(certWithPrivateKey, X509Utils.GetDomainsFromCertficate(certWithPrivateKey));
             return ServiceResult.Good;
         }
@@ -565,7 +567,8 @@ namespace Opc.Ua.Server
                     if (updateCertificate != null)
                     {
                         disconnectSessions = true;
-                        Utils.Trace((int)Utils.TraceMasks.Security, $"Apply Changes for certificate {updateCertificate.CertificateWithPrivateKey}");
+                        Utils.LogCertificate((int)Utils.TraceMasks.Security, "Apply Changes for certificate: ",
+                            updateCertificate.CertificateWithPrivateKey);
                     }
                 }
                 finally
@@ -577,11 +580,11 @@ namespace Opc.Ua.Server
             if (disconnectSessions)
             {
                 Task.Run(async () => {
-                    Utils.Trace((int)Utils.TraceMasks.Security, $"Apply Changes for application certificate update.");
+                    Utils.LogInfo((int)Utils.TraceMasks.Security, "Apply Changes for application certificate update.");
                     // give the client some time to receive the response
                     // before the certificate update may disconnect all sessions
                     await Task.Delay(1000).ConfigureAwait(false);
-                    await m_configuration.CertificateValidator.UpdateCertificate(m_configuration.SecurityConfiguration);
+                    await m_configuration.CertificateValidator.UpdateCertificate(m_configuration.SecurityConfiguration).ConfigureAwait(false);
                 }
                 );
             }
@@ -657,7 +660,7 @@ namespace Opc.Ua.Server
                 NamespacesState serverNamespacesNode = FindPredefinedNode(ObjectIds.Server_Namespaces, typeof(NamespacesState)) as NamespacesState;
                 if (serverNamespacesNode == null)
                 {
-                    Utils.Trace("Cannot find ObjectIds.Server_Namespaces node.");
+                    Utils.LogError("Cannot find ObjectIds.Server_Namespaces node.");
                     return null;
                 }
 
@@ -711,7 +714,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception ex)
             {
-                Utils.Trace(ex, "Error searching NamespaceMetadata for namespaceUri {0}.", namespaceUri);
+                Utils.LogError(ex, "Error searching NamespaceMetadata for namespaceUri {0}.", namespaceUri);
                 return null;
             }
         }

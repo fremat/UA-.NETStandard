@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2018 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2021 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -35,6 +35,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using NUnit.Framework;
+using Opc.Ua.Tests;
 
 namespace Opc.Ua.Security.Certificates.Tests
 {
@@ -48,10 +49,10 @@ namespace Opc.Ua.Security.Certificates.Tests
     {
         #region DataPointSources
         [DatapointSource]
-        public CRLAsset[] CRLTestCases = new AssetCollection<CRLAsset>(TestUtils.EnumerateTestAssets("*.crl")).ToArray();
+        public static readonly CRLAsset[] CRLTestCases = new AssetCollection<CRLAsset>(TestUtils.EnumerateTestAssets("*.crl")).ToArray();
 
         [DatapointSource]
-        public KeyHashPair[] KeyHashPairs = new KeyHashPairCollection {
+        public static readonly KeyHashPair[] KeyHashPairs = new KeyHashPairCollection {
             { 2048, HashAlgorithmName.SHA256 },
             { 3072, HashAlgorithmName.SHA384 },
             { 4096, HashAlgorithmName.SHA512 } }.ToArray();
@@ -64,7 +65,7 @@ namespace Opc.Ua.Security.Certificates.Tests
         [OneTimeSetUp]
         protected void OneTimeSetUp()
         {
-            m_issuerCert = CertificateBuilder.Create("CN=Root CA")
+            m_issuerCert = CertificateBuilder.Create("CN=Root CA, O=OPC Foundation")
                 .SetCAConstraint()
                 .CreateForRSA();
         }
@@ -100,7 +101,7 @@ namespace Opc.Ua.Security.Certificates.Tests
         [Test]
         public void CrlInternalBuilderTest()
         {
-            var dname = new X500DistinguishedName("CN=Test");
+            var dname = new X500DistinguishedName("CN=Test, O=OPC Foundation");
             var hash = HashAlgorithmName.SHA256;
             var crlBuilder = CrlBuilder.Create(dname, hash)
                 .SetNextUpdate(DateTime.Today.AddDays(30));
@@ -216,23 +217,23 @@ namespace Opc.Ua.Security.Certificates.Tests
         private string WriteCRL(X509CRL x509Crl)
         {
             var stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine($"Issuer:     {x509Crl.Issuer}");
-            stringBuilder.AppendLine($"ThisUpdate: {x509Crl.ThisUpdate}");
-            stringBuilder.AppendLine($"NextUpdate: {x509Crl.NextUpdate}");
-            stringBuilder.AppendLine($"RevokedCertificates:");
+            stringBuilder.Append("Issuer:     ").AppendLine(x509Crl.Issuer);
+            stringBuilder.Append("ThisUpdate: ").Append(x509Crl.ThisUpdate).AppendLine();
+            stringBuilder.Append("NextUpdate: ").Append(x509Crl.NextUpdate).AppendLine();
+            stringBuilder.AppendLine("RevokedCertificates:");
             foreach (var revokedCert in x509Crl.RevokedCertificates)
             {
-                stringBuilder.Append($"{revokedCert.SerialNumber:20}, {revokedCert.RevocationDate}, ");
+                stringBuilder.AppendFormat("{0:20}", revokedCert.SerialNumber).Append(", ").Append(revokedCert.RevocationDate).Append(", ");
                 foreach (var entryExt in revokedCert.CrlEntryExtensions)
                 {
-                    stringBuilder.Append($"{entryExt.Format(false)} ");
+                    stringBuilder.Append(entryExt.Format(false)).Append(' ');
                 }
                 stringBuilder.AppendLine("");
             }
-            stringBuilder.AppendLine($"Extensions:");
+            stringBuilder.AppendLine("Extensions:");
             foreach (var extension in x509Crl.CrlExtensions)
             {
-                stringBuilder.AppendLine($"{extension.Format(false)}");
+                stringBuilder.AppendLine(extension.Format(false));
             }
             return stringBuilder.ToString();
         }

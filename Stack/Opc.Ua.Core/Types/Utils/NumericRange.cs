@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -23,7 +23,7 @@ namespace Opc.Ua
     /// <remarks>
     /// A class that stores a numeric range.
     /// </remarks>
-	public struct NumericRange : IFormattable
+    public struct NumericRange : IFormattable, IEquatable<NumericRange>
     {
         #region Constructors
         /// <summary>
@@ -268,19 +268,24 @@ namespace Opc.Ua
         /// <param name="obj">The object to test against this</param>
         public override bool Equals(object obj)
         {
-            if (Object.ReferenceEquals(this, obj))
+            if (obj is NumericRange)
             {
-                return true;
+                return this.Equals((NumericRange)obj);
             }
 
-            NumericRange? range = obj as NumericRange?;
+            return false;
+        }
 
-            if (range == null)
-            {
-                return false;
-            }
-
-            return (range.Value.m_begin == m_begin) && (range.Value.m_end == m_end);
+        /// <summary>
+        /// Returns true if the objects are equal.
+        /// </summary>
+        /// <remarks>
+        /// Returns true if the objects are equal.
+        /// </remarks>
+        /// <param name="other">The NumericRange to test against this</param>
+        public bool Equals(NumericRange other)
+        {
+            return (other.m_begin == m_begin) && (other.m_end == m_end);
         }
 
         /// <summary>

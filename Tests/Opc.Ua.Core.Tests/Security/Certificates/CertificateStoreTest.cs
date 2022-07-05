@@ -27,7 +27,9 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -99,7 +101,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
                     StorePath = storePath,
                     StoreType = CertificateStoreType.X509Store
                 };
-                var privateKey = await id.LoadPrivateKey(null);
+                var privateKey = await id.LoadPrivateKey(null).ConfigureAwait(false);
                 Assert.NotNull(privateKey);
                 Assert.True(privateKey.HasPrivateKey);
 
@@ -108,7 +110,72 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
                 using (var x509Store = new X509CertificateStore())
                 {
                     x509Store.Open(storePath);
-                    await x509Store.Delete(publicKey.Thumbprint);
+                    await x509Store.Delete(publicKey.Thumbprint).ConfigureAwait(false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Verify new app certificate is stored in Directory Store
+        /// with password for private key (PFX).
+        /// </summary>
+        [Test]
+        public async Task VerifyAppCertDirectoryStore()
+        {
+            var appCertificate = GetTestCert();
+            Assert.NotNull(appCertificate);
+            Assert.True(appCertificate.HasPrivateKey);
+
+            string password = Guid.NewGuid().ToString();
+
+            // pki directory root for app cert
+            var pkiRoot = Path.GetTempPath() + Path.GetRandomFileName() + Path.DirectorySeparatorChar;
+            var storePath = pkiRoot + "own";
+            const string storeType = CertificateStoreType.Directory;
+            appCertificate.AddToStore(
+                storeType, storePath, password
+                );
+
+            using (var publicKey = new X509Certificate2(appCertificate.RawData))
+            {
+                Assert.NotNull(publicKey);
+                Assert.False(publicKey.HasPrivateKey);
+
+                var id = new CertificateIdentifier() {
+                    Thumbprint = publicKey.Thumbprint,
+                    StorePath = storePath,
+                    StoreType = storeType
+                };
+
+                {
+                    // check no password fails to load
+                    var nullKey = await id.LoadPrivateKey(null).ConfigureAwait(false);
+                    Assert.IsNull(nullKey);
+                }
+
+                {
+                    // check invalid password fails to load
+                    var nullKey = await id.LoadPrivateKey("123").ConfigureAwait(false);
+                    Assert.IsNull(nullKey);
+                }
+
+                {
+                    // check invalid password fails to load
+                    var nullKey = await id.LoadPrivateKeyEx(new CertificatePasswordProvider("123")).ConfigureAwait(false);
+                    Assert.IsNull(nullKey);
+                }
+
+                var privateKey = await id.LoadPrivateKeyEx(new CertificatePasswordProvider(password)).ConfigureAwait(false);
+
+                Assert.NotNull(privateKey);
+                Assert.True(privateKey.HasPrivateKey);
+
+                X509Utils.VerifyRSAKeyPair(publicKey, privateKey, true);
+
+                using (ICertificateStore store = Opc.Ua.CertificateStoreIdentifier.CreateStore(storeType))
+                {
+                    store.Open(storePath);
+                    await store.Delete(publicKey.Thumbprint).ConfigureAwait(false);
                 }
             }
         }
@@ -140,8 +207,9 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
 
         private static string[] GetCertStores()
         {
-            var result = new List<string>();
-            result.Add("CurrentUser\\My");
+            var result = new List<string> {
+                "CurrentUser\\My"
+            };
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 result.Add("CurrentUser\\UA_MachineDefault");
@@ -151,8 +219,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
         #endregion
 
         #region Private Fields
-        X509Certificate2 m_testCertificate;
+        private X509Certificate2 m_testCertificate;
         #endregion
     }
-
 }

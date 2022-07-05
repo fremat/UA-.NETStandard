@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -152,7 +152,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch
                 {
-                    Utils.Trace(Utils.TraceMasks.Error, "Failed to load the assembly {0} for transport binding {1}.",
+                    Utils.LogError("Failed to load the assembly {0} for transport binding {1}.",
                         fullName, scheme
                         );
                 }
@@ -160,12 +160,12 @@ namespace Opc.Ua.Bindings
                 if (assembly != null)
                 {
                     var listeners = AddBindings(assembly);
-                    return listeners.Count() > 0;
+                    return listeners.Any();
                 }
             }
             else
             {
-                Utils.Trace(Utils.TraceMasks.Error, "The transport binding {0} is unsupported.", scheme);
+                Utils.LogError("The transport binding {0} is unsupported.", scheme);
             }
             return false;
         }

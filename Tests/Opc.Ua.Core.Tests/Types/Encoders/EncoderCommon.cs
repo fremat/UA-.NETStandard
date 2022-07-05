@@ -50,12 +50,12 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
     [SetCulture("en-us")]
     public class EncoderCommon
     {
-        protected const int RandomStart = 4840;
-        protected const int RandomRepeats = 100;
-        protected const string ApplicationUri = "uri:localhost:opcfoundation.org:EncoderCommon";
+        protected const int kRandomStart = 4840;
+        protected const int kRandomRepeats = 100;
+        protected const string kApplicationUri = "uri:localhost:opcfoundation.org:EncoderCommon";
         protected RandomSource RandomSource { get; private set; }
         protected DataGenerator DataGenerator { get; private set; }
-        protected ServiceMessageContext Context { get; private set; }
+        protected IServiceMessageContext Context { get; private set; }
         protected NamespaceTable NameSpaceUris { get; private set; }
         protected StringTable ServerUris { get; private set; }
 
@@ -66,7 +66,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
             Context = new ServiceMessageContext();
             NameSpaceUris = Context.NamespaceUris;
             // namespace index 1 must be the ApplicationUri
-            NameSpaceUris.GetIndexOrAppend(ApplicationUri);
+            NameSpaceUris.GetIndexOrAppend(kApplicationUri);
             NameSpaceUris.GetIndexOrAppend(Namespaces.OpcUaGds);
             ServerUris = new StringTable();
         }
@@ -80,7 +80,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
         protected void SetUp()
         {
             // ensure tests are reproducible, reset for every test
-            RandomSource = new RandomSource(RandomStart);
+            RandomSource = new RandomSource(kRandomStart);
             DataGenerator = new DataGenerator(RandomSource);
         }
 
@@ -94,7 +94,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
         /// </summary>
         protected void SetRepeatedRandomSeed()
         {
-            int randomSeed = TestContext.CurrentContext.Random.Next() + RandomStart;
+            int randomSeed = TestContext.CurrentContext.Random.Next() + kRandomStart;
             RandomSource = new RandomSource(randomSeed);
             DataGenerator = new DataGenerator(RandomSource);
         }
@@ -104,14 +104,14 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
         /// </summary>
         protected void SetRandomSeed(int randomSeed)
         {
-            RandomSource = new RandomSource(randomSeed + RandomStart);
+            RandomSource = new RandomSource(randomSeed + kRandomStart);
             DataGenerator = new DataGenerator(RandomSource);
         }
         #endregion
 
         #region DataPointSources
         [DatapointSource]
-        public static BuiltInType[] BuiltInTypes = ((BuiltInType[])Enum.GetValues(typeof(BuiltInType)))
+        public static readonly BuiltInType[] BuiltInTypes = ((BuiltInType[])Enum.GetValues(typeof(BuiltInType)))
             .ToList().Where(b =>
                 (b != BuiltInType.Variant) &&
                 (b != BuiltInType.DiagnosticInfo) &&
@@ -120,7 +120,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
              ).ToArray();
 
         [DatapointSource]
-        public static EncodingType[] EncoderTypes = (EncodingType[])Enum.GetValues(typeof(EncodingType));
+        public static readonly EncodingType[] EncoderTypes = (EncodingType[])Enum.GetValues(typeof(EncodingType));
         #endregion
 
         #region Protected Methods
@@ -318,7 +318,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
         /// <returns></returns>
         protected IEncoder CreateEncoder(
             EncodingType encoderType,
-            ServiceMessageContext context,
+            IServiceMessageContext context,
             Stream stream,
             Type systemType,
             bool useReversibleEncoding = true,
@@ -337,8 +337,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
                     var xmlWriter = XmlWriter.Create(stream);
                     return new XmlEncoder(systemType, xmlWriter, context);
                 case EncodingType.Json:
-                    var streamWriter = new StreamWriter(stream, new System.Text.UTF8Encoding(false));
-                    return new JsonEncoder(context, useReversibleEncoding, streamWriter, topLevelIsArray) {
+                    return new JsonEncoder(context, useReversibleEncoding, topLevelIsArray, stream) {
                         IncludeDefaultValues = includeDefaultValues,
                         IncludeDefaultNumberValues = includeDefaultNumbers
                     };
@@ -351,7 +350,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
         /// </summary>
         protected IDecoder CreateDecoder(
             EncodingType decoderType,
-            ServiceMessageContext context,
+            IServiceMessageContext context,
             Stream stream,
             Type systemType
             )
@@ -361,7 +360,7 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
                 case EncodingType.Binary:
                     return new BinaryDecoder(stream, context);
                 case EncodingType.Xml:
-                    var xmlReader = XmlReader.Create(stream);
+                    var xmlReader = XmlReader.Create(stream, Utils.DefaultXmlReaderSettings());
                     return new XmlDecoder(systemType, xmlReader, context);
                 case EncodingType.Json:
                     var jsonTextReader = new JsonTextReader(new StreamReader(stream));
@@ -692,14 +691,14 @@ namespace Opc.Ua.Core.Tests.Types.Encoders
 
             public void Encode(IEncoder encoder)
             {
-                encoder.PushNamespace(ApplicationUri);
+                encoder.PushNamespace(kApplicationUri);
                 encoder.WriteString(FieldName, Foo);
                 encoder.PopNamespace();
             }
 
             public void Decode(IDecoder decoder)
             {
-                decoder.PushNamespace(ApplicationUri);
+                decoder.PushNamespace(kApplicationUri);
                 Foo = decoder.ReadString(FieldName);
                 decoder.PopNamespace();
             }

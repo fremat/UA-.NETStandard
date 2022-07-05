@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -216,16 +216,11 @@ namespace Opc.Ua.Schema
         /// </summary>
         protected static object LoadFile(System.Type type, string path)
         {
-            StreamReader reader = new StreamReader(new FileStream(path, FileMode.Open));
-
-            try
+            using (StreamReader reader = new StreamReader(new FileStream(path, FileMode.Open)))
+            using (XmlReader xmlReader = XmlReader.Create(reader, Utils.DefaultXmlReaderSettings()))
             {
                 XmlSerializer serializer = new XmlSerializer(type);
-                return serializer.Deserialize(reader);
-            }
-            finally
-            {
-                reader.Dispose();
+                return serializer.Deserialize(xmlReader);
             }
         }
 
@@ -234,16 +229,11 @@ namespace Opc.Ua.Schema
         /// </summary>
         protected static object LoadFile(System.Type type, Stream stream)
         {
-            StreamReader reader = new StreamReader(stream);
-
-            try
+            using (StreamReader reader = new StreamReader(stream))
+            using (XmlReader xmlReader = XmlReader.Create(reader, Utils.DefaultXmlReaderSettings()))
             {
                 XmlSerializer serializer = new XmlSerializer(type);
-                return serializer.Deserialize(reader);
-            }
-            finally
-            {
-                reader.Dispose();
+                return serializer.Deserialize(xmlReader);
             }
         }
 
@@ -259,17 +249,13 @@ namespace Opc.Ua.Schema
                     assembly = typeof(SchemaValidator).GetTypeInfo().Assembly;
                 }
 
-                StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(path));
-
-                try
+                using (StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(path)))
+                using (XmlReader xmlReader = XmlReader.Create(reader, Utils.DefaultXmlReaderSettings()))
                 {
                     XmlSerializer serializer = new XmlSerializer(type);
-                    return serializer.Deserialize(reader);
+                    return serializer.Deserialize(xmlReader);
                 }
-                finally
-                {
-                    reader.Dispose();
-                }
+
             }
             catch (Exception e)
             {
@@ -305,6 +291,7 @@ namespace Opc.Ua.Schema
         }
 
         #endregion
+
         #region Private Fields
         private Dictionary<string, string> m_knownFiles;
         private Dictionary<string, object> m_loadedFiles;

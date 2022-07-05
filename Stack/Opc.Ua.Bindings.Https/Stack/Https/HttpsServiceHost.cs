@@ -1,30 +1,14 @@
-/* ========================================================================
- * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
- *
- * OPC Reciprocal Community License ("RCL") Version 1.00
- * 
- * Unless explicitly acquired and licensed from Licensor under another 
- * license, the contents of this file are subject to the Reciprocal 
- * Community License ("RCL") Version 1.00, or subsequent versions 
- * as allowed by the RCL, and You may not copy or use this file in either 
- * source code or executable form, except in compliance with the terms and 
- * conditions of the RCL.
- * 
- * All software distributed under the RCL is provided strictly on an 
- * "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT 
- * LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
- * PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RCL for specific 
- * language governing rights and limitations under the RCL.
- *
- * The complete license agreement can be found here:
- * http://opcfoundation.org/License/RCL/1.00/
- * ======================================================================*/
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
+   The source code in this file is covered under a dual-license scenario:
+     - RCL: for OPC Foundation Corporate Members in good-standing
+     - GPL V2: everybody else
+   RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
+   GNU General Public License as published by the Free Software Foundation;
+*/
 
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 
 
 namespace Opc.Ua.Bindings
@@ -52,7 +36,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         public List<EndpointDescription> CreateServiceHost(
             ServerBase serverBase,
-            IDictionary<string, Task> hosts,
+            IDictionary<string, ServiceHost> hosts,
             ApplicationConfiguration configuration,
             IList<string> baseAddresses,
             ApplicationDescription serverDescription,
@@ -62,12 +46,7 @@ namespace Opc.Ua.Bindings
             )
         {
             // generate a unique host name.
-            string hostName = String.Empty;
-
-            if (hosts.ContainsKey(hostName))
-            {
-                hostName = "/Https";
-            }
+            string hostName = hostName = "/Https";
 
             if (hosts.ContainsKey(hostName))
             {
@@ -96,7 +75,7 @@ namespace Opc.Ua.Bindings
                     uri.Path += "/";
                 }
 
-                if (String.Compare(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) == 0)
+                if (String.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
                 {
                     uri.Host = computerName;
                 }
@@ -164,9 +143,14 @@ namespace Opc.Ua.Bindings
                     }
                     else
                     {
-                        Utils.Trace(Utils.TraceMasks.Error, "Failed to create endpoint {0} because the transport profile is unsupported.", uri);
+                        Utils.LogError("Failed to create endpoint {0} because the transport profile is unsupported.", uri);
                     }
                 }
+
+                // create the host.
+                ServiceHost serviceHost = serverBase.CreateServiceHost(serverBase, uris.ToArray());
+
+                hosts[hostName] = serviceHost;
             }
 
             return endpoints;

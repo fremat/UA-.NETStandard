@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -12,6 +12,7 @@
 
 using System;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Opc.Ua
@@ -75,7 +76,7 @@ namespace Opc.Ua
         /// <returns></returns>
         public static DiscoveryClient Create(Uri discoveryUrl)
         {
-            return DiscoveryClient.Create(discoveryUrl, null);
+            return DiscoveryClient.Create(discoveryUrl, null, null);
         }
 
         /// <summary>
@@ -129,12 +130,7 @@ namespace Opc.Ua
 
             try
             {
-                if (applicationConfiguration != null &&
-                    applicationConfiguration.SecurityConfiguration != null &&
-                    applicationConfiguration.SecurityConfiguration.ApplicationCertificate != null)
-                {
-                    clientCertificate = applicationConfiguration.SecurityConfiguration.ApplicationCertificate.Find(true).Result;
-                }
+                clientCertificate = applicationConfiguration?.SecurityConfiguration?.ApplicationCertificate?.Find(true).Result;
             }
             catch
             {
@@ -173,7 +169,7 @@ namespace Opc.Ua
         /// <returns></returns>
         public async virtual Task<EndpointDescriptionCollection> GetEndpointsAsync(StringCollection profileUris)
         {
-            var endpoints = await GetEndpointsAsync(null, this.Endpoint.EndpointUrl, null, profileUris);
+            var endpoints = await GetEndpointsAsync(null, this.Endpoint.EndpointUrl, null, profileUris).ConfigureAwait(false);
             return PatchEndpointUrls(endpoints);
         }
 
@@ -194,6 +190,22 @@ namespace Opc.Ua
                 out servers);
 
             return servers;
+        }
+
+        /// <summary>
+        /// Invokes the FindServers service async.
+        /// </summary>
+        /// <param name="serverUris">The collection of server URIs.</param>
+        /// <returns></returns>
+        public virtual async Task<ApplicationDescriptionCollection> FindServersAsync(StringCollection serverUris)
+        {
+            var response = await FindServersAsync(
+                null,
+                this.Endpoint.EndpointUrl,
+                null,
+                serverUris,
+                CancellationToken.None).ConfigureAwait(false);
+            return response.Servers;
         }
 
         /// <summary>
@@ -223,6 +235,7 @@ namespace Opc.Ua
             return servers;
         }
         #endregion
+
         #region Private Methods
         /// <summary>
         /// Helper to get endpoints async.
@@ -260,11 +273,10 @@ namespace Opc.Ua
                 foreach (EndpointDescription discoveryEndPoint in endpoints)
                 {
                     Uri discoveryEndPointUri = Utils.ParseUri(discoveryEndPoint.EndpointUrl);
-                    if (endpointUrl.Scheme == discoveryEndPointUri.Scheme)
+                    if  ( (endpointUrl.Scheme == discoveryEndPointUri.Scheme) && (endpointUrl.Port == discoveryEndPointUri.Port))
                     {
                         UriBuilder builder = new UriBuilder(discoveryEndPointUri);
                         builder.Host = endpointUrl.DnsSafeHost;
-                        builder.Port = endpointUrl.Port;
                         discoveryEndPoint.EndpointUrl = builder.ToString();
                     }
 
@@ -298,7 +310,7 @@ namespace Opc.Ua
         public static ITransportChannel Create(
             Uri discoveryUrl,
             EndpointConfiguration endpointConfiguration,
-            ServiceMessageContext messageContext,
+            IServiceMessageContext messageContext,
             X509Certificate2 clientCertificate = null)
         {
             // create a dummy description.
@@ -327,7 +339,7 @@ namespace Opc.Ua
             ApplicationConfiguration configuration,
             ITransportWaitingConnection connection,
             EndpointConfiguration endpointConfiguration,
-            ServiceMessageContext messageContext,
+            IServiceMessageContext messageContext,
             X509Certificate2 clientCertificate = null)
         {
             // create a default description.
@@ -358,7 +370,7 @@ namespace Opc.Ua
             ApplicationConfiguration configuration,
             Uri discoveryUrl,
             EndpointConfiguration endpointConfiguration,
-            ServiceMessageContext messageContext,
+            IServiceMessageContext messageContext,
             X509Certificate2 clientCertificate = null)
         {
             // create a default description.

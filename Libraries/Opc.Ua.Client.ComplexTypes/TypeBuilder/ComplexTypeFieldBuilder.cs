@@ -27,7 +27,6 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
-
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -52,7 +51,7 @@ namespace Opc.Ua.Client.ComplexTypes
             m_structureBuilder = structureBuilder;
             m_structureType = structureType;
         }
-        #endregion
+        #endregion Constructors
 
         #region Public Properties
         /// <summary>
@@ -126,11 +125,15 @@ namespace Opc.Ua.Client.ComplexTypes
             m_structureBuilder = null;
             return complexType;
         }
+        #endregion Public Properties
+
+        #region Internal Properties
+        internal TypeBuilder StructureTypeBuilder { get => this.m_structureBuilder; }
         #endregion
 
         #region Private Member
         private TypeBuilder m_structureBuilder;
         private StructureType m_structureType;
-        #endregion
+        #endregion Private Member
     }
 }//namespace

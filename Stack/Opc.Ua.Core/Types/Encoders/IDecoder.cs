@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -28,7 +28,7 @@ namespace Opc.Ua
         /// <summary>
         /// The message context associated with the decoder.
         /// </summary>
-        ServiceMessageContext Context { get; }
+        IServiceMessageContext Context { get; }
 
         /// <summary>
         /// Initializes the tables used to map namespace and server uris during decoding.
@@ -324,5 +324,10 @@ namespace Opc.Ua
         /// Reads an enumerated value array from the stream.
         /// </summary>
         Array ReadEnumeratedArray(string fieldName, System.Type enumType);
+
+        /// <summary>
+        /// Reads an array with the specified valueRank and the specified BuiltInType
+        /// </summary>
+        object ReadArray(string fieldName, int valueRank, BuiltInType builtInType, ExpandedNodeId encodeableTypeId = null);
     }
 }

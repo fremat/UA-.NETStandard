@@ -1,16 +1,33 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
-   The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
-     - GPL V2: everybody else
-   RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
-   GNU General Public License as published by the Free Software Foundation;
-   version 2 of the License are accompanied with this source code. See http://opcfoundation.org/License/GPLv2
-   This source code is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*/
+/* ========================================================================
+ * Copyright (c) 2005-2021 The OPC Foundation, Inc. All rights reserved.
+ *
+ * OPC Foundation MIT License 1.00
+ * 
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ * 
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * The complete license agreement can be found here:
+ * http://opcfoundation.org/License/MIT/1.00/
+ * ======================================================================*/
 
-#if !NETSTANDARD2_1
+#if !NETSTANDARD2_1 && !NET5_0_OR_GREATER
 using System;
 using System.IO;
 using System.Linq;
@@ -20,7 +37,6 @@ using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
-using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 
@@ -90,15 +106,9 @@ namespace Opc.Ua.Security.Certificates.BouncyCastle
         /// </summary>
         internal static RsaKeyParameters GetPublicKeyParameter(X509Certificate2 certificate)
         {
-            RSA rsa = null;
-            try
+            using (RSA rsa = certificate.GetRSAPublicKey())
             {
-                rsa = certificate.GetRSAPublicKey();
                 return GetPublicKeyParameter(rsa);
-            }
-            finally
-            {
-                RsaUtils.RSADispose(rsa);
             }
         }
 
@@ -120,16 +130,10 @@ namespace Opc.Ua.Security.Certificates.BouncyCastle
         /// </summary>
         internal static RsaPrivateCrtKeyParameters GetPrivateKeyParameter(X509Certificate2 certificate)
         {
-            RSA rsa = null;
-            try
+            // try to get signing/private key from certificate passed in
+            using (RSA rsa = certificate.GetRSAPrivateKey())
             {
-                // try to get signing/private key from certificate passed in
-                rsa = certificate.GetRSAPrivateKey();
                 return GetPrivateKeyParameter(rsa);
-            }
-            finally
-            {
-                RsaUtils.RSADispose(rsa);
             }
         }
 
@@ -172,6 +176,20 @@ namespace Opc.Ua.Security.Certificates.BouncyCastle
                 return subjectDN[0].ToString();
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Create secure temporary passcode.
+        /// </summary>
+        internal static string GeneratePasscode()
+        {
+            const int kLength = 18;
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                byte[] tokenBuffer = new byte[kLength];
+                rng.GetBytes(tokenBuffer);
+                return Convert.ToBase64String(tokenBuffer);
+            }
         }
         #endregion
     }

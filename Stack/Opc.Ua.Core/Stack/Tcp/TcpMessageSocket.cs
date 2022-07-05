@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -22,7 +22,6 @@ namespace Opc.Ua.Bindings
     /// <summary>
     /// Creates a transport channel with UA-TCP transport, UA-SC security and UA Binary encoding
     /// </summary>
-
     public class TcpTransportChannel : UaSCUaBinaryTransportChannel
     {
         /// <summary>
@@ -97,12 +96,12 @@ namespace Opc.Ua.Bindings
         {
             add
             {
-                m_internalComplete += value;
+                m_InternalComplete += value;
                 m_args.Completed += OnComplete;
             }
             remove
             {
-                m_internalComplete -= value;
+                m_InternalComplete -= value;
                 m_args.Completed -= OnComplete;
             }
         }
@@ -115,7 +114,7 @@ namespace Opc.Ua.Bindings
                 return;
             }
 
-            m_internalComplete(this, e.UserToken as IMessageSocketAsyncEventArgs);
+            m_InternalComplete(this, e.UserToken as IMessageSocketAsyncEventArgs);
         }
 
         /// <inheritdoc/>
@@ -137,7 +136,7 @@ namespace Opc.Ua.Bindings
         public SocketAsyncEventArgs Args => m_args;
 
         private SocketAsyncEventArgs m_args;
-        private event EventHandler<IMessageSocketAsyncEventArgs> m_internalComplete;
+        private event EventHandler<IMessageSocketAsyncEventArgs> m_InternalComplete;
     }
 
     /// <summary>
@@ -212,7 +211,6 @@ namespace Opc.Ua.Bindings
         private SocketError m_socketError;
     }
 
-
     /// <summary>
     /// Creates a new TcpMessageSocket with IMessageSocket interface.
     /// </summary>
@@ -236,16 +234,14 @@ namespace Opc.Ua.Bindings
         /// </summary>
         /// <value>The implementation string.</value>
         public string Implementation => "UA-TCP";
-
     }
-
 
     /// <summary>
     /// Handles reading and writing of message chunks over a socket.
     /// </summary>
     public class TcpMessageSocket : IMessageSocket
     {
-        private static readonly int DefaultRetryNextAddressTimeout = 1000;
+        private static readonly int s_defaultRetryNextAddressTimeout = 1000;
 
         #region Constructors
         /// <summary>
@@ -295,6 +291,7 @@ namespace Opc.Ua.Bindings
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -316,6 +313,15 @@ namespace Opc.Ua.Bindings
         /// <value>The socket handle.</value>
         public int Handle => m_socket != null ? m_socket.GetHashCode() : -1;
 
+        /// <summary>
+        /// Gets the local endpoint.
+        /// </summary>
+        /// <exception cref="System.Net.Sockets.SocketException">An error occurred when attempting to access the socket.
+        /// See the Remarks section for more information.</exception>
+        /// <exception cref="System.ObjectDisposedException">The System.Net.Sockets.Socket has been closed.</exception>
+        /// <returns>The System.Net.EndPoint that the System.Net.Sockets.Socket is using for communications.</returns>
+        public EndPoint LocalEndpoint => m_socket.LocalEndPoint;
+        
         /// <summary>
         /// Gets the transport channel features implemented by this message socket.
         /// </summary>
@@ -340,11 +346,15 @@ namespace Opc.Ua.Bindings
             try
             {
                 // Get DNS host information
+#if NET6_0_OR_GREATER
+                hostAdresses = await Dns.GetHostAddressesAsync(endpointUrl.DnsSafeHost, cts).ConfigureAwait(false);
+#else
                 hostAdresses = await Dns.GetHostAddressesAsync(endpointUrl.DnsSafeHost).ConfigureAwait(false);
+#endif
             }
             catch (SocketException e)
             {
-                Utils.Trace("Name resolution failed for: {0} Error: {1}", endpointUrl.DnsSafeHost, e.Message);
+                Utils.LogWarning("Name resolution failed for: {0} Error: {1}", endpointUrl.DnsSafeHost, e.Message);
                 error = e.SocketErrorCode;
                 goto ErrorExit;
             }
@@ -406,16 +416,15 @@ namespace Opc.Ua.Bindings
                     arrayV4Index++;
                 }
 
-
                 moreAddresses = addressesV6.Length > arrayV6Index || addressesV4.Length > arrayV4Index;
                 if (moreAddresses && !m_tcs.Task.IsCompleted)
                 {
-                    await Task.Delay(DefaultRetryNextAddressTimeout, cts).ContinueWith(tsk => {
+                    await Task.Delay(s_defaultRetryNextAddressTimeout, cts).ContinueWith(tsk => {
                         if (tsk.IsCanceled)
                         {
                             moreAddresses = false;
                         }
-                    }).ConfigureAwait(false);
+                    }, cts).ConfigureAwait(false);
                 }
 
                 if (!moreAddresses || m_tcs.Task.IsCompleted)
@@ -460,7 +469,7 @@ namespace Opc.Ua.Bindings
                     }
                     catch (Exception e)
                     {
-                        Utils.Trace(e, "Unexpected error closing socket.");
+                        Utils.LogError(e, "Unexpected error closing socket.");
                     }
                     finally
                     {
@@ -534,7 +543,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(ex, "Unexpected error during OnReadComplete,");
+                    Utils.LogError(ex, "Unexpected error during OnReadComplete,");
                     error = ServiceResult.Create(ex, StatusCodes.BadTcpInternalError, ex.Message);
                 }
                 finally
@@ -569,8 +578,6 @@ namespace Opc.Ua.Bindings
                 BufferManager.UnlockBuffer(m_receiveBuffer);
             }
 
-            Utils.TraceDebug("Bytes read: {0}", bytesRead);
-
             if (bytesRead == 0)
             {
                 // Remote end has closed the connection
@@ -602,7 +609,7 @@ namespace Opc.Ua.Bindings
 
                 if (m_incomingMessageSize <= 0 || m_incomingMessageSize > m_receiveBufferSize)
                 {
-                    Utils.Trace(
+                    Utils.LogError(
                         "BadTcpMessageTooLarge: BufferSize={0}; MessageSize={1}",
                         m_receiveBufferSize,
                         m_incomingMessageSize);
@@ -639,7 +646,7 @@ namespace Opc.Ua.Bindings
                 }
                 catch (Exception ex)
                 {
-                    Utils.Trace(ex, "Unexpected error invoking OnMessageReceived callback.");
+                    Utils.LogError(ex, "Unexpected error invoking OnMessageReceived callback.");
                 }
             }
 

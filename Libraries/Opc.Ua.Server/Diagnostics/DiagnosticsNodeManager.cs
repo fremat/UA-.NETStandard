@@ -141,9 +141,9 @@ namespace Opc.Ua.Server
                 Server.CoreNodeManager.ImportNodes(SystemContext, PredefinedNodes.Values, true);
 
                 // hook up the server GetMonitoredItems method.
-                MethodState getMonitoredItems = (MethodState)FindPredefinedNode(
+                GetMonitoredItemsMethodState getMonitoredItems = (GetMonitoredItemsMethodState)FindPredefinedNode(
                     MethodIds.Server_GetMonitoredItems,
-                    typeof(MethodState));
+                    typeof(GetMonitoredItemsMethodState));
 
                 if (getMonitoredItems != null)
                 {
@@ -169,11 +169,86 @@ namespace Opc.Ua.Server
                         getMonitoredItemsOutputArguments.ClearChangeMasks(SystemContext, false);
                     }
                 }
+
+#if SUPPORT_DURABLE_SUBSCRIPTION
+                // hook up the server SetSubscriptionDurable method.
+                SetSubscriptionDurableMethodState setSubscriptionDurable= (SetSubscriptionDurableMethodState)FindPredefinedNode(
+                    MethodIds.Server_SetSubscriptionDurable,
+                    typeof(SetSubscriptionDurableMethodState));
+
+                if (setSubscriptionDurable != null)
+                {
+                    setSubscriptionDurable.OnCall = OnSetSubscriptionDurable;
+                }
+#else
+                // Subscription Durable mode not supported by the server.
+                ServerObjectState serverObject = (ServerObjectState)FindPredefinedNode(
+                    ObjectIds.Server,
+                    typeof(ServerObjectState));
+
+                if (serverObject != null)
+                {
+                    NodeState setSubscriptionDurableNode = serverObject.FindChild(
+                        SystemContext,
+                        BrowseNames.SetSubscriptionDurable);
+
+                    if (setSubscriptionDurableNode != null)
+                    {
+                        DeleteNode(SystemContext, MethodIds.Server_SetSubscriptionDurable);
+                        serverObject.SetSubscriptionDurable = null;
+                    }
+                }
+#endif
+
+                // hookup server ResendData method.
+
+                ResendDataMethodState resendData = (ResendDataMethodState)FindPredefinedNode(
+                    MethodIds.Server_ResendData,
+                    typeof(ResendDataMethodState));
+
+                if (resendData != null)
+                {
+                    resendData.OnCallMethod = OnResendData;
+                }
             }
         }
 
         /// <summary>
-        /// Called when a client locks the server.
+        /// Called when a client sets a subscription as durable.
+        /// </summary>
+
+        public ServiceResult OnSetSubscriptionDurable(
+            ISystemContext context,
+            MethodState method,
+            NodeId objectId,
+            uint subscriptionId,
+            uint lifetimeInHours,
+            ref uint revisedLifetimeInHours)
+        {
+            revisedLifetimeInHours = 0;
+
+            foreach (Subscription subscription in Server.SubscriptionManager.GetSubscriptions())
+            {
+                if (subscription.Id == subscriptionId)
+                {
+                    if (subscription.SessionId != context.SessionId)
+                    {
+                        // user tries to access subscription of different session
+                        return StatusCodes.BadUserAccessDenied;
+                    }
+
+                    ServiceResult result = subscription.SetSubscriptionDurable(lifetimeInHours, out uint revisedLifeTimeHours);
+
+                    revisedLifetimeInHours = revisedLifeTimeHours;
+                    return result;
+                }
+            }
+
+            return StatusCodes.BadSubscriptionIdInvalid;
+        }
+
+        /// <summary>
+        /// Called when a client gets the monitored items of a subscription.
         /// </summary>
         public ServiceResult OnGetMonitoredItems(
             ISystemContext context,
@@ -210,6 +285,46 @@ namespace Opc.Ua.Server
 
                     outputArguments[0] = serverHandles;
                     outputArguments[1] = clientHandles;
+
+                    return ServiceResult.Good;
+                }
+            }
+
+            return StatusCodes.BadSubscriptionIdInvalid;
+        }
+
+        /// <summary>
+        /// Called when a client initiates resending of all data monitored items in a Subscription.
+        /// </summary>
+        public ServiceResult OnResendData(
+            ISystemContext context,
+            MethodState method,
+            IList<object> inputArguments,
+            IList<object> outputArguments)
+        {
+            if (inputArguments == null || inputArguments.Count != 1)
+            {
+                return StatusCodes.BadInvalidArgument;
+            }
+
+            uint? subscriptionId = inputArguments[0] as uint?;
+
+            if (subscriptionId == null)
+            {
+                return StatusCodes.BadInvalidArgument;
+            }
+
+            foreach (Subscription subscription in Server.SubscriptionManager.GetSubscriptions())
+            {
+                if (subscription.Id == subscriptionId)
+                {
+                    if (subscription.SessionId != context.SessionId)
+                    {
+                        // user tries to access subscription of different session
+                        return StatusCodes.BadUserAccessDenied;
+                    }
+
+                    subscription.ResendData((OperationContext)((SystemContext)context)?.OperationContext);
 
                     return ServiceResult.Good;
                 }
@@ -308,6 +423,22 @@ namespace Opc.Ua.Server
 
                     return activeNode;
                 }
+                else if (passiveMethod.NodeId == MethodIds.ConditionType_ConditionRefresh2)
+                {
+                    ConditionRefresh2MethodState activeNode = new ConditionRefresh2MethodState(passiveMethod.Parent);
+                    activeNode.Create(context, passiveMethod);
+
+                    // replace the node in the parent.
+                    if (passiveMethod.Parent != null)
+                    {
+                        passiveMethod.Parent.ReplaceChild(context, activeNode);
+                    }
+
+                    activeNode.OnCall = OnConditionRefresh2;
+
+                    return activeNode;
+                }
+
 
                 return predefinedNode;
             }
@@ -343,6 +474,24 @@ namespace Opc.Ua.Server
                     return activeNode;
                 }
 
+                case ObjectTypes.HistoryServerCapabilitiesType:
+                {
+                    if (passiveNode is HistoryServerCapabilitiesState)
+                    {
+                        break;
+                    }
+
+                    HistoryServerCapabilitiesState activeNode = new HistoryServerCapabilitiesState(passiveNode.Parent);
+                    activeNode.Create(context, passiveNode);
+
+                    // replace the node in the parent.
+                    if (passiveNode.Parent != null)
+                    {
+                        passiveNode.Parent.ReplaceChild(context, activeNode);
+                    }
+
+                    return activeNode;
+                }
             }
 
             return predefinedNode;
@@ -365,6 +514,28 @@ namespace Opc.Ua.Server
             }
 
             Server.ConditionRefresh(systemContext.OperationContext, subscriptionId);
+
+            return ServiceResult.Good;
+        }
+
+        /// <summary>
+        /// Handles a request to refresh conditions for a subscription and specific monitored item.
+        /// </summary>
+        private ServiceResult OnConditionRefresh2(
+            ISystemContext context,
+            MethodState method,
+            NodeId objectId,
+            uint subscriptionId,
+            uint monitoredItemId)
+        {
+            ServerSystemContext systemContext = context as ServerSystemContext;
+
+            if (systemContext == null)
+            {
+                systemContext = this.SystemContext;
+            }
+
+            Server.ConditionRefresh2(systemContext.OperationContext, subscriptionId, monitoredItemId);
 
             return ServiceResult.Good;
         }
@@ -864,40 +1035,49 @@ namespace Opc.Ua.Server
                     return m_historyCapabilities;
                 }
 
-                HistoryServerCapabilitiesState state = new HistoryServerCapabilitiesState(null);
+                // search the Node in PredefinedNodes.
+                HistoryServerCapabilitiesState historyServerCapabilitiesNode = (HistoryServerCapabilitiesState)FindPredefinedNode(
+                    ObjectIds.HistoryServerCapabilities,
+                    typeof(HistoryServerCapabilitiesState));
 
-                NodeId nodeId = CreateNode(
-                    SystemContext,
-                    null,
-                    ReferenceTypeIds.HasComponent,
-                    new QualifiedName(BrowseNames.HistoryServerCapabilities),
-                    state);
-
-                state.AccessHistoryDataCapability.Value = false;
-                state.AccessHistoryEventsCapability.Value = false;
-                state.MaxReturnDataValues.Value = 0;
-                state.MaxReturnEventValues.Value = 0;
-                state.ReplaceDataCapability.Value = false;
-                state.UpdateDataCapability.Value = false;
-                state.InsertEventCapability.Value = false;
-                state.ReplaceEventCapability.Value = false;
-                state.UpdateEventCapability.Value = false;
-                state.InsertAnnotationCapability.Value = false;
-                state.InsertDataCapability.Value = false;
-                state.DeleteRawCapability.Value = false;
-                state.DeleteAtTimeCapability.Value = false;
-
-                NodeState parent = FindPredefinedNode(ObjectIds.Server_ServerCapabilities, typeof(ServerCapabilitiesState));
-
-                if (parent != null)
+                if (historyServerCapabilitiesNode == null)
                 {
-                    parent.AddReference(ReferenceTypes.HasComponent, false, state.NodeId);
-                    state.AddReference(ReferenceTypes.HasComponent, true, parent.NodeId);
+                    // create new node if not found.
+                    historyServerCapabilitiesNode = new HistoryServerCapabilitiesState(null);
+
+                    NodeId nodeId = CreateNode(
+                        SystemContext,
+                        null,
+                        ReferenceTypeIds.HasComponent,
+                        new QualifiedName(BrowseNames.HistoryServerCapabilities),
+                        historyServerCapabilitiesNode);
+
+                    historyServerCapabilitiesNode.AccessHistoryDataCapability.Value = false;
+                    historyServerCapabilitiesNode.AccessHistoryEventsCapability.Value = false;
+                    historyServerCapabilitiesNode.MaxReturnDataValues.Value = 0;
+                    historyServerCapabilitiesNode.MaxReturnEventValues.Value = 0;
+                    historyServerCapabilitiesNode.ReplaceDataCapability.Value = false;
+                    historyServerCapabilitiesNode.UpdateDataCapability.Value = false;
+                    historyServerCapabilitiesNode.InsertEventCapability.Value = false;
+                    historyServerCapabilitiesNode.ReplaceEventCapability.Value = false;
+                    historyServerCapabilitiesNode.UpdateEventCapability.Value = false;
+                    historyServerCapabilitiesNode.InsertAnnotationCapability.Value = false;
+                    historyServerCapabilitiesNode.InsertDataCapability.Value = false;
+                    historyServerCapabilitiesNode.DeleteRawCapability.Value = false;
+                    historyServerCapabilitiesNode.DeleteAtTimeCapability.Value = false;
+
+                    NodeState parent = FindPredefinedNode(ObjectIds.Server_ServerCapabilities, typeof(ServerCapabilitiesState));
+
+                    if (parent != null)
+                    {
+                        parent.AddReference(ReferenceTypes.HasComponent, false, historyServerCapabilitiesNode.NodeId);
+                        historyServerCapabilitiesNode.AddReference(ReferenceTypes.HasComponent, true, parent.NodeId);
+                    }
+
+                    AddPredefinedNode(SystemContext, historyServerCapabilitiesNode);
                 }
 
-                AddPredefinedNode(SystemContext, state);
-
-                m_historyCapabilities = state;
+                m_historyCapabilities = historyServerCapabilitiesNode;
                 return m_historyCapabilities;
             }
         }
@@ -1359,7 +1539,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error during diagnostics scan.");
+                Utils.LogError(e, "Unexpected error during diagnostics scan.");
             }
         }
 
@@ -1776,7 +1956,7 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {
-                Utils.Trace(e, "Unexpected error during diagnostics scan.");
+                Utils.LogError(e, "Unexpected error during diagnostics scan.");
             }
         }
         #endregion
