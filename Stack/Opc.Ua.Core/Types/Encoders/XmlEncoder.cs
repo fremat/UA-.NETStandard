@@ -905,6 +905,14 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        /// Writes an enumerated value array to the stream.
+        /// </summary>
+        public void WriteEnumerated<T>(string fieldName, T value) where T : struct, Enum
+        {
+            WriteEnumerated(fieldName, (Enum)value);
+        }
+
+        /// <summary>
         /// Writes a boolean array to the stream.
         /// </summary>
         public void WriteBooleanArray(string fieldName, IList<bool> values)

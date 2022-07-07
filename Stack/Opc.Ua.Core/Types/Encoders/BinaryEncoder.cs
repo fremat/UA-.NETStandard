@@ -1060,6 +1060,15 @@ namespace Opc.Ua
             WriteInt32(null, Convert.ToInt32(value, CultureInfo.InvariantCulture));
         }
 
+
+        /// <summary>
+        /// Writes an enumerated value array to the stream.
+        /// </summary>
+        public void WriteEnumerated<T>(string fieldName, T value) where T : struct, Enum
+        {
+            WriteEnumerated(fieldName, (Enum)value);
+        }
+
         /// <summary>
         /// Writes a boolean array to the stream.
         /// </summary>
