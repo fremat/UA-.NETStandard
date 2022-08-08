@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2022 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -30,6 +30,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using Opc.Ua.Bindings;
 
 #pragma warning disable 0618
 
@@ -66,11 +67,11 @@ namespace Opc.Ua.Server
         /// <param name="certificateValidator">The certificate validator.</param>
         /// <param name="instanceCertificate">The instance certificate.</param>
         public ServerInternalData(
-            ServerProperties                     serverDescription,
-            ApplicationConfiguration             configuration,
-            ServiceMessageContext                messageContext,
-            CertificateValidator                 certificateValidator,
-            X509Certificate2                     instanceCertificate)
+            ServerProperties serverDescription,
+            ApplicationConfiguration configuration,
+            IServiceMessageContext messageContext,
+            CertificateValidator certificateValidator,
+            X509Certificate2 instanceCertificate)
         {
             m_serverDescription = serverDescription;
             m_configuration = configuration;
@@ -94,10 +95,6 @@ namespace Opc.Ua.Server
             m_serverUris = new StringTable();
             m_typeTree = new TypeTable(m_namespaceUris);
 
-#if LEGACY_CORENODEMANAGER
-            m_typeSources = new TypeSourceTable();
-#endif
-
             // add the server uri to the server table.
             m_serverUris.Append(m_configuration.ApplicationUri);
 
@@ -113,6 +110,7 @@ namespace Opc.Ua.Server
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -170,9 +168,9 @@ namespace Opc.Ua.Server
         /// <param name="resourceManager">The resource manager.</param>
         /// <param name="requestManager">The request manager.</param>
         public void CreateServerObject(
-            EventManager      eventManager,
-            ResourceManager   resourceManager, 
-            RequestManager    requestManager)
+            EventManager eventManager,
+            ResourceManager resourceManager,
+            RequestManager requestManager)
         {
             m_eventManager = eventManager;
             m_resourceManager = resourceManager;
@@ -188,7 +186,7 @@ namespace Opc.Ua.Server
         /// <param name="sessionManager">The session manager.</param>
         /// <param name="subscriptionManager">The subscription manager.</param>
         public void SetSessionManager(
-            SessionManager      sessionManager, 
+            SessionManager sessionManager,
             SubscriptionManager subscriptionManager)
         {
             m_sessionManager = sessionManager;
@@ -212,7 +210,7 @@ namespace Opc.Ua.Server
         /// The context to use when serializing/deserializing extension objects.
         /// </summary>
         /// <value>The message context.</value>
-        public ServiceMessageContext MessageContext
+        public IServiceMessageContext MessageContext
         {
             get { return m_messageContext; }
         }
@@ -248,11 +246,10 @@ namespace Opc.Ua.Server
         /// The factory used to create encodeable objects that the server understands.
         /// </summary>
         /// <value>The factory.</value>
-        public EncodeableFactory Factory
+        public IEncodeableFactory Factory
         {
             get { return m_factory; }
         }
-
 
         /// <summary>
         /// The datatypes, object types and variable types known to the server.
@@ -267,23 +264,6 @@ namespace Opc.Ua.Server
         {
             get { return m_typeTree; }
         }
-
-#if LEGACY_CORENODEMANAGER
-
-        /// <summary>
-        /// Returns the source for a types that has shared components defined.
-        /// </summary>
-        /// <value>The type sources.</value>
-        /// <remarks>
-        /// Some types define shared components which are used by all instances of the type. This
-        /// table contains sources for those shared components. The namespace qualified browse name
-        /// is assumed to be a unique identifier for a type.
-        /// </remarks>
-        public TypeSourceTable TypeSources
-        {
-            get { return m_typeSources; } 
-        }
-#endif
 
         /// <summary>
         /// The master node manager for the server.
@@ -302,7 +282,6 @@ namespace Opc.Ua.Server
         {
             get { return m_coreNodeManager; }
         }
-
 
         /// <summary>
         /// Returns the node manager that managers the server diagnostics.
@@ -445,19 +424,6 @@ namespace Opc.Ua.Server
             get { return m_serverDiagnostics; }
         }
 
-#if LEGACY_CORENODEMANAGER
-
-        /// <summary>
-        /// Returns the diagnostics object for the server.
-        /// </summary>
-        /// <value>The diagnostics.</value>
-        public ServerDiagnostics Diagnostics
-        {
-            get { return null; }
-        }
-#endif
-
-
         /// <summary>
         /// Whether the server is currently running.
         /// </summary>
@@ -535,10 +501,7 @@ namespace Opc.Ua.Server
         /// <param name="e">The event.</param>
         public void ReportEvent(IFilterTarget e)
         {
-            if (m_serverObject != null)
-            {
-                m_serverObject.ReportEvent(this.DefaultSystemContext, e);
-            }
+            ReportEvent(DefaultSystemContext, e);
         }
 
         /// <summary>
@@ -548,6 +511,12 @@ namespace Opc.Ua.Server
         /// <param name="e">The event.</param>
         public void ReportEvent(ISystemContext context, IFilterTarget e)
         {
+            if (e is AuditEventState && (EventManager?.ServerAuditing == false))
+            {
+                // do not report auditing events if server Auditing flag is false
+                return;
+            }
+
             if (m_serverObject != null)
             {
                 m_serverObject.ReportEvent(context, e);
@@ -563,7 +532,539 @@ namespace Opc.Ua.Server
         {
             m_subscriptionManager.ConditionRefresh(context, subscriptionId);
         }
+
+        /// <summary>
+        /// Refreshes the conditions for the specified subscription.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="subscriptionId">The subscription identifier.</param>
+        /// <param name="monitoredItemId">The monitored item identifier.</param>
+        public void ConditionRefresh2(OperationContext context, uint subscriptionId, uint monitoredItemId)
+        {
+            m_subscriptionManager.ConditionRefresh2(context, subscriptionId, monitoredItemId);
+        }
+
         #endregion
+
+        #region Report Audit Events        
+
+        /// <summary>
+        ///  Reports all audit events for client certificate ServiceResultException. It goes recursively for all service results stored in the exception
+        /// </summary>
+        /// <param name="clientCertificate">The client certificate.</param>
+        /// <param name="exception">The Exception that triggers a certificate audit event.</param>
+        public void ReportAuditCertificateEvent(X509Certificate2 clientCertificate, Exception exception)
+        {
+            if (exception == null)
+            {
+                return;
+            }
+
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+                while (exception != null)
+                {
+                    if (exception is ServiceResultException sre && sre.InnerResult != null)
+                    {
+                        // Each validation step has a unique error status and audit event type that shall be reported if the check fails.
+                        ReportAuditCertificateEvent(systemContext, clientCertificate, sre);
+                    }
+                    exception = exception.InnerException;
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting ReportAuditCertificateDataMismatch event.");
+            }
+        }
+
+        /// <summary>
+        /// Report the audit certificate event for the specified ServiceResultException
+        /// </summary>
+        private void ReportAuditCertificateEvent(ServerSystemContext systemContext, X509Certificate2 clientCertificate, ServiceResultException sre)
+        {
+            try
+            {
+                if (StatusCode.IsBad(sre.InnerResult.Code))
+                {
+                    AuditCertificateEventState auditCertificateEventState = null;
+                    switch (sre.StatusCode)
+                    {
+                        case StatusCodes.BadCertificateTimeInvalid:
+                        case StatusCodes.BadCertificateIssuerTimeInvalid:
+                            // create AuditCertificateExpiredEventType
+                            auditCertificateEventState = new AuditCertificateExpiredEventState(null);
+                            break;
+                        case StatusCodes.BadCertificateInvalid:
+                        case StatusCodes.BadCertificateChainIncomplete:
+                        case StatusCodes.BadCertificatePolicyCheckFailed:
+                            // create AuditCertificateInvalidEventType
+                            auditCertificateEventState = new AuditCertificateInvalidEventState(null);
+                            break;
+                        case StatusCodes.BadCertificateUntrusted:
+                            // create AuditCertificateUntrustedEventType
+                            auditCertificateEventState = new AuditCertificateUntrustedEventState(null);
+                            break;
+                        case StatusCodes.BadCertificateRevoked:
+                        case StatusCodes.BadCertificateIssuerRevoked:
+                        case StatusCodes.BadCertificateRevocationUnknown:
+                        case StatusCodes.BadCertificateIssuerRevocationUnknown:
+                            // create AuditCertificateRevokedEventType
+                            auditCertificateEventState = new AuditCertificateRevokedEventState(null);
+                            break;
+                        case StatusCodes.BadCertificateUseNotAllowed:
+                        case StatusCodes.BadCertificateIssuerUseNotAllowed:
+                            // create AuditCertificateMismatchEventType
+                            auditCertificateEventState = new AuditCertificateMismatchEventState(null);
+                            break;
+                    }
+                    if (auditCertificateEventState != null)
+                    {
+                        auditCertificateEventState.Initialize(
+                              systemContext,
+                              null,
+                              EventSeverity.Min,
+                              sre.Message,
+                              false,
+                              DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                        auditCertificateEventState.SetChildValue(systemContext, BrowseNames.SourceName, "Security/Certificate", false);
+
+                        // set AuditSecurityEventType fields
+                        auditCertificateEventState.SetChildValue(systemContext, BrowseNames.StatusCodeId, (StatusCode)sre.InnerResult.StatusCode, false);
+
+                        // set AuditCertificateEventType fields
+                        auditCertificateEventState.SetChildValue(systemContext, BrowseNames.Certificate, clientCertificate?.RawData, false);
+
+                        ReportEvent(systemContext, auditCertificateEventState);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting ReportAuditCertificateDataMismatch event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports the AuditCertificateDataMismatchEventType for Invalid Uri
+        /// </summary>        
+        /// <param name="clientCertificate">The client certificate</param>
+        /// <param name="invalidHostName">The string that represents the host name passed in as part of the URL that is found to be invalid. If the host name was not invalid it can be null.</param>
+        /// <param name="invalidUri">The URI that was passed in and found to not match what is contained in the certificate. If the URI was not invalid it can be null.</param>
+        /// <param name="statusCode">The status code.</param>
+        public void ReportAuditCertificateDataMismatchEvent(X509Certificate2 clientCertificate, string invalidHostName, string invalidUri, StatusCode statusCode)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                // create AuditCertificateDataMismatchEventType
+                AuditCertificateDataMismatchEventState e = new AuditCertificateDataMismatchEventState(null);
+
+                e.Initialize(
+                   systemContext,
+                   null,
+                   EventSeverity.Min,
+                   null,
+                   StatusCode.IsGood(statusCode),
+                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Security/Certificate", false);
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, ObjectIds.Server, false);
+                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+                // set AuditSecurityEventType fields
+                e.SetChildValue(systemContext, BrowseNames.StatusCodeId, statusCode, false);
+                // set AuditCertificateEventType fields
+                e.SetChildValue(systemContext, BrowseNames.Certificate, clientCertificate?.RawData, false);
+                // set AuditCertificateDataMismatchEventState fields
+                e.SetChildValue(systemContext, BrowseNames.InvalidUri, invalidUri, false);
+                e.SetChildValue(systemContext, BrowseNames.InvalidHostname, invalidHostName, false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting ReportAuditCertificateDataMismatchEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Report the AuditCancelEventState
+        /// </summary>
+        /// <param name="sessionId">Session id of the current session</param>
+        /// <param name="requestHandle">The handle of the canceled request</param>
+        /// <param name="statusCode">The resulted status code of cancel request.</param>
+        public void ReportAuditCancelEvent(NodeId sessionId, uint requestHandle, StatusCode statusCode)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                // create AuditCancelEventState
+                AuditCancelEventState e = new AuditCancelEventState(null);
+
+                e.Initialize(
+                   systemContext,
+                   null,
+                   EventSeverity.Min,
+                   $"Cancel requested for sessionId: {sessionId} with requestHandle: {requestHandle}",
+                   StatusCode.IsGood(statusCode),
+                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Session/Cancel", false);
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, ObjectIds.Server, false);
+                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+                // set AuditSecurityEventType fields
+                e.SetChildValue(systemContext, BrowseNames.StatusCodeId, statusCode, false);
+                // set AuditSessionEventType fields
+                e.SetChildValue(systemContext, BrowseNames.SessionId, sessionId, false);
+                // set AuditCancelEventType fields
+                e.SetChildValue(systemContext, BrowseNames.RequestHandle, requestHandle, false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting ReportAuditCancelEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports a RoleMappingRuleChangedAuditEvent when a method is called on a RoleType instance
+        /// </summary>
+        /// <param name="roleStateObjectId"></param>
+        /// <param name="method"></param>
+        /// <param name="inputArguments"></param>
+        /// <param name="status"></param>
+        public void ReportRoleMappingRuleChangedAuditEvent(NodeId roleStateObjectId, MethodState method, object[] inputArguments, bool status)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                // create RoleMappingRuleChangedAuditEventState
+                RoleMappingRuleChangedAuditEventState e = new RoleMappingRuleChangedAuditEventState(null);
+
+                e.Initialize(
+                   systemContext,
+                   null,
+                   EventSeverity.Min,
+                   $"RoleMappingRuleChanged - {method?.BrowseName}",
+                   status,
+                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Attribute/Call", false);
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, roleStateObjectId, false);
+                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+                // set AuditUpdateMethodEventType fields
+                e.SetChildValue(systemContext, BrowseNames.MethodId, method?.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.InputArguments, inputArguments, false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting ReportRoleMappingRuleChangedAuditEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports an audit create session event.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session object that was created.</param>
+        /// <param name="revisedSessionTimeout">The revised session timeout</param>
+        /// <param name="exception">The exception received during create session request</param> 
+        public void ReportAuditCreateSessionEvent(string auditEntryId, Session session, double revisedSessionTimeout, Exception exception = null)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                // raise an audit event.
+                AuditCreateSessionEventState e = new AuditCreateSessionEventState(null);
+
+                TranslationInfo message = null;
+                if (exception == null)
+                {
+                    message = new TranslationInfo(
+                      "AuditCreateSessionEvent",
+                      "en-US",
+                      $"Session with ID:{session?.Id} was created.");
+                }
+                else
+                {
+                    message = new TranslationInfo(
+                      "AuditCreateSessionEvent",
+                      "en-US",
+                      $"Error while creating session with ID:{session?.Id}: Exception: {exception.Message}.");
+                }
+
+                InitializeAuditSessionEvent(systemContext, e, message, exception == null, session, auditEntryId);
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Session/CreateSession", false);
+
+                // set AuditCreateSessionEventState fields
+                e.SetChildValue(systemContext, BrowseNames.ClientCertificate, session?.ClientCertificate?.RawData, false);
+                e.SetChildValue(systemContext, BrowseNames.ClientCertificateThumbprint, session?.ClientCertificate?.Thumbprint, false);
+                e.SetChildValue(systemContext, BrowseNames.RevisedSessionTimeout, revisedSessionTimeout, false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditCreateSessionEvent event for SessionId {0}.", session?.Id);
+            }
+        }
+
+        /// <summary>
+        /// Reports an audit activate session event.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session that is activated.</param>
+        /// <param name="softwareCertificates">The software certificates</param>
+        /// <param name="exception">The exception received during activate session request</param> 
+        public void ReportAuditActivateSessionEvent(string auditEntryId, Session session, List<SoftwareCertificate> softwareCertificates, Exception exception = null)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                AuditActivateSessionEventState e = new AuditActivateSessionEventState(null);
+
+                TranslationInfo message = null;
+                if (exception == null)
+                {
+                    message = new TranslationInfo(
+                     "AuditActivateSessionEvent",
+                    "en-US",
+                    $"Session with Id:{session.Id} was activated.");
+                }
+                else
+                {
+                    message = new TranslationInfo(
+                      "AuditActivateSessionEvent",
+                      "en-US",
+                      $"Error while activate session with ID:{session?.Id}. Exception: {exception.Message}.");
+                }
+
+                InitializeAuditSessionEvent(systemContext, e, message, exception == null, session, auditEntryId);
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Session/ActivateSession", false);
+                e.SetChildValue(systemContext, BrowseNames.UserIdentityToken, Utils.Clone(session?.IdentityToken), false);
+
+                if (softwareCertificates != null)
+                {
+                    // build the list of SignedSoftwareCertificate
+                    List<SignedSoftwareCertificate> signedSoftwareCertificates = new List<SignedSoftwareCertificate>();
+                    foreach (SoftwareCertificate softwareCertificate in softwareCertificates)
+                    {
+                        SignedSoftwareCertificate item = new SignedSoftwareCertificate();
+                        item.CertificateData = softwareCertificate.SignedCertificate.RawData;
+                        signedSoftwareCertificates.Add(item);
+                    }
+                    e.SetChildValue(systemContext, BrowseNames.ClientSoftwareCertificates, signedSoftwareCertificates.ToArray(), false);
+                }
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception e)
+            {
+                Utils.LogError(e, "Error while reporting AuditActivateSessionEvent event for SessionId {0}.", session?.Id);
+            }
+        }
+
+        /// <summary>
+        /// Reports an audit Url Mismatch event.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session object that was created.</param>
+        /// <param name="revisedSessionTimeout">The revised session timeout</param>
+        /// <param name="endpointUrl">The invalid endpoint url</param> 
+        public void ReportAuditUrlMismatchEvent(string auditEntryId, Session session, double revisedSessionTimeout, string endpointUrl)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                AuditUrlMismatchEventState e = new AuditUrlMismatchEventState(null);
+
+                TranslationInfo message = new TranslationInfo(
+                     "AuditUrlMismatchEvent",
+                     "en-US",
+                     $"Session with ID:{session.Id} was cannot be created because endpoint URL does not match the Server’s HostNames.");
+
+                InitializeAuditSessionEvent(systemContext, e, message, false, session, auditEntryId);
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Session/CreateSession", false);
+
+                // set AuditCreateSessionEventState fields
+                e.SetChildValue(systemContext, BrowseNames.ClientCertificate, session?.ClientCertificate?.RawData, false);
+                e.SetChildValue(systemContext, BrowseNames.ClientCertificateThumbprint, session?.ClientCertificate?.Thumbprint, false);
+                e.SetChildValue(systemContext, BrowseNames.RevisedSessionTimeout, revisedSessionTimeout, false);
+
+                // set AuditUrlMismatchEventState
+                e.SetChildValue(systemContext, BrowseNames.EndpointUrl, endpointUrl, false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception e)
+            {
+                Utils.LogError(e, "Error while reporting AuditUrlMismatchEvent event for SessionId {0}.", session?.Id);
+            }
+        }
+
+        /// <summary>
+        /// Reports an audit close session event.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session object that was created.</param>
+        /// <param name="sourceName">Session/CloseSession when the session is closed by request
+        /// “Session/Timeout” for a Session timeout
+        /// “Session/Terminated” for all other cases.</param>
+        public void ReportAuditCloseSessionEvent(string auditEntryId, Session session, string sourceName = "Session/Terminated")
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                // raise an audit event.
+                AuditSessionEventState e = new AuditSessionEventState(null);
+
+                TranslationInfo message = new TranslationInfo(
+                    "AuditCloseSessionEvent",
+                    "en-US",
+                    $"Session with ID:{session?.Id} was closed.");
+
+                InitializeAuditSessionEvent(systemContext, e, message, true, session, auditEntryId);
+
+                e.SetChildValue(systemContext, BrowseNames.SourceName, sourceName, false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditSessionEventState close event for SessionId {0}.", session?.Id);
+            }
+        }
+
+        /// <summary>
+        /// Reports an audit session event for the transfer subscription.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session object that was created.</param>
+        /// <param name="statusCode">The status code resulting .</param>
+        public void ReportAuditTransferSubscriptionEvent(string auditEntryId, Session session, StatusCode statusCode)
+        {
+            if (EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                ServerSystemContext systemContext = DefaultSystemContext.Copy();
+
+                // raise an audit event.
+                AuditSessionEventState e = new AuditSessionEventState(null);
+
+                TranslationInfo message = new TranslationInfo(
+                    "AuditSessionEventState",
+                    "en-US",
+                    $"Transfer subscription for session ID:{session?.Id} has statusCode {statusCode}.");
+
+                InitializeAuditSessionEvent(systemContext, e, message, StatusCode.IsGood(statusCode), session, auditEntryId);
+
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, session.Id, false);
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Session/TransferSubscriptions", false);
+
+                ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditSessionEventState close event for SessionId {0}.", session?.Id);
+            }
+        }
+
+        /// <summary>
+        /// Initializes a session audit event.
+        /// </summary>
+        private void InitializeAuditSessionEvent(ServerSystemContext systemContext, AuditEventState e, TranslationInfo message, bool status, Session session, string auditEntryId)
+        {
+            e.Initialize(
+                systemContext,
+                null,
+                EventSeverity.Min,
+                new LocalizedText(message),
+                status,
+                DateTime.UtcNow);
+
+            e.SetChildValue(systemContext, BrowseNames.SourceNode, ObjectIds.Server, false);
+
+            // set AuditEventType properties
+            e.SetChildValue(systemContext, BrowseNames.ClientUserId, session?.Identity?.DisplayName, false);
+            e.SetChildValue(systemContext, BrowseNames.ClientAuditEntryId, auditEntryId, false);
+            // set AuditCreateSessionEventType & AuditActivateSessionsEventType properties
+            e.SetChildValue(systemContext, BrowseNames.SecureChannelId, session?.SecureChannelId, false);
+            // set AuditSessionEventType 
+            e.SetChildValue(systemContext, BrowseNames.SessionId, session?.Id, false);
+        }
+
+        #endregion Report Audit Events
 
         #region Private Methods
         /// <summary>
@@ -589,11 +1090,54 @@ namespace Opc.Ua.Server
                 serverObject.ServerCapabilities.MaxArrayLength.Value = (uint)m_configuration.TransportQuotas.MaxArrayLength;
                 serverObject.ServerCapabilities.MaxStringLength.Value = (uint)m_configuration.TransportQuotas.MaxStringLength;
                 serverObject.ServerCapabilities.MaxByteStringLength.Value = (uint)m_configuration.TransportQuotas.MaxByteStringLength;
-                serverObject.ServerCapabilities.OperationLimits.MaxNodesPerRead.Value = 0;
-                serverObject.ServerCapabilities.OperationLimits.MaxNodesPerWrite.Value = 0;
-                serverObject.ServerCapabilities.OperationLimits.MaxNodesPerMethodCall.Value = 1000;
-                serverObject.ServerCapabilities.OperationLimits.MaxNodesPerBrowse.Value = 0;
-                serverObject.ServerCapabilities.OperationLimits.MaxNodesPerRegisterNodes.Value = 0;
+
+                // Any operational limits Property that is provided shall have a non zero value.
+                var operationLimits = serverObject.ServerCapabilities.OperationLimits;
+                var configOperationLimits = m_configuration.ServerConfiguration.OperationLimits;
+                if (configOperationLimits != null)
+                {
+                    operationLimits.MaxNodesPerRead = SetPropertyValue(operationLimits.MaxNodesPerRead, configOperationLimits.MaxNodesPerRead);
+                    operationLimits.MaxNodesPerHistoryReadData = SetPropertyValue(operationLimits.MaxNodesPerHistoryReadData, configOperationLimits.MaxNodesPerHistoryReadData);
+                    operationLimits.MaxNodesPerHistoryReadEvents = SetPropertyValue(operationLimits.MaxNodesPerHistoryReadEvents, configOperationLimits.MaxNodesPerHistoryReadEvents);
+                    operationLimits.MaxNodesPerWrite = SetPropertyValue(operationLimits.MaxNodesPerWrite, configOperationLimits.MaxNodesPerWrite);
+                    operationLimits.MaxNodesPerHistoryUpdateData = SetPropertyValue(operationLimits.MaxNodesPerHistoryUpdateData, configOperationLimits.MaxNodesPerHistoryUpdateData);
+                    operationLimits.MaxNodesPerHistoryUpdateEvents = SetPropertyValue(operationLimits.MaxNodesPerHistoryUpdateEvents, configOperationLimits.MaxNodesPerHistoryUpdateEvents);
+                    operationLimits.MaxNodesPerMethodCall = SetPropertyValue(operationLimits.MaxNodesPerMethodCall, configOperationLimits.MaxNodesPerMethodCall);
+                    operationLimits.MaxNodesPerBrowse = SetPropertyValue(operationLimits.MaxNodesPerBrowse, configOperationLimits.MaxNodesPerBrowse);
+                    operationLimits.MaxNodesPerRegisterNodes = SetPropertyValue(operationLimits.MaxNodesPerRegisterNodes, configOperationLimits.MaxNodesPerRegisterNodes);
+                    operationLimits.MaxNodesPerTranslateBrowsePathsToNodeIds = SetPropertyValue(operationLimits.MaxNodesPerTranslateBrowsePathsToNodeIds, configOperationLimits.MaxNodesPerTranslateBrowsePathsToNodeIds);
+                    operationLimits.MaxNodesPerNodeManagement = SetPropertyValue(operationLimits.MaxNodesPerNodeManagement, configOperationLimits.MaxNodesPerNodeManagement);
+                    operationLimits.MaxMonitoredItemsPerCall = SetPropertyValue(operationLimits.MaxMonitoredItemsPerCall, configOperationLimits.MaxMonitoredItemsPerCall);
+                }
+                else
+                {
+                    operationLimits.MaxNodesPerRead =
+                    operationLimits.MaxNodesPerHistoryReadData =
+                    operationLimits.MaxNodesPerHistoryReadEvents =
+                    operationLimits.MaxNodesPerWrite =
+                    operationLimits.MaxNodesPerHistoryUpdateData =
+                    operationLimits.MaxNodesPerHistoryUpdateEvents =
+                    operationLimits.MaxNodesPerMethodCall =
+                    operationLimits.MaxNodesPerBrowse =
+                    operationLimits.MaxNodesPerRegisterNodes =
+                    operationLimits.MaxNodesPerTranslateBrowsePathsToNodeIds =
+                    operationLimits.MaxNodesPerNodeManagement =
+                    operationLimits.MaxMonitoredItemsPerCall = null;
+                }
+
+                // setup PublishSubscribe Status State value
+                PubSubState pubSubState = PubSubState.Disabled;
+
+                var default_PubSubState = (BaseVariableState)m_diagnosticsNodeManager.FindPredefinedNode(
+                    VariableIds.PublishSubscribe_Status_State,
+                    typeof(BaseVariableState));
+                default_PubSubState.Value = pubSubState;
+
+                // setup value for SupportedTransportProfiles
+                var default_SupportedTransportProfiles = (BaseVariableState)m_diagnosticsNodeManager.FindPredefinedNode(
+                   VariableIds.PublishSubscribe_SupportedTransportProfiles,
+                   typeof(BaseVariableState));
+                default_SupportedTransportProfiles.Value = "uadp";
 
                 // setup callbacks for dynamic values.
                 serverObject.NamespaceArray.OnSimpleReadValue = OnReadNamespaceArray;
@@ -612,16 +1156,16 @@ namespace Opc.Ua.Server
                 // initialize status.
                 ServerStatusDataType serverStatus = new ServerStatusDataType();
 
-                serverStatus.StartTime                  = DateTime.UtcNow;
-                serverStatus.CurrentTime                = DateTime.UtcNow;
-                serverStatus.State                      = ServerState.Shutdown;
-                serverStatus.BuildInfo.ProductName      = m_serverDescription.ProductName;
-                serverStatus.BuildInfo.ProductUri       = m_serverDescription.ProductUri;
+                serverStatus.StartTime = DateTime.UtcNow;
+                serverStatus.CurrentTime = DateTime.UtcNow;
+                serverStatus.State = ServerState.Shutdown;
+                serverStatus.BuildInfo.ProductName = m_serverDescription.ProductName;
+                serverStatus.BuildInfo.ProductUri = m_serverDescription.ProductUri;
                 serverStatus.BuildInfo.ManufacturerName = m_serverDescription.ManufacturerName;
-                serverStatus.BuildInfo.SoftwareVersion  = m_serverDescription.SoftwareVersion;
-                serverStatus.BuildInfo.BuildNumber      = m_serverDescription.BuildNumber;
-                serverStatus.BuildInfo.BuildDate        = m_serverDescription.BuildDate;
-                
+                serverStatus.BuildInfo.SoftwareVersion = m_serverDescription.SoftwareVersion;
+                serverStatus.BuildInfo.BuildNumber = m_serverDescription.BuildNumber;
+                serverStatus.BuildInfo.BuildDate = m_serverDescription.BuildDate;
+
                 serverObject.ServerStatus.MinimumSamplingInterval = 1000;
                 serverObject.ServerStatus.CurrentTime.MinimumSamplingInterval = 1000;
 
@@ -749,23 +1293,35 @@ namespace Opc.Ua.Server
 
             return ServiceResult.Good;
         }
+
+        /// <summary>
+        /// Set the property to null if the value is zero,
+        /// to the value otherwise.
+        /// </summary>
+        private PropertyState<uint> SetPropertyValue(PropertyState<uint> property, uint value)
+        {
+            if (value != 0)
+            {
+                property.Value = value;
+            }
+            else
+            {
+                property = null;
+            }
+            return property;
+        }
         #endregion
 
         #region Private Fields
         private ServerProperties m_serverDescription;
         private ApplicationConfiguration m_configuration;
         private List<Uri> m_endpointAddresses;
-        private ServiceMessageContext m_messageContext;
+        private IServiceMessageContext m_messageContext;
         private ServerSystemContext m_defaultSystemContext;
         private NamespaceTable m_namespaceUris;
         private StringTable m_serverUris;
-        private EncodeableFactory m_factory;
+        private IEncodeableFactory m_factory;
         private TypeTable m_typeTree;
-
-#if LEGACY_CORENODEMANAGER
-        private TypeSourceTable m_typeSources;
-#endif
-
         private ResourceManager m_resourceManager;
         private RequestManager m_requestManager;
         private AggregateManager m_aggregateManager;

@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2019 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -11,14 +11,8 @@
 */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using System.Xml;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Reflection;
-using System.Threading;
 
 namespace Opc.Ua
 {       
@@ -529,7 +523,7 @@ namespace Opc.Ua
                 node.ReferenceTable.Add(referenceTypeId, true, this.Parent.NodeId);
             }
 
-            if (!NodeId.IsNull(this.TypeDefinitionId))
+            if (!NodeId.IsNull(m_typeDefinitionId) && IsObjectOrVariable)
             {
                 node.ReferenceTable.Add(ReferenceTypeIds.HasTypeDefinition, false, this.TypeDefinitionId);
             }
@@ -711,7 +705,7 @@ namespace Opc.Ua
         {
             base.PopulateBrowser(context, browser);
 
-            if (!NodeId.IsNull(m_typeDefinitionId))
+            if (!NodeId.IsNull(m_typeDefinitionId) && IsObjectOrVariable)
             {
                 if (browser.IsRequired(ReferenceTypeIds.HasTypeDefinition, false))
                 {
@@ -739,7 +733,9 @@ namespace Opc.Ua
             }
         }
         #endregion
-        
+
+        private bool IsObjectOrVariable => ((this.NodeClass & (NodeClass.Variable | NodeClass.Object)) != 0);
+
         #region Private Fields
         private NodeState m_parent;
         private NodeId m_referenceTypeId;

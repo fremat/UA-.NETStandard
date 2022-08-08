@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2019 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -68,7 +68,7 @@ namespace Opc.Ua.Schema.Binary
         {
             // read and parse the file.
             Dictionary = (TypeDictionary)LoadInput(typeof(TypeDictionary), stream);
-            await Validate();
+            await Validate().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace Opc.Ua.Schema.Binary
         {
             // read and parse the file.
             Dictionary = (TypeDictionary)LoadInput(typeof(TypeDictionary), inputPath);
-            await Validate();
+            await Validate().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -86,11 +86,7 @@ namespace Opc.Ua.Schema.Binary
         /// </summary>
         public override string GetSchema(string typeName)
         {
-            XmlWriterSettings settings = new XmlWriterSettings();
-
-            settings.Encoding = Encoding.UTF8;
-            settings.Indent = true;
-            settings.IndentChars = "    ";
+            XmlWriterSettings settings = Utils.DefaultXmlWriterSettings();
 
             MemoryStream ostrm = new MemoryStream();
             XmlWriter writer = XmlWriter.Create(ostrm, settings);
@@ -143,7 +139,7 @@ namespace Opc.Ua.Schema.Binary
             {
                 foreach (ImportDirective directive in Dictionary.Import)
                 {
-                    await Import(directive);
+                    await Import(directive).ConfigureAwait(false);
                 }
             }
             else
@@ -152,7 +148,7 @@ namespace Opc.Ua.Schema.Binary
                 if (!WellKnownDictionaries.Any(n => String.Equals(n[0], Dictionary.TargetNamespace)))
                 {
                     ImportDirective directive = new ImportDirective { Namespace = Namespaces.OpcUa };
-                    await Import(directive);
+                    await Import(directive).ConfigureAwait(false);
                 }
             }
 
@@ -207,7 +203,7 @@ namespace Opc.Ua.Schema.Binary
             {
                 for (int ii = 0; ii < dictionary.Import.Length; ii++)
                 {
-                    await Import(dictionary.Import[ii]);
+                    await Import(dictionary.Import[ii]).ConfigureAwait(false);
                 }
             }
 
@@ -424,7 +420,7 @@ namespace Opc.Ua.Schema.Binary
             {
                 if (structure.Field == null || structure.Field.Length == 0)
                 {
-                    structure.Field = new FieldType[0];
+                    structure.Field = Array.Empty<FieldType>();
                 }
 
                 int bitCount = 0;
@@ -512,6 +508,9 @@ namespace Opc.Ua.Schema.Binary
         #endregion
 
         #region Private Fields
+        /// <summary>
+        /// Well known embedded binary schemas.
+        /// </summary>
         protected readonly static string[][] WellKnownDictionaries = new string[][]
         {
             new string[] { Namespaces.OpcBinarySchema,   "Opc.Ua.Types.Schemas.StandardTypes.bsd" },

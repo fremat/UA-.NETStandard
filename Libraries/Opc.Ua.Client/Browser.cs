@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -28,9 +28,6 @@
  * ======================================================================*/
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.ServiceModel;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
@@ -39,7 +36,7 @@ namespace Opc.Ua.Client
     /// <summary>
     /// Stores the options to use for a browse operation.
     /// </summary>
-    [DataContract(Namespace=Namespaces.OpcUaXsd)]
+    [DataContract(Namespace = Namespaces.OpcUaXsd)]
     public class Browser
     {
         #region Constructors
@@ -69,15 +66,15 @@ namespace Opc.Ua.Client
 
             if (template != null)
             {
-                m_session               = template.m_session;
-                m_view                  = template.m_view;
+                m_session = template.m_session;
+                m_view = template.m_view;
                 m_maxReferencesReturned = template.m_maxReferencesReturned;
-                m_browseDirection       = template.m_browseDirection;
-                m_referenceTypeId       = template.m_referenceTypeId;
-                m_includeSubtypes       = template.m_includeSubtypes;
-                m_nodeClassMask         = template.m_nodeClassMask;
-                m_resultMask            = template.m_resultMask;
-                m_continueUntilDone     = template.m_continueUntilDone;
+                m_browseDirection = template.m_browseDirection;
+                m_referenceTypeId = template.m_referenceTypeId;
+                m_includeSubtypes = template.m_includeSubtypes;
+                m_nodeClassMask = template.m_nodeClassMask;
+                m_resultMask = template.m_resultMask;
+                m_continueUntilDone = template.m_continueUntilDone;
             }
         }
 
@@ -86,16 +83,16 @@ namespace Opc.Ua.Client
         /// </summary>
         private void Initialize()
         {
-            m_session               = null;
-            m_view                  = null;
+            m_session = null;
+            m_view = null;
             m_maxReferencesReturned = 0;
-            m_browseDirection       = Opc.Ua.BrowseDirection.Forward;
-            m_referenceTypeId       = null;
-            m_includeSubtypes       = true;
-            m_nodeClassMask         = 0;
-            m_resultMask            = (uint)BrowseResultMask.All;
-            m_continueUntilDone     = false;
-            m_browseInProgress      = false;
+            m_browseDirection = Opc.Ua.BrowseDirection.Forward;
+            m_referenceTypeId = null;
+            m_includeSubtypes = true;
+            m_nodeClassMask = 0;
+            m_resultMask = (uint)BrowseResultMask.All;
+            m_continueUntilDone = false;
+            m_browseInProgress = false;
         }
         #endregion
 
@@ -161,7 +158,7 @@ namespace Opc.Ua.Client
 
         /// <summary>
         /// The reference type to follow.
-        /// </summary>        
+        /// </summary>
         [DataMember(Order = 4)]
         public NodeId ReferenceTypeId
         {
@@ -176,7 +173,7 @@ namespace Opc.Ua.Client
 
         /// <summary>
         /// Whether subtypes of the reference type should be included.
-        /// </summary>   
+        /// </summary>
         [DataMember(Order = 5)]
         public bool IncludeSubtypes
         {
@@ -207,7 +204,7 @@ namespace Opc.Ua.Client
         /// <summary>
         /// The results to return.
         /// </summary>
-        [DataMember(Order=6)]
+        [DataMember(Order = 6)]
         public uint ResultMask
         {
             get { return m_resultMask; }
@@ -225,7 +222,7 @@ namespace Opc.Ua.Client
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
         public event BrowserEventHandler MoreReferences
         {
-            add    { m_MoreReferences += value; }
+            add { m_MoreReferences += value; }
             remove { m_MoreReferences -= value; }
         }
 
@@ -325,7 +322,7 @@ namespace Opc.Ua.Client
                     }
                     else
                     {
-                        Utils.Trace("Continuation point exists, but the browse results are null/empty.");
+                        Utils.LogWarning("Browser: Continuation point exists, but the browse results are null/empty.");
                         break;
                     }
                 }
@@ -560,7 +557,7 @@ namespace Opc.Ua.Client
         /// </summary>
         public bool Cancel
         {
-            get { return m_cancel;  }
+            get { return m_cancel; }
             set { m_cancel = value; }
         }
 
@@ -569,17 +566,14 @@ namespace Opc.Ua.Client
         /// </summary>
         public bool ContinueUntilDone
         {
-            get { return m_continueUntilDone;  }
+            get { return m_continueUntilDone; }
             set { m_continueUntilDone = value; }
         }
 
         /// <summary>
         /// The references that have been fetched so far.
         /// </summary>
-        public ReferenceDescriptionCollection References
-        {
-            get { return m_references;  }
-        }
+        public ReferenceDescriptionCollection References => m_references;
         #endregion
 
         #region Private Fields

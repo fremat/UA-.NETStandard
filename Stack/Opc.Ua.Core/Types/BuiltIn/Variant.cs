@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2019 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -780,7 +780,7 @@ namespace Opc.Ua
 
                 // create document from encoder.
                 XmlDocument document = new XmlDocument();
-                document.InnerXml = encoder.Close();
+                document.LoadInnerXml(encoder.Close());
 
                 // return element.
                 return document.DocumentElement;
@@ -862,6 +862,24 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        /// Append a ByteString as a hex string.
+        /// </summary>
+        private void AppendByteString(StringBuilder buffer, byte[] bytes, IFormatProvider formatProvider)
+        {
+            if (bytes != null)
+            {
+                for (int ii = 0; ii < bytes.Length; ii++)
+                {
+                    buffer.AppendFormat(formatProvider, "{0:X2}", bytes[ii]);
+                }
+            }
+            else
+            {
+                buffer.Append("(null)");
+            }
+        }
+
+        /// <summary>
         /// Formats a value as a string.
         /// </summary>
         private void AppendFormat(StringBuilder buffer, object value, IFormatProvider formatProvider)
@@ -877,12 +895,7 @@ namespace Opc.Ua
             if (m_typeInfo.BuiltInType == BuiltInType.ByteString && m_typeInfo.ValueRank < 0)
             {
                 byte[] bytes = (byte[])value;
-
-                for (int ii = 0; ii < bytes.Length; ii++)
-                {
-                    buffer.AppendFormat(formatProvider, "{0:X2}", bytes[ii]);
-                }
-
+                AppendByteString(buffer, bytes, formatProvider);
                 return;
             }
 
@@ -899,20 +912,37 @@ namespace Opc.Ua
 
             if (array != null && m_typeInfo.ValueRank <= 1)
             {
-                buffer.Append("{");
+                buffer.Append('{');
 
-                if (array.Length > 0)
+                if (m_typeInfo.BuiltInType == BuiltInType.ByteString)
                 {
-                    AppendFormat(buffer, array.GetValue(0), formatProvider);
-                }
+                    if (array.Length > 0)
+                    {
+                        byte[] bytes = (byte[])array.GetValue(0);
+                        AppendByteString(buffer, bytes, formatProvider);
+                    }
 
-                for (int ii = 1; ii < array.Length; ii++)
+                    for (int ii = 1; ii < array.Length; ii++)
+                    {
+                        buffer.Append('|');
+                        byte[] bytes = (byte[])array.GetValue(ii);
+                        AppendByteString(buffer, bytes, formatProvider);
+                    }
+                }
+                else
                 {
-                    buffer.Append(" |");
-                    AppendFormat(buffer, array.GetValue(ii), formatProvider);
-                }
+                    if (array.Length > 0)
+                    {
+                        AppendFormat(buffer, array.GetValue(0), formatProvider);
+                    }
 
-                buffer.Append("}");
+                    for (int ii = 1; ii < array.Length; ii++)
+                    {
+                        buffer.Append('|');
+                        AppendFormat(buffer, array.GetValue(ii), formatProvider);
+                    }
+                }
+                buffer.Append('}');
                 return;
             }
 
@@ -1516,11 +1546,6 @@ namespace Opc.Ua
         /// </remarks>
         public override bool Equals(object obj)
         {
-            if (Object.ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
             Variant? variant = obj as Variant?;
 
             if (variant != null)
@@ -2622,14 +2647,14 @@ namespace Opc.Ua
 
             if (dimensions != null && dimensions.Length > 0)
             {
-                int length = 1;
+                ulong length = 1;
 
                 for (int ii = 0; ii < dimensions.Length; ii++)
                 {
-                    length *= dimensions[ii];
+                    length *= (ulong)dimensions[ii];
                 }
 
-                if (length != elements.Length)
+                if ((length > int.MaxValue) || (length != (ulong)elements.Length))
                 {
                     throw new ArgumentException("The number of elements in the array does not match the dimensions.");
                 }
@@ -2645,7 +2670,8 @@ namespace Opc.Ua
             TypeInfo sanityCheck = TypeInfo.Construct(m_elements);
             System.Diagnostics.Debug.Assert(sanityCheck.BuiltInType == builtInType ||
                 (sanityCheck.BuiltInType == BuiltInType.Int32 && builtInType == BuiltInType.Enumeration) ||
-                (sanityCheck.BuiltInType == BuiltInType.ByteString && builtInType == BuiltInType.Byte));
+                (sanityCheck.BuiltInType == BuiltInType.ByteString && builtInType == BuiltInType.Byte) ||
+                (builtInType == BuiltInType.Variant));
 #endif
         }
         #endregion
@@ -2760,7 +2786,7 @@ namespace Opc.Ua
         /// <param name="format">(Unused) Always pass a NULL value</param>
         /// <param name="formatProvider">The format-provider to use. If unsure, pass an empty string or null</param>
         /// <returns>
-        /// A <see cref="T:System.String"/> containing the value of the current instance in the specified format.
+        /// A <see cref="System.String"/> containing the value of the current instance in the specified format.
         /// </returns>
         /// <remarks>
         /// Returns the string representation of the object.
@@ -2778,7 +2804,7 @@ namespace Opc.Ua
                 {
                     if (ii > 0)
                     {
-                        buffer.Append(",");
+                        buffer.Append(',');
                     }
 
                     buffer.AppendFormat(formatProvider, "{0}", m_dimensions[ii]);
@@ -2812,5 +2838,4 @@ namespace Opc.Ua
         private TypeInfo m_typeInfo;
         #endregion
     }
-
 }//namespace

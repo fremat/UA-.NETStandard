@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2019 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -157,7 +157,7 @@ namespace Opc.Ua
         /// <remarks>
         /// The following BuiltInTypes are for coding convenience
         /// internally used in the .NET Standard library.
-        /// The types can not be used for encoding/decoding.
+        /// The enumerations are not used for encoding/decoding.
         /// </remarks>
 
         /// <summary>
@@ -366,6 +366,39 @@ namespace Opc.Ua
             {
                 return BuiltInType.Null;
             }
+            switch ((uint)datatypeId.Identifier)
+            {
+                // subtype of DateTime
+                case DataTypes.UtcTime: return BuiltInType.DateTime;
+                // subtype of ByteString
+                case DataTypes.ApplicationInstanceCertificate:
+                case DataTypes.AudioDataType:
+                case DataTypes.ContinuationPoint:
+                case DataTypes.Image:
+                case DataTypes.ImageBMP:
+                case DataTypes.ImageGIF:
+                case DataTypes.ImageJPG:
+                case DataTypes.ImagePNG: return BuiltInType.ByteString;
+                // subtype of NodeId
+                case DataTypes.SessionAuthenticationToken: return BuiltInType.NodeId;
+                // subtype of Double
+                case DataTypes.Duration: return BuiltInType.Double;
+                // subtype of UInt32
+                case DataTypes.IntegerId:
+                case DataTypes.Index:
+                case DataTypes.VersionTime:
+                case DataTypes.Counter: return BuiltInType.UInt32;
+                // subtype of UInt64
+                case DataTypes.BitFieldMaskDataType: return BuiltInType.UInt64;
+                // subtype of String
+                case DataTypes.DateString:
+                case DataTypes.DecimalString:
+                case DataTypes.DurationString:
+                case DataTypes.LocaleId:
+                case DataTypes.NormalizedString:
+                case DataTypes.NumericRange:
+                case DataTypes.TimeString: return BuiltInType.String;
+            }
 
             return (BuiltInType)Enum.ToObject(typeof(BuiltInType), datatypeId.Identifier);
         }
@@ -478,14 +511,14 @@ namespace Opc.Ua
         /// <param name="datatypeId">The datatype id.</param>
         /// <param name="factory">The factory used to store and retrieve underlying OPC UA system types.</param>
         /// <returns>The system type for the <paramref name="datatypeId"/>.</returns>
-        public static Type GetSystemType(NodeId datatypeId, EncodeableFactory factory)
+        public static Type GetSystemType(ExpandedNodeId datatypeId, IEncodeableFactory factory)
         {
             if (datatypeId == null)
             {
                 return null;
             }
 
-            if (datatypeId.NamespaceIndex != 0 || datatypeId.IdType != Opc.Ua.IdType.Numeric)
+            if (datatypeId.NamespaceIndex != 0 || datatypeId.IdType != Opc.Ua.IdType.Numeric || datatypeId.IsAbsolute)
             {
                 return factory.GetSystemType(datatypeId);
             }
@@ -523,7 +556,6 @@ namespace Opc.Ua
                 case DataTypes.Enumeration: { return typeof(Int32); }
 
                 // subtype of DateTime
-                case DataTypes.Date: 
                 case DataTypes.UtcTime: goto case DataTypes.DateTime;
                 // subtype of ByteString
                 case DataTypes.ApplicationInstanceCertificate:
@@ -552,7 +584,6 @@ namespace Opc.Ua
                 case DataTypes.LocaleId:
                 case DataTypes.NormalizedString:
                 case DataTypes.NumericRange:
-                case DataTypes.Time:
                 case DataTypes.TimeString: goto case DataTypes.String;
             }
 
@@ -1097,7 +1128,7 @@ namespace Opc.Ua
 
             TypeInfo typeInfo = Construct(value.GetType());
 
-            // check for instances of matrixes.
+            // check for instances of matrices.
             if (typeInfo.BuiltInType == BuiltInType.Null)
             {
                 Matrix matrix = value as Matrix;
@@ -1357,7 +1388,6 @@ namespace Opc.Ua
                 switch (id)
                 {
                     case DataTypes.Duration: { return (double)0; }
-                    case DataTypes.Date: { return DateTime.MinValue; }
                     case DataTypes.UtcTime: { return DateTime.MinValue; }
                     case DataTypes.Counter: { return (uint)0; }
                     case DataTypes.IntegerId: { return (uint)0; }
@@ -2327,7 +2357,7 @@ namespace Opc.Ua
 
                     if (text.Length == 0)
                     {
-                        return new byte[0];
+                        return Array.Empty<byte>();
                     }
 
                     using (System.IO.MemoryStream ostrm = new System.IO.MemoryStream())
@@ -2405,7 +2435,7 @@ namespace Opc.Ua
                 case BuiltInType.String:
                 {
                     XmlDocument document = new XmlDocument();
-                    document.InnerXml = (string)value;
+                    document.LoadInnerXml((string)value);
                     return document.DocumentElement;
                 }
             }
@@ -3017,14 +3047,14 @@ namespace Opc.Ua
 
                 if (m_valueRank >= 0)
                 {
-                    buffer.Append("[");
+                    buffer.Append('[');
 
                     for (int ii = 1; ii < m_valueRank; ii++)
                     {
-                        buffer.Append(",");
+                        buffer.Append(',');
                     }
 
-                    buffer.Append("]");
+                    buffer.Append(']');
                 }
 
                 return buffer.ToString();

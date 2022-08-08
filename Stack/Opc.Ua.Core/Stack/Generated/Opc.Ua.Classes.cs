@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2021 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -66,6 +66,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -1114,6 +1115,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -1939,6 +1941,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -2308,6 +2311,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -2512,6 +2516,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -2816,6 +2821,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -2888,6 +2894,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -3044,6 +3051,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -3248,6 +3256,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -3405,6 +3414,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -3563,6 +3573,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -4345,6 +4356,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -4369,40 +4381,50 @@ namespace Opc.Ua
             {
                 MimeType.Initialize(context, MimeType_InitializationString);
             }
+
+            if (MaxByteStringLength != null)
+            {
+                MaxByteStringLength.Initialize(context, MaxByteStringLength_InitializationString);
+            }
         }
 
         #region Initialization String
         private const string MimeType_InitializationString =
            "//////////8VYIkKAgAAAAAACAAAAE1pbWVUeXBlAQAdNAAuAEQdNAAAAAz/////AQH/////AAAAAA==";
 
+        private const string MaxByteStringLength_InitializationString =
+           "//////////8VYIkKAgAAAAAAEwAAAE1heEJ5dGVTdHJpbmdMZW5ndGgBALReAC4ARLReAAAAB/////8B" +
+           "Af////8AAAAA";
+
         private const string InitializationString =
-           "//////////8EYIACAQAAAAAAEAAAAEZpbGVUeXBlSW5zdGFuY2UBADctAQA3LTctAAD/////CwAAABVg" +
+           "//////////8EYIACAQAAAAAAEAAAAEZpbGVUeXBlSW5zdGFuY2UBADctAQA3LTctAAD/////DAAAABVg" +
            "iQoCAAAAAAAEAAAAU2l6ZQEAOC0ALgBEOC0AAAAJ/////wEB/////wAAAAAVYIkKAgAAAAAACAAAAFdy" +
            "aXRhYmxlAQCOMQAuAESOMQAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAMAAAAVXNlcldyaXRhYmxl" +
            "AQCPMQAuAESPMQAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAJAAAAT3BlbkNvdW50AQA7LQAuAEQ7" +
            "LQAAAAX/////AQH/////AAAAABVgiQoCAAAAAAAIAAAATWltZVR5cGUBAB00AC4ARB00AAAADP////8B" +
-           "Af////8AAAAABGGCCgQAAAAAAAQAAABPcGVuAQA8LQAvAQA8LTwtAAABAf////8CAAAAF2CpCgIAAAAA" +
-           "AA4AAABJbnB1dEFyZ3VtZW50cwEAPS0ALgBEPS0AAJYBAAAAAQAqAQETAAAABAAAAE1vZGUAA/////8A" +
-           "AAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAAF2CpCgIAAAAAAA8AAABPdXRwdXRBcmd1bWVudHMB" +
-           "AD4tAC4ARD4tAACWAQAAAAEAKgEBGQAAAAoAAABGaWxlSGFuZGxlAAf/////AAAAAAABACgBAQAAAAEA" +
-           "AAAAAAAAAQH/////AAAAAARhggoEAAAAAAAFAAAAQ2xvc2UBAD8tAC8BAD8tPy0AAAEB/////wEAAAAX" +
-           "YKkKAgAAAAAADgAAAElucHV0QXJndW1lbnRzAQBALQAuAERALQAAlgEAAAABACoBARkAAAAKAAAARmls" +
-           "ZUhhbmRsZQAH/////wAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAAEYYIKBAAAAAAABAAAAFJl" +
-           "YWQBAEEtAC8BAEEtQS0AAAEB/////wIAAAAXYKkKAgAAAAAADgAAAElucHV0QXJndW1lbnRzAQBCLQAu" +
-           "AERCLQAAlgIAAAABACoBARkAAAAKAAAARmlsZUhhbmRsZQAH/////wAAAAAAAQAqAQEVAAAABgAAAExl" +
-           "bmd0aAAG/////wAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAAXYKkKAgAAAAAADwAAAE91dHB1" +
-           "dEFyZ3VtZW50cwEAQy0ALgBEQy0AAJYBAAAAAQAqAQETAAAABAAAAERhdGEAD/////8AAAAAAAEAKAEB" +
-           "AAAAAQAAAAAAAAABAf////8AAAAABGGCCgQAAAAAAAUAAABXcml0ZQEARC0ALwEARC1ELQAAAQH/////" +
-           "AQAAABdgqQoCAAAAAAAOAAAASW5wdXRBcmd1bWVudHMBAEUtAC4AREUtAACWAgAAAAEAKgEBGQAAAAoA" +
-           "AABGaWxlSGFuZGxlAAf/////AAAAAAABACoBARMAAAAEAAAARGF0YQAP/////wAAAAAAAQAoAQEAAAAB" +
-           "AAAAAAAAAAEB/////wAAAAAEYYIKBAAAAAAACwAAAEdldFBvc2l0aW9uAQBGLQAvAQBGLUYtAAABAf//" +
-           "//8CAAAAF2CpCgIAAAAAAA4AAABJbnB1dEFyZ3VtZW50cwEARy0ALgBERy0AAJYBAAAAAQAqAQEZAAAA" +
-           "CgAAAEZpbGVIYW5kbGUAB/////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAAF2CpCgIAAAAA" +
-           "AA8AAABPdXRwdXRBcmd1bWVudHMBAEgtAC4AREgtAACWAQAAAAEAKgEBFwAAAAgAAABQb3NpdGlvbgAJ" +
-           "/////wAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAAEYYIKBAAAAAAACwAAAFNldFBvc2l0aW9u" +
-           "AQBJLQAvAQBJLUktAAABAf////8BAAAAF2CpCgIAAAAAAA4AAABJbnB1dEFyZ3VtZW50cwEASi0ALgBE" +
-           "Si0AAJYCAAAAAQAqAQEZAAAACgAAAEZpbGVIYW5kbGUAB/////8AAAAAAAEAKgEBFwAAAAgAAABQb3Np" +
-           "dGlvbgAJ/////wAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAA=";
+           "Af////8AAAAAFWCJCgIAAAAAABMAAABNYXhCeXRlU3RyaW5nTGVuZ3RoAQC0XgAuAES0XgAAAAf/////" +
+           "AQH/////AAAAAARhggoEAAAAAAAEAAAAT3BlbgEAPC0ALwEAPC08LQAAAQH/////AgAAABdgqQoCAAAA" +
+           "AAAOAAAASW5wdXRBcmd1bWVudHMBAD0tAC4ARD0tAACWAQAAAAEAKgEBEwAAAAQAAABNb2RlAAP/////" +
+           "AAAAAAABACgBAQAAAAEAAAAAAAAAAQH/////AAAAABdgqQoCAAAAAAAPAAAAT3V0cHV0QXJndW1lbnRz" +
+           "AQA+LQAuAEQ+LQAAlgEAAAABACoBARkAAAAKAAAARmlsZUhhbmRsZQAH/////wAAAAAAAQAoAQEAAAAB" +
+           "AAAAAAAAAAEB/////wAAAAAEYYIKBAAAAAAABQAAAENsb3NlAQA/LQAvAQA/LT8tAAABAf////8BAAAA" +
+           "F2CpCgIAAAAAAA4AAABJbnB1dEFyZ3VtZW50cwEAQC0ALgBEQC0AAJYBAAAAAQAqAQEZAAAACgAAAEZp" +
+           "bGVIYW5kbGUAB/////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAABGGCCgQAAAAAAAQAAABS" +
+           "ZWFkAQBBLQAvAQBBLUEtAAABAf////8CAAAAF2CpCgIAAAAAAA4AAABJbnB1dEFyZ3VtZW50cwEAQi0A" +
+           "LgBEQi0AAJYCAAAAAQAqAQEZAAAACgAAAEZpbGVIYW5kbGUAB/////8AAAAAAAEAKgEBFQAAAAYAAABM" +
+           "ZW5ndGgABv////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAAF2CpCgIAAAAAAA8AAABPdXRw" +
+           "dXRBcmd1bWVudHMBAEMtAC4AREMtAACWAQAAAAEAKgEBEwAAAAQAAABEYXRhAA//////AAAAAAABACgB" +
+           "AQAAAAEAAAAAAAAAAQH/////AAAAAARhggoEAAAAAAAFAAAAV3JpdGUBAEQtAC8BAEQtRC0AAAEB////" +
+           "/wEAAAAXYKkKAgAAAAAADgAAAElucHV0QXJndW1lbnRzAQBFLQAuAERFLQAAlgIAAAABACoBARkAAAAK" +
+           "AAAARmlsZUhhbmRsZQAH/////wAAAAAAAQAqAQETAAAABAAAAERhdGEAD/////8AAAAAAAEAKAEBAAAA" +
+           "AQAAAAAAAAABAf////8AAAAABGGCCgQAAAAAAAsAAABHZXRQb3NpdGlvbgEARi0ALwEARi1GLQAAAQH/" +
+           "////AgAAABdgqQoCAAAAAAAOAAAASW5wdXRBcmd1bWVudHMBAEctAC4AREctAACWAQAAAAEAKgEBGQAA" +
+           "AAoAAABGaWxlSGFuZGxlAAf/////AAAAAAABACgBAQAAAAEAAAAAAAAAAQH/////AAAAABdgqQoCAAAA" +
+           "AAAPAAAAT3V0cHV0QXJndW1lbnRzAQBILQAuAERILQAAlgEAAAABACoBARcAAAAIAAAAUG9zaXRpb24A" +
+           "Cf////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAABGGCCgQAAAAAAAsAAABTZXRQb3NpdGlv" +
+           "bgEASS0ALwEASS1JLQAAAQH/////AQAAABdgqQoCAAAAAAAOAAAASW5wdXRBcmd1bWVudHMBAEotAC4A" +
+           "REotAACWAgAAAAEAKgEBGQAAAAoAAABGaWxlSGFuZGxlAAf/////AAAAAAABACoBARcAAAAIAAAAUG9z" +
+           "aXRpb24ACf////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -4500,6 +4522,25 @@ namespace Opc.Ua
                 }
 
                 m_mimeType = value;
+            }
+        }
+
+        /// <remarks />
+        public PropertyState<uint> MaxByteStringLength
+        {
+            get
+            {
+                return m_maxByteStringLength;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_maxByteStringLength, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_maxByteStringLength = value;
             }
         }
 
@@ -4651,6 +4692,11 @@ namespace Opc.Ua
             if (m_mimeType != null)
             {
                 children.Add(m_mimeType);
+            }
+
+            if (m_maxByteStringLength != null)
+            {
+                children.Add(m_maxByteStringLength);
             }
 
             if (m_openMethod != null)
@@ -4809,6 +4855,27 @@ namespace Opc.Ua
                     break;
                 }
 
+                case Opc.Ua.BrowseNames.MaxByteStringLength:
+                {
+                    if (createOrReplace)
+                    {
+                        if (MaxByteStringLength == null)
+                        {
+                            if (replacement == null)
+                            {
+                                MaxByteStringLength = new PropertyState<uint>(this);
+                            }
+                            else
+                            {
+                                MaxByteStringLength = (PropertyState<uint>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = MaxByteStringLength;
+                    break;
+                }
+
                 case Opc.Ua.BrowseNames.Open:
                 {
                     if (createOrReplace)
@@ -4951,6 +5018,7 @@ namespace Opc.Ua
         private PropertyState<bool> m_userWritable;
         private PropertyState<ushort> m_openCount;
         private PropertyState<string> m_mimeType;
+        private PropertyState<uint> m_maxByteStringLength;
         private OpenMethodState m_openMethod;
         private CloseMethodState m_closeMethod;
         private ReadMethodState m_readMethod;
@@ -4993,6 +5061,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -5182,6 +5251,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -5499,7 +5569,7 @@ namespace Opc.Ua
         }
 
         /// <remarks />
-        public PropertyState<uint> DefaultAccessRestrictions
+        public PropertyState<ushort> DefaultAccessRestrictions
         {
             get
             {
@@ -5822,11 +5892,11 @@ namespace Opc.Ua
                         {
                             if (replacement == null)
                             {
-                                DefaultAccessRestrictions = new PropertyState<uint>(this);
+                                DefaultAccessRestrictions = new PropertyState<ushort>(this);
                             }
                             else
                             {
-                                DefaultAccessRestrictions = (PropertyState<uint>)replacement;
+                                DefaultAccessRestrictions = (PropertyState<ushort>)replacement;
                             }
                         }
                     }
@@ -5856,7 +5926,7 @@ namespace Opc.Ua
         private AddressSpaceFileState m_namespaceFile;
         private PropertyState<RolePermissionType[]> m_defaultRolePermissions;
         private PropertyState<RolePermissionType[]> m_defaultUserRolePermissions;
-        private PropertyState<uint> m_defaultAccessRestrictions;
+        private PropertyState<ushort> m_defaultAccessRestrictions;
         #endregion
     }
     #endif
@@ -5893,6 +5963,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -5965,6 +6036,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -6504,6 +6576,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -6854,6 +6927,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -7030,6 +7104,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -7197,6 +7272,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -7216,12 +7292,21 @@ namespace Opc.Ua
         protected override void InitializeOptionalChildren(ISystemContext context)
         {
             base.InitializeOptionalChildren(context);
+
+            if (CertificateErrorEventId != null)
+            {
+                CertificateErrorEventId.Initialize(context, CertificateErrorEventId_InitializationString);
+            }
         }
 
         #region Initialization String
+        private const string CertificateErrorEventId_InitializationString =
+           "//////////8VYIkKAgAAAAAAFwAAAENlcnRpZmljYXRlRXJyb3JFdmVudElkAQBHXgAuAERHXgAAAAz/" +
+           "////AQH/////AAAAAA==";
+
         private const string InitializationString =
            "//////////8EYIACAQAAAAAAJwAAAEF1ZGl0T3BlblNlY3VyZUNoYW5uZWxFdmVudFR5cGVJbnN0YW5j" +
-           "ZQEADAgBAAwIDAgAAP////8UAAAAFWCJCgIAAAAAAAcAAABFdmVudElkAQClDAAuAESlDAAAAA//////" +
+           "ZQEADAgBAAwIDAgAAP////8VAAAAFWCJCgIAAAAAAAcAAABFdmVudElkAQClDAAuAESlDAAAAA//////" +
            "AQH/////AAAAABVgiQoCAAAAAAAJAAAARXZlbnRUeXBlAQCmDAAuAESmDAAAABH/////AQH/////AAAA" +
            "ABVgiQoCAAAAAAAKAAAAU291cmNlTm9kZQEApwwALgBEpwwAAAAR/////wEB/////wAAAAAVYIkKAgAA" +
            "AAAACgAAAFNvdXJjZU5hbWUBAKgMAC4ARKgMAAAADP////8BAf////8AAAAAFWCJCgIAAAAAAAQAAABU" +
@@ -7239,7 +7324,8 @@ namespace Opc.Ua
            "dWVzdFR5cGUBAA4IAC4ARA4IAAABADsB/////wEB/////wAAAAAVYIkKAgAAAAAAEQAAAFNlY3VyaXR5" +
            "UG9saWN5VXJpAQAPCAAuAEQPCAAAAAz/////AQH/////AAAAABVgiQoCAAAAAAAMAAAAU2VjdXJpdHlN" +
            "b2RlAQARCAAuAEQRCAAAAQAuAf////8BAf////8AAAAAFWCJCgIAAAAAABEAAABSZXF1ZXN0ZWRMaWZl" +
-           "dGltZQEAEggALgBEEggAAAEAIgH/////AQH/////AAAAAA==";
+           "dGltZQEAEggALgBEEggAAAEAIgH/////AQH/////AAAAABVgiQoCAAAAAAAXAAAAQ2VydGlmaWNhdGVF" +
+           "cnJvckV2ZW50SWQBAEdeAC4AREdeAAAADP////8BAf////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -7358,6 +7444,25 @@ namespace Opc.Ua
                 m_requestedLifetime = value;
             }
         }
+
+        /// <remarks />
+        public PropertyState<string> CertificateErrorEventId
+        {
+            get
+            {
+                return m_certificateErrorEventId;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_certificateErrorEventId, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_certificateErrorEventId = value;
+            }
+        }
         #endregion
 
         #region Overridden Methods
@@ -7398,6 +7503,11 @@ namespace Opc.Ua
             if (m_requestedLifetime != null)
             {
                 children.Add(m_requestedLifetime);
+            }
+
+            if (m_certificateErrorEventId != null)
+            {
+                children.Add(m_certificateErrorEventId);
             }
 
             base.GetChildren(context, children);
@@ -7546,6 +7656,27 @@ namespace Opc.Ua
                     instance = RequestedLifetime;
                     break;
                 }
+
+                case Opc.Ua.BrowseNames.CertificateErrorEventId:
+                {
+                    if (createOrReplace)
+                    {
+                        if (CertificateErrorEventId == null)
+                        {
+                            if (replacement == null)
+                            {
+                                CertificateErrorEventId = new PropertyState<string>(this);
+                            }
+                            else
+                            {
+                                CertificateErrorEventId = (PropertyState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = CertificateErrorEventId;
+                    break;
+                }
             }
 
             if (instance != null)
@@ -7564,6 +7695,7 @@ namespace Opc.Ua
         private PropertyState<string> m_securityPolicyUri;
         private PropertyState<MessageSecurityMode> m_securityMode;
         private PropertyState<double> m_requestedLifetime;
+        private PropertyState<string> m_certificateErrorEventId;
         #endregion
     }
     #endif
@@ -7600,6 +7732,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -7767,6 +7900,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -8076,6 +8210,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -8248,6 +8383,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -8510,6 +8646,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -8678,6 +8815,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -8845,6 +8983,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9060,6 +9199,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9144,6 +9284,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9228,6 +9369,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9312,6 +9454,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9396,6 +9539,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9480,6 +9624,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9563,6 +9708,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9730,6 +9876,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -9897,6 +10044,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -10064,6 +10212,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -10231,6 +10380,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -10314,6 +10464,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -10621,6 +10772,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -10788,6 +10940,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11002,6 +11155,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11080,6 +11234,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11158,6 +11313,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11320,6 +11476,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11398,6 +11555,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11561,6 +11719,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11723,6 +11882,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -11802,6 +11962,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -12011,6 +12172,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -12099,6 +12261,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -12246,6 +12409,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -13300,6 +13464,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -14085,6 +14250,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -15417,6 +15583,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -15505,6 +15672,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -15977,6 +16145,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -16065,6 +16234,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -19082,6 +19252,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -19170,6 +19341,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -23323,6 +23495,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -23411,6 +23584,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -24469,6 +24643,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -24756,6 +24931,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -24797,11 +24973,11 @@ namespace Opc.Ua
            "AAAAAA==";
 
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAGQAAAFNlbGVjdGlvbkxpc3RUeXBlSW5zdGFuY2UBALU/AQC1P7U/AAAA" +
-           "GP7///8BAf////8DAAAAF2CJCgIAAAAAAAoAAABTZWxlY3Rpb25zAQDgRAAuAETgRAAAABgBAAAAAQAA" +
-           "AAAAAAABAf////8AAAAAF2CJCgIAAAAAABUAAABTZWxlY3Rpb25EZXNjcmlwdGlvbnMBAOFEAC4AROFE" +
-           "AAAAFQEAAAABAAAAAAAAAAEB/////wAAAAAVYIkKAgAAAAAADgAAAFJlc3RyaWN0VG9MaXN0AQC4PwAu" +
-           "AES4PwAAAAH/////AQH/////AAAAAA==";
+           "//////////8VYIECAgAAAAAAGQAAAFNlbGVjdGlvbkxpc3RUeXBlSW5zdGFuY2UBALU/AQC1P7U/AAAA" +
+           "GAEB/////wMAAAAXYIkKAgAAAAAACgAAAFNlbGVjdGlvbnMBAOBEAC4AROBEAAAAGAEAAAABAAAAAAAA" +
+           "AAEB/////wAAAAAXYIkKAgAAAAAAFQAAAFNlbGVjdGlvbkRlc2NyaXB0aW9ucwEA4UQALgBE4UQAAAAV" +
+           "AQAAAAEAAAAAAAAAAQH/////AAAAABVgiQoCAAAAAAAOAAAAUmVzdHJpY3RUb0xpc3QBALg/AC4ARLg/" +
+           "AAAAAf////8BAf////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -25099,6 +25275,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -25374,6 +25551,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -25457,9 +25635,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GetMonitoredItemsMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint subscriptionId,
         ref uint[] serverHandles,
         ref uint[] clientHandles);
@@ -25499,6 +25677,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -25571,9 +25750,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult ResendDataMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint subscriptionId);
     #endif
     #endregion
@@ -25611,6 +25790,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -25693,9 +25873,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult SetSubscriptionDurableMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint subscriptionId,
         uint lifetimeInHours,
         ref uint revisedLifetimeInHours);
@@ -25735,6 +25915,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -25818,9 +25999,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RequestServerStateChangeMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ServerState state,
         DateTime estimatedReturnTime,
         uint secondsTillShutdown,
@@ -25860,6 +26041,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -26089,6 +26271,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -26426,6 +26609,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -26803,6 +26987,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27108,6 +27293,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27263,6 +27449,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27402,6 +27589,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27557,6 +27745,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27629,6 +27818,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27785,6 +27975,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27873,6 +28064,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -27961,6 +28153,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -28133,6 +28326,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -28221,6 +28415,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -28642,6 +28837,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -28823,6 +29019,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -29334,6 +29531,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -29515,6 +29713,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -30026,6 +30225,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -30207,6 +30407,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -30718,6 +30919,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -31101,6 +31303,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -31739,6 +31942,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -31997,6 +32201,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32215,6 +32420,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32294,9 +32500,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult OpenMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         byte mode,
         ref uint fileHandle);
     #endif
@@ -32335,6 +32541,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32407,9 +32614,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CloseMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle);
     #endif
     #endregion
@@ -32447,6 +32654,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32528,9 +32736,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult ReadMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle,
         int length,
         ref byte[] data);
@@ -32570,6 +32778,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32645,9 +32854,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult WriteMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle,
         byte[] data);
     #endif
@@ -32686,6 +32895,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32765,9 +32975,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GetPositionMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle,
         ref ulong position);
     #endif
@@ -32806,6 +33016,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -32881,9 +33092,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult SetPositionMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle,
         ulong position);
     #endif
@@ -32920,6 +33131,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -33234,6 +33446,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -33313,9 +33526,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CreateDirectoryMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string directoryName,
         ref NodeId directoryNodeId);
     #endif
@@ -33354,6 +33567,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -33439,9 +33653,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CreateFileMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string fileName,
         bool requestFileOpen,
         ref NodeId fileNodeId,
@@ -33482,6 +33696,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -33554,9 +33769,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult DeleteFileMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId objectToDelete);
     #endif
     #endregion
@@ -33594,6 +33809,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -33681,9 +33897,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult MoveOrCopyMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId objectToMoveOrCopy,
         NodeId targetDirectory,
         bool createCopy,
@@ -33723,6 +33939,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34034,6 +34251,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34121,9 +34339,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GenerateFileForReadMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         object generateOptions,
         ref NodeId fileNodeId,
         ref uint fileHandle,
@@ -34164,6 +34382,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34247,9 +34466,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GenerateFileForWriteMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         object generateOptions,
         ref NodeId fileNodeId,
         ref uint fileHandle);
@@ -34289,6 +34508,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34368,9 +34588,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CloseAndCommitMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle,
         ref NodeId completionStateMachine);
     #endif
@@ -34407,6 +34627,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34564,6 +34785,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34774,6 +34996,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34856,9 +35079,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddRoleMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string roleName,
         string namespaceUri,
         ref NodeId roleNodeId);
@@ -34898,6 +35121,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -34970,9 +35194,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveRoleMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId roleNodeId);
     #endif
     #endregion
@@ -35008,6 +35232,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -35741,6 +35966,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -35813,9 +36039,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddIdentityMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         IdentityMappingRuleType rule);
     #endif
     #endregion
@@ -35853,6 +36079,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -35925,9 +36152,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveIdentityMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         IdentityMappingRuleType rule);
     #endif
     #endregion
@@ -35965,6 +36192,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36037,9 +36265,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddApplicationMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string applicationUri);
     #endif
     #endregion
@@ -36077,6 +36305,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36150,9 +36379,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveApplicationMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string applicationUri);
     #endif
     #endregion
@@ -36190,6 +36419,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36262,9 +36492,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddEndpointMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         EndpointType endpoint);
     #endif
     #endregion
@@ -36302,6 +36532,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36374,9 +36605,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveEndpointMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         EndpointType endpoint);
     #endif
     #endregion
@@ -36412,6 +36643,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36497,6 +36729,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36569,6 +36802,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36641,6 +36875,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36713,6 +36948,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36785,6 +37021,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36821,6 +37058,329 @@ namespace Opc.Ua
         #endregion
 
         #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IOrderedObjectState Class
+    #if (!OPCUA_EXCLUDE_IOrderedObjectState)
+    /// <summary>
+    /// Stores an instance of the IOrderedObjectType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IOrderedObjectState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IOrderedObjectState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IOrderedObjectType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAGgAAAElPcmRlcmVkT2JqZWN0VHlwZUluc3RhbmNlAQDZWwEA2VvZWwAA" +
+           "/////wEAAAAVYIkKAgAAAAAADAAAAE51bWJlckluTGlzdAEA3VsALgBE3VsAAAAa/////wEB/////wAA" +
+           "AAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public PropertyState NumberInList
+        {
+            get
+            {
+                return m_numberInList;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_numberInList, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_numberInList = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_numberInList != null)
+            {
+                children.Add(m_numberInList);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.NumberInList:
+                {
+                    if (createOrReplace)
+                    {
+                        if (NumberInList == null)
+                        {
+                            if (replacement == null)
+                            {
+                                NumberInList = new PropertyState(this);
+                            }
+                            else
+                            {
+                                NumberInList = (PropertyState)replacement;
+                            }
+                        }
+                    }
+
+                    instance = NumberInList;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private PropertyState m_numberInList;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region OrderedListState Class
+    #if (!OPCUA_EXCLUDE_OrderedListState)
+    /// <summary>
+    /// Stores an instance of the OrderedListType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class OrderedListState : BaseObjectState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public OrderedListState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.OrderedListType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (NodeVersion != null)
+            {
+                NodeVersion.Initialize(context, NodeVersion_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string NodeVersion_InitializationString =
+           "//////////8VYIkKAgAAAAAACwAAAE5vZGVWZXJzaW9uAQDlWwAuAETlWwAAAAz/////AQH/////AAAA" +
+           "AA==";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAFwAAAE9yZGVyZWRMaXN0VHlwZUluc3RhbmNlAQDeWwEA3lveWwAAAQAA" +
+           "AAApAAEAVQgBAAAAFWCJCgIAAAAAAAsAAABOb2RlVmVyc2lvbgEA5VsALgBE5VsAAAAM/////wEB////" +
+           "/wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public PropertyState<string> NodeVersion
+        {
+            get
+            {
+                return m_nodeVersion;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_nodeVersion, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_nodeVersion = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_nodeVersion != null)
+            {
+                children.Add(m_nodeVersion);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.NodeVersion:
+                {
+                    if (createOrReplace)
+                    {
+                        if (NodeVersion == null)
+                        {
+                            if (replacement == null)
+                            {
+                                NodeVersion = new PropertyState<string>(this);
+                            }
+                            else
+                            {
+                                NodeVersion = (PropertyState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = NodeVersion;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private PropertyState<string> m_nodeVersion;
         #endregion
     }
     #endif
@@ -36873,6 +37433,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -36913,9 +37474,9 @@ namespace Opc.Ua
            "AAAAAA==";
 
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAFAAAAERhdGFJdGVtVHlwZUluc3RhbmNlAQA9CQEAPQk9CQAAABj+////" +
-           "AQH/////AgAAABVgiQoCAAAAAAAKAAAARGVmaW5pdGlvbgEAPgkALgBEPgkAAAAM/////wEB/////wAA" +
-           "AAAVYIkKAgAAAAAADgAAAFZhbHVlUHJlY2lzaW9uAQA/CQAuAEQ/CQAAAAv/////AQH/////AAAAAA==";
+           "//////////8VYIECAgAAAAAAFAAAAERhdGFJdGVtVHlwZUluc3RhbmNlAQA9CQEAPQk9CQAAABgBAf//" +
+           "//8CAAAAFWCJCgIAAAAAAAoAAABEZWZpbml0aW9uAQA+CQAuAEQ+CQAAAAz/////AQH/////AAAAABVg" +
+           "iQoCAAAAAAAOAAAAVmFsdWVQcmVjaXNpb24BAD8JAC4ARD8JAAAAC/////8BAf////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -37167,6 +37728,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -37216,11 +37778,10 @@ namespace Opc.Ua
            "/////wAAAAA=";
 
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAFgAAAEJhc2VBbmFsb2dUeXBlSW5zdGFuY2UBANY7AQDWO9Y7AAAAGv7/" +
-           "//8BAf////8DAAAAFWCJCgIAAAAAAA8AAABJbnN0cnVtZW50UmFuZ2UBAJ9EAC4ARJ9EAAABAHQD////" +
-           "/wEB/////wAAAAAVYIkKAgAAAAAABwAAAEVVUmFuZ2UBAKBEAC4ARKBEAAABAHQD/////wEB/////wAA" +
-           "AAAVYIkKAgAAAAAAEAAAAEVuZ2luZWVyaW5nVW5pdHMBAKFEAC4ARKFEAAABAHcD/////wEB/////wAA" +
-           "AAA=";
+           "//////////8VYIECAgAAAAAAFgAAAEJhc2VBbmFsb2dUeXBlSW5zdGFuY2UBANY7AQDWO9Y7AAAAGgEB" +
+           "/////wMAAAAVYIkKAgAAAAAADwAAAEluc3RydW1lbnRSYW5nZQEAn0QALgBEn0QAAAEAdAP/////AQH/" +
+           "////AAAAABVgiQoCAAAAAAAHAAAARVVSYW5nZQEAoEQALgBEoEQAAAEAdAP/////AQH/////AAAAABVg" +
+           "iQoCAAAAAAAQAAAARW5naW5lZXJpbmdVbml0cwEAoUQALgBEoUQAAAEAdwP/////AQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -37518,6 +38079,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -37541,9 +38103,8 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAFgAAAEFuYWxvZ0l0ZW1UeXBlSW5zdGFuY2UBAEAJAQBACUAJAAAAGv7/" +
-           "//8BAf////8BAAAAFWCJCgIAAAAAAAcAAABFVVJhbmdlAQBBCQAuAERBCQAAAQB0A/////8BAf////8A" +
-           "AAAA";
+           "//////////8VYIECAgAAAAAAFgAAAEFuYWxvZ0l0ZW1UeXBlSW5zdGFuY2UBAEAJAQBACUAJAAAAGgEB" +
+           "/////wEAAAAVYIkKAgAAAAAABwAAAEVVUmFuZ2UBAEEJAC4AREEJAAABAHQD/////wEB/////wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -37666,6 +38227,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -37689,9 +38251,9 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAFgAAAEFuYWxvZ1VuaXRUeXBlSW5zdGFuY2UBAFlEAQBZRFlEAAAAGv7/" +
-           "//8BAf////8BAAAAFWCJCgIAAAAAABAAAABFbmdpbmVlcmluZ1VuaXRzAQBeRAAuAEReRAAAAQB3A///" +
-           "//8BAf////8AAAAA";
+           "//////////8VYIECAgAAAAAAFgAAAEFuYWxvZ1VuaXRUeXBlSW5zdGFuY2UBAFlEAQBZRFlEAAAAGgEB" +
+           "/////wEAAAAVYIkKAgAAAAAAEAAAAEVuZ2luZWVyaW5nVW5pdHMBAF5EAC4ARF5EAAABAHcD/////wEB" +
+           "/////wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -37814,6 +38376,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -37837,10 +38400,10 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAGwAAAEFuYWxvZ1VuaXRSYW5nZVR5cGVJbnN0YW5jZQEAokQBAKJEokQA" +
-           "AAAa/v///wEB/////wIAAAAVYIkKAgAAAAAABwAAAEVVUmFuZ2UBAKZEAC4ARKZEAAABAHQD/////wEB" +
-           "/////wAAAAAVYIkKAgAAAAAAEAAAAEVuZ2luZWVyaW5nVW5pdHMBAKdEAC4ARKdEAAABAHcD/////wEB" +
-           "/////wAAAAA=";
+           "//////////8VYIECAgAAAAAAGwAAAEFuYWxvZ1VuaXRSYW5nZVR5cGVJbnN0YW5jZQEAokQBAKJEokQA" +
+           "AAAaAQH/////AgAAABVgiQoCAAAAAAAHAAAARVVSYW5nZQEApkQALgBEpkQAAAEAdAP/////AQH/////" +
+           "AAAAABVgiQoCAAAAAAAQAAAARW5naW5lZXJpbmdVbml0cwEAp0QALgBEp0QAAAEAdwP/////AQH/////" +
+           "AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -37963,6 +38526,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -37986,8 +38550,8 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAGAAAAERpc2NyZXRlSXRlbVR5cGVJbnN0YW5jZQEARAkBAEQJRAkAAAAY" +
-           "/v///wEB/////wAAAAA=";
+           "//////////8VYIECAgAAAAAAGAAAAERpc2NyZXRlSXRlbVR5cGVJbnN0YW5jZQEARAkBAEQJRAkAAAAY" +
+           "AQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -38110,6 +38674,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -38133,10 +38698,9 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAHAAAAFR3b1N0YXRlRGlzY3JldGVUeXBlSW5zdGFuY2UBAEUJAQBFCUUJ" +
-           "AAAAAf7///8BAf////8CAAAAFWCJCgIAAAAAAAoAAABGYWxzZVN0YXRlAQBGCQAuAERGCQAAABX/////" +
-           "AQH/////AAAAABVgiQoCAAAAAAAJAAAAVHJ1ZVN0YXRlAQBHCQAuAERHCQAAABX/////AQH/////AAAA" +
-           "AA==";
+           "//////////8VYIECAgAAAAAAHAAAAFR3b1N0YXRlRGlzY3JldGVUeXBlSW5zdGFuY2UBAEUJAQBFCUUJ" +
+           "AAAAAQEB/////wIAAAAVYIkKAgAAAAAACgAAAEZhbHNlU3RhdGUBAEYJAC4AREYJAAAAFf////8BAf//" +
+           "//8AAAAAFWCJCgIAAAAAAAkAAABUcnVlU3RhdGUBAEcJAC4AREcJAAAAFf////8BAf////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -38329,6 +38893,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -38352,9 +38917,9 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAHgAAAE11bHRpU3RhdGVEaXNjcmV0ZVR5cGVJbnN0YW5jZQEASAkBAEgJ" +
-           "SAkAAAAc/v///wEB/////wEAAAAXYIkKAgAAAAAACwAAAEVudW1TdHJpbmdzAQBJCQAuAERJCQAAABUB" +
-           "AAAAAQAAAAAAAAABAf////8AAAAA";
+           "//////////8VYIECAgAAAAAAHgAAAE11bHRpU3RhdGVEaXNjcmV0ZVR5cGVJbnN0YW5jZQEASAkBAEgJ" +
+           "SAkAAAAcAQH/////AQAAABdgiQoCAAAAAAALAAAARW51bVN0cmluZ3MBAEkJAC4AREkJAAAAFQEAAAAB" +
+           "AAAAAAAAAAEB/////wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -38477,6 +39042,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -38500,10 +39066,10 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAIwAAAE11bHRpU3RhdGVWYWx1ZURpc2NyZXRlVHlwZUluc3RhbmNlAQDm" +
-           "KwEA5ivmKwAAABr+////AQH/////AgAAABdgiQoCAAAAAAAKAAAARW51bVZhbHVlcwEA6SsALgBE6SsA" +
-           "AAEAqh0BAAAAAQAAAAAAAAABAf////8AAAAAFWCJCgIAAAAAAAsAAABWYWx1ZUFzVGV4dAEAxSwALgBE" +
-           "xSwAAAAV/////wEB/////wAAAAA=";
+           "//////////8VYIECAgAAAAAAIwAAAE11bHRpU3RhdGVWYWx1ZURpc2NyZXRlVHlwZUluc3RhbmNlAQDm" +
+           "KwEA5ivmKwAAABoBAf////8CAAAAF2CJCgIAAAAAAAoAAABFbnVtVmFsdWVzAQDpKwAuAETpKwAAAQCq" +
+           "HQEAAAABAAAAAAAAAAEB/////wAAAAAVYIkKAgAAAAAACwAAAFZhbHVlQXNUZXh0AQDFLAAuAETFLAAA" +
+           "ABX/////AQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -38755,6 +39321,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -38787,12 +39354,12 @@ namespace Opc.Ua
            "////AAAAAA==";
 
         private const string InitializationString =
-           "//////////8VYIECAgAAAAAAFQAAAEFycmF5SXRlbVR5cGVJbnN0YW5jZQEA9S4BAPUu9S4AAAAYAQH/" +
-           "////BQAAABVgiQoCAAAAAAAPAAAASW5zdHJ1bWVudFJhbmdlAQD4LgAuAET4LgAAAQB0A/////8BAf//" +
-           "//8AAAAAFWCJCgIAAAAAAAcAAABFVVJhbmdlAQD5LgAuAET5LgAAAQB0A/////8BAf////8AAAAAFWCJ" +
-           "CgIAAAAAABAAAABFbmdpbmVlcmluZ1VuaXRzAQD6LgAuAET6LgAAAQB3A/////8BAf////8AAAAAFWCJ" +
-           "CgIAAAAAAAUAAABUaXRsZQEA+y4ALgBE+y4AAAAV/////wEB/////wAAAAAVYIkKAgAAAAAADQAAAEF4" +
-           "aXNTY2FsZVR5cGUBAPwuAC4ARPwuAAABAC0v/////wEB/////wAAAAA=";
+           "//////////8VYIkCAgAAAAAAFQAAAEFycmF5SXRlbVR5cGVJbnN0YW5jZQEA9S4BAPUu9S4AAAAYAAAA" +
+           "AAEB/////wUAAAAVYIkKAgAAAAAADwAAAEluc3RydW1lbnRSYW5nZQEA+C4ALgBE+C4AAAEAdAP/////" +
+           "AQH/////AAAAABVgiQoCAAAAAAAHAAAARVVSYW5nZQEA+S4ALgBE+S4AAAEAdAP/////AQH/////AAAA" +
+           "ABVgiQoCAAAAAAAQAAAARW5naW5lZXJpbmdVbml0cwEA+i4ALgBE+i4AAAEAdwP/////AQH/////AAAA" +
+           "ABVgiQoCAAAAAAAFAAAAVGl0bGUBAPsuAC4ARPsuAAAAFf////8BAf////8AAAAAFWCJCgIAAAAAAA0A" +
+           "AABBeGlzU2NhbGVUeXBlAQD8LgAuAET8LgAAAQAtL/////8BAf////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -39182,6 +39749,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -39416,6 +39984,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -39591,6 +40160,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -39872,6 +40442,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -40200,6 +40771,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -40223,12 +40795,13 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIECAgAAAAAAHwAAAE5EaW1lbnNpb25BcnJheUl0ZW1UeXBlSW5zdGFuY2UBACQvAQAk" +
-           "LyQvAAAAGAEB/////wUAAAAVYIkKAgAAAAAABwAAAEVVUmFuZ2UBACgvAC4ARCgvAAABAHQD/////wEB" +
-           "/////wAAAAAVYIkKAgAAAAAAEAAAAEVuZ2luZWVyaW5nVW5pdHMBACkvAC4ARCkvAAABAHcD/////wEB" +
-           "/////wAAAAAVYIkKAgAAAAAABQAAAFRpdGxlAQAqLwAuAEQqLwAAABX/////AQH/////AAAAABVgiQoC" +
-           "AAAAAAANAAAAQXhpc1NjYWxlVHlwZQEAKy8ALgBEKy8AAAEALS//////AQH/////AAAAABdgiQoCAAAA" +
-           "AAAOAAAAQXhpc0RlZmluaXRpb24BACwvAC4ARCwvAAABAC8vAQAAAAEAAAAAAAAAAQH/////AAAAAA==";
+           "//////////8VYIkCAgAAAAAAHwAAAE5EaW1lbnNpb25BcnJheUl0ZW1UeXBlSW5zdGFuY2UBACQvAQAk" +
+           "LyQvAAAAGAAAAAABAf////8FAAAAFWCJCgIAAAAAAAcAAABFVVJhbmdlAQAoLwAuAEQoLwAAAQB0A///" +
+           "//8BAf////8AAAAAFWCJCgIAAAAAABAAAABFbmdpbmVlcmluZ1VuaXRzAQApLwAuAEQpLwAAAQB3A///" +
+           "//8BAf////8AAAAAFWCJCgIAAAAAAAUAAABUaXRsZQEAKi8ALgBEKi8AAAAV/////wEB/////wAAAAAV" +
+           "YIkKAgAAAAAADQAAAEF4aXNTY2FsZVR5cGUBACsvAC4ARCsvAAABAC0v/////wEB/////wAAAAAXYIkK" +
+           "AgAAAAAADgAAAEF4aXNEZWZpbml0aW9uAQAsLwAuAEQsLwAAAQAvLwEAAAABAAAAAAAAAAEB/////wAA" +
+           "AAA=";
         #endregion
         #endif
         #endregion
@@ -40434,6 +41007,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -40809,6 +41383,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -40832,9 +41407,9 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAHQAAAENvbmRpdGlvblZhcmlhYmxlVHlwZUluc3RhbmNlAQAqIwEAKiMq" +
-           "IwAAABj+////AQH/////AQAAABVgiQoCAAAAAAAPAAAAU291cmNlVGltZXN0YW1wAQArIwAuAEQrIwAA" +
-           "AQAmAf////8BAf////8AAAAA";
+           "//////////8VYIECAgAAAAAAHQAAAENvbmRpdGlvblZhcmlhYmxlVHlwZUluc3RhbmNlAQAqIwEAKiMq" +
+           "IwAAABgBAf////8BAAAAFWCJCgIAAAAAAA8AAABTb3VyY2VUaW1lc3RhbXABACsjAC4ARCsjAAABACYB" +
+           "/////wEB/////wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -41024,6 +41599,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -41876,6 +42452,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -41892,10 +42469,10 @@ namespace Opc.Ua
         private const string InitializationString =
            "//////////8EYYIKBAAAAAAAGwAAAENvbmRpdGlvblJlZnJlc2gyTWV0aG9kVHlwZQEAcjIALwEAcjJy" +
            "MgAAAQH/////AQAAABdgqQoCAAAAAAAOAAAASW5wdXRBcmd1bWVudHMBAHMyAC4ARHMyAACWAgAAAAEA" +
-           "KgEBVQAAAA4AAABTdWJzY3JpcHRpb25JZAEAIAH/////AAAAAAMAAAAALgAAAFRoZSBpZGVudGlmaWVy" +
-           "IGZvciB0aGUgc3VzY3JpcHRpb24gdG8gcmVmcmVzaC4BACoBAVkAAAAPAAAATW9uaXRvcmVkSXRlbUlk" +
-           "AQAgAf////8AAAAAAwAAAAAxAAAAVGhlIGlkZW50aWZpZXIgZm9yIHRoZSBtb25pdG9yZWQgaXRlbSB0" +
-           "byByZWZyZXNoLgEAKAEBAAAAAQAAAAAAAAABAf////8AAAAA";
+           "KgEBVgAAAA4AAABTdWJzY3JpcHRpb25JZAEAIAH/////AAAAAAMAAAAALwAAAFRoZSBpZGVudGlmaWVy" +
+           "IGZvciB0aGUgc3Vic2NyaXB0aW9uIHRvIHJlZnJlc2guAQAqAQFZAAAADwAAAE1vbml0b3JlZEl0ZW1J" +
+           "ZAEAIAH/////AAAAAAMAAAAAMQAAAFRoZSBpZGVudGlmaWVyIGZvciB0aGUgbW9uaXRvcmVkIGl0ZW0g" +
+           "dG8gcmVmcmVzaC4BACgBAQAAAAEAAAAAAAAAAQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -41953,9 +42530,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult ConditionRefresh2MethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint subscriptionId,
         uint monitoredItemId);
     #endif
@@ -41994,6 +42571,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -42010,8 +42588,8 @@ namespace Opc.Ua
         private const string InitializationString =
            "//////////8EYYIKBAAAAAAAGgAAAENvbmRpdGlvblJlZnJlc2hNZXRob2RUeXBlAQAvIwAvAQAvIy8j" +
            "AAABAf////8BAAAAF2CpCgIAAAAAAA4AAABJbnB1dEFyZ3VtZW50cwEAMCMALgBEMCMAAJYBAAAAAQAq" +
-           "AQFVAAAADgAAAFN1YnNjcmlwdGlvbklkAQAgAf////8AAAAAAwAAAAAuAAAAVGhlIGlkZW50aWZpZXIg" +
-           "Zm9yIHRoZSBzdXNjcmlwdGlvbiB0byByZWZyZXNoLgEAKAEBAAAAAQAAAAAAAAABAf////8AAAAA";
+           "AQFWAAAADgAAAFN1YnNjcmlwdGlvbklkAQAgAf////8AAAAAAwAAAAAvAAAAVGhlIGlkZW50aWZpZXIg" +
+           "Zm9yIHRoZSBzdWJzY3JpcHRpb24gdG8gcmVmcmVzaC4BACgBAQAAAAEAAAAAAAAAAQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -42067,9 +42645,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult ConditionRefreshMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint subscriptionId);
     #endif
     #endregion
@@ -42107,6 +42685,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -42183,9 +42762,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddCommentMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         byte[] eventId,
         LocalizedText comment);
     #endif
@@ -42222,6 +42801,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -42741,6 +43321,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -42814,9 +43395,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult DialogResponseMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         int selectedResponse);
     #endif
     #endregion
@@ -42852,6 +43433,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -43216,6 +43798,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -43378,7 +43961,7 @@ namespace Opc.Ua
            "AAAAAA==";
 
         private const string AudibleSound_InitializationString =
-           "//////////8VYIkKAgAAAAAADAAAAEF1ZGlibGVTb3VuZAEABkAALgEAQkYGQAAAAQCzP/////8BAf//" +
+           "//////////8VYIkKAgAAAAAADAAAAEF1ZGlibGVTb3VuZAEABkAALwEAQkYGQAAAAQCzP/////8BAf//" +
            "//8AAAAA";
 
         private const string SilenceState_InitializationString =
@@ -43510,7 +44093,7 @@ namespace Opc.Ua
            "AQCEC/wjAAABAQEAAAABAPkLAAEAVSsAAAAAFWCJCgIAAAAAABMAAABTdXBwcmVzc2VkT3JTaGVsdmVk" +
            "AQD/IwAuAET/IwAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAOAAAATWF4VGltZVNoZWx2ZWQBAAAk" +
            "AC4ARAAkAAABACIB/////wEB/////wAAAAAVYIkKAgAAAAAADgAAAEF1ZGlibGVFbmFibGVkAQAFQAAu" +
-           "AEQFQAAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAMAAAAQXVkaWJsZVNvdW5kAQAGQAAuAQBCRgZA" +
+           "AEQFQAAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAMAAAAQXVkaWJsZVNvdW5kAQAGQAAvAQBCRgZA" +
            "AAABALM//////wEB/////wAAAAAVYIkKAgAAAAAADAAAAFNpbGVuY2VTdGF0ZQEA/D8ALwEAIyP8PwAA" +
            "ABX/////AQH/////BAAAABVgiQoCAAAAAAACAAAASWQBAP0/AC4ARP0/AAAAAf////8BAf////8AAAAA" +
            "FWCJCgIAAAAAAA4AAABUcmFuc2l0aW9uVGltZQEAAUAALgBEAUAAAAEAJgH/////AQH/////AAAAABVg" +
@@ -44675,6 +45258,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -44747,6 +45331,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -45051,6 +45636,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -45125,9 +45711,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult TimedShelveMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         double shelvingTime);
     #endif
     #endregion
@@ -45163,6 +45749,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -45754,6 +46341,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -45827,6 +46415,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -46024,6 +46613,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -46427,6 +47017,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -46536,6 +47127,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -46647,6 +47239,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -46896,6 +47489,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -47098,6 +47692,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -47349,6 +47944,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -47553,6 +48149,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -47661,6 +48258,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -47853,6 +48451,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -47962,6 +48561,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -48071,6 +48671,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -48181,6 +48782,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -48290,6 +48892,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -48633,6 +49236,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -48927,6 +49531,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -48999,6 +49604,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49071,6 +49677,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49143,6 +49750,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49215,6 +49823,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49287,6 +49896,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49359,6 +49969,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49431,6 +50042,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49472,20 +50084,20 @@ namespace Opc.Ua
     #endif
     #endregion
 
-    #region TestingConditionSubClassState Class
-    #if (!OPCUA_EXCLUDE_TestingConditionSubClassState)
+    #region TestingConditionClassState Class
+    #if (!OPCUA_EXCLUDE_TestingConditionClassState)
     /// <summary>
-    /// Stores an instance of the TestingConditionSubClassType ObjectType.
+    /// Stores an instance of the TestingConditionClassType ObjectType.
     /// </summary>
     /// <exclude />
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
-    public partial class TestingConditionSubClassState : BaseConditionClassState
+    public partial class TestingConditionClassState : BaseConditionClassState
     {
         #region Constructors
         /// <summary>
         /// Initializes the type with its default attribute values.
         /// </summary>
-        public TestingConditionSubClassState(NodeState parent) : base(parent)
+        public TestingConditionClassState(NodeState parent) : base(parent)
         {
         }
 
@@ -49494,7 +50106,7 @@ namespace Opc.Ua
         /// </summary>
         protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
         {
-            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.TestingConditionSubClassType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.TestingConditionClassType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
         }
 
         #if (!OPCUA_EXCLUDE_InitializationStrings)
@@ -49503,6 +50115,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49526,8 +50139,8 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8EYIACAQAAAAAAJAAAAFRlc3RpbmdDb25kaXRpb25TdWJDbGFzc1R5cGVJbnN0YW5jZQEA" +
-           "RUMBAEVDRUMAAP////8AAAAA";
+           "//////////8EYIACAQAAAAAAIQAAAFRlc3RpbmdDb25kaXRpb25DbGFzc1R5cGVJbnN0YW5jZQEARUMB" +
+           "AEVDRUMAAP////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -49575,6 +50188,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49660,6 +50274,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49745,6 +50360,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -49961,6 +50577,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50130,6 +50747,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50346,6 +50964,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50562,6 +51181,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50740,6 +51360,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50825,6 +51446,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50910,6 +51532,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -50995,6 +51618,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -51080,6 +51704,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -51158,6 +51783,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -51236,6 +51862,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -51314,6 +51941,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -51863,6 +52491,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -52019,6 +52648,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -52052,7 +52682,7 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string ProgramDiagnostic_InitializationString =
-           "//////////8VYIkKAgAAAAAAEQAAAFByb2dyYW1EaWFnbm9zdGljAQBfCQAvAQAXPF8JAAABACQ8////" +
+           "//////////8VYIkKAgAAAAAAEQAAAFByb2dyYW1EaWFnbm9zdGljAQBfCQAvAQAXPF8JAAABAOFd////" +
            "/wEB/////wwAAAAVYIkKAgAAAAAADwAAAENyZWF0ZVNlc3Npb25JZAEAAA8ALwA/AA8AAAAR/////wEB" +
            "/////wAAAAAVYIkKAgAAAAAAEAAAAENyZWF0ZUNsaWVudE5hbWUBAAEPAC8APwEPAAAADP////8BAf//" +
            "//8AAAAAFWCJCgIAAAAAABYAAABJbnZvY2F0aW9uQ3JlYXRpb25UaW1lAQACDwAvAD8CDwAAAQAmAf//" +
@@ -52082,7 +52712,7 @@ namespace Opc.Ua
            "Af////8AAAAAFWCJCgIAAAAAAAkAAABEZWxldGFibGUBAFkJAC4ARFkJAAAAAf////8BAf////8AAAAA" +
            "FWCJCgIAAAAAAAoAAABBdXRvRGVsZXRlAQBaCQAuAERaCQAAAAH/////AQH/////AAAAABVgiQoCAAAA" +
            "AAAMAAAAUmVjeWNsZUNvdW50AQBbCQAuAERbCQAAAAb/////AQH/////AAAAABVgiQoCAAAAAAARAAAA" +
-           "UHJvZ3JhbURpYWdub3N0aWMBAF8JAC8BABc8XwkAAAEAJDz/////AQH/////DAAAABVgiQoCAAAAAAAP" +
+           "UHJvZ3JhbURpYWdub3N0aWMBAF8JAC8BABc8XwkAAAEA4V3/////AQH/////DAAAABVgiQoCAAAAAAAP" +
            "AAAAQ3JlYXRlU2Vzc2lvbklkAQAADwAvAD8ADwAAABH/////AQH/////AAAAABVgiQoCAAAAAAAQAAAA" +
            "Q3JlYXRlQ2xpZW50TmFtZQEAAQ8ALwA/AQ8AAAAM/////wEB/////wAAAAAVYIkKAgAAAAAAFgAAAElu" +
            "dm9jYXRpb25DcmVhdGlvblRpbWUBAAIPAC8APwIPAAABACYB/////wEB/////wAAAAAVYIkKAgAAAAAA" +
@@ -52411,6 +53041,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -52578,6 +53209,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -52749,6 +53381,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -52936,6 +53569,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -52970,7 +53604,7 @@ namespace Opc.Ua
            "AFMJAC4ARFMJAAAAGAEAAAABAAAAAAAAAAEB/////wAAAAAXYIkKAgAAAAAAGQAAAExhc3RNZXRob2RP" +
            "dXRwdXRBcmd1bWVudHMBAFQJAC4ARFQJAAAAGAEAAAABAAAAAAAAAAEB/////wAAAAAVYIkKAgAAAAAA" +
            "EgAAAExhc3RNZXRob2RDYWxsVGltZQEAVQkALgBEVQkAAAEAJgH/////AQH/////AAAAABVgiQoCAAAA" +
-           "AAAWAAAATGFzdE1ldGhvZFJldHVyblN0YXR1cwEAVgkALgBEVgkAAAAT/////wEB/////wAAAAA=";
+           "AAAWAAAATGFzdE1ldGhvZFJldHVyblN0YXR1cwEAVgkALgBEVgkAAAEAKwH/////AQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -53148,7 +53782,7 @@ namespace Opc.Ua
         }
 
         /// <remarks />
-        public PropertyState<StatusCode> LastMethodReturnStatus
+        public PropertyState<StatusResult> LastMethodReturnStatus
         {
             get
             {
@@ -53445,11 +54079,11 @@ namespace Opc.Ua
                         {
                             if (replacement == null)
                             {
-                                LastMethodReturnStatus = new PropertyState<StatusCode>(this);
+                                LastMethodReturnStatus = new PropertyState<StatusResult>(this);
                             }
                             else
                             {
-                                LastMethodReturnStatus = (PropertyState<StatusCode>)replacement;
+                                LastMethodReturnStatus = (PropertyState<StatusResult>)replacement;
                             }
                         }
                     }
@@ -53478,7 +54112,7 @@ namespace Opc.Ua
         private PropertyState<object[]> m_lastMethodInputArguments;
         private PropertyState<object[]> m_lastMethodOutputArguments;
         private PropertyState<DateTime> m_lastMethodCallTime;
-        private PropertyState<StatusCode> m_lastMethodReturnStatus;
+        private PropertyState<StatusResult> m_lastMethodReturnStatus;
         #endregion
     }
 
@@ -54085,6 +54719,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -54109,7 +54744,7 @@ namespace Opc.Ua
         #region Initialization String
         private const string InitializationString =
            "//////////8VYIkCAgAAAAAAHgAAAFByb2dyYW1EaWFnbm9zdGljMlR5cGVJbnN0YW5jZQEAFzwBABc8" +
-           "FzwAAAEAJDz/////AQH/////DAAAABVgiQoCAAAAAAAPAAAAQ3JlYXRlU2Vzc2lvbklkAQAYPAAvAD8Y" +
+           "FzwAAAEA4V3/////AQH/////DAAAABVgiQoCAAAAAAAPAAAAQ3JlYXRlU2Vzc2lvbklkAQAYPAAvAD8Y" +
            "PAAAABH/////AQH/////AAAAABVgiQoCAAAAAAAQAAAAQ3JlYXRlQ2xpZW50TmFtZQEAGTwALwA/GTwA" +
            "AAAM/////wEB/////wAAAAAVYIkKAgAAAAAAFgAAAEludm9jYXRpb25DcmVhdGlvblRpbWUBABo8AC8A" +
            "Pxo8AAABACYB/////wEB/////wAAAAAVYIkKAgAAAAAAEgAAAExhc3RUcmFuc2l0aW9uVGltZQEAGzwA" +
@@ -55353,7 +55988,7 @@ namespace Opc.Ua
         {
             lock (Lock)
             {
-                m_value.LastMethodReturnStatus = (StatusResult)Write(value);
+                m_value.LastMethodReturnStatus = (StatusCode)Write(value);
             }
 
             return ServiceResult.Good;
@@ -55401,6 +56036,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -56110,6 +56746,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -56972,6 +57609,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -57328,6 +57966,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -57637,6 +58276,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -57899,6 +58539,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -58067,6 +58708,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -58377,6 +59019,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -58593,6 +59236,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -58811,6 +59455,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -58890,9 +59535,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult OpenWithMasksMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint masks,
         ref uint fileHandle);
     #endif
@@ -58931,6 +59576,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -59010,9 +59656,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CloseAndUpdateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         uint fileHandle,
         ref bool applyChangesRequired);
     #endif
@@ -59051,6 +59697,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -59126,9 +59773,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddCertificateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         byte[] certificate,
         bool isTrustedCertificate);
     #endif
@@ -59167,6 +59814,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -59242,9 +59890,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveCertificateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string thumbprint,
         bool isTrustedCertificate);
     #endif
@@ -59281,6 +59929,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -59751,6 +60400,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -60038,6 +60688,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -60066,6 +60717,11 @@ namespace Opc.Ua
             if (TrustListOutOfDate != null)
             {
                 TrustListOutOfDate.Initialize(context, TrustListOutOfDate_InitializationString);
+            }
+
+            if (GetRejectedList != null)
+            {
+                GetRejectedList.Initialize(context, GetRejectedList_InitializationString);
             }
         }
 
@@ -60158,9 +60814,14 @@ namespace Opc.Ua
            "dGVUaW1lAQBATwAuAERATwAAAQAmAf////8BAf////8AAAAAFWCJCgIAAAAAAA8AAABVcGRhdGVGcmVx" +
            "dWVuY3kBAEFPAC4AREFPAAABACIB/////wEB/////wAAAAA=";
 
+        private const string GetRejectedList_InitializationString =
+           "//////////8EYYIKBAAAAAAADwAAAEdldFJlamVjdGVkTGlzdAEA5lsALwEA5lvmWwAAAQH/////AQAA" +
+           "ABdgqQoCAAAAAAAPAAAAT3V0cHV0QXJndW1lbnRzAQDnWwAuAETnWwAAlgEAAAABACoBAR8AAAAMAAAA" +
+           "Q2VydGlmaWNhdGVzAA8BAAAAAQAAAAAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAA=";
+
         private const string InitializationString =
            "//////////8EYIACAQAAAAAAHAAAAENlcnRpZmljYXRlR3JvdXBUeXBlSW5zdGFuY2UBAAsxAQALMQsx" +
-           "AAD/////BAAAAARggAoBAAAAAAAJAAAAVHJ1c3RMaXN0AQAfNQAvAQDqMB81AAD/////DAAAABVgiQoC" +
+           "AAD/////BQAAAARggAoBAAAAAAAJAAAAVHJ1c3RMaXN0AQAfNQAvAQDqMB81AAD/////DAAAABVgiQoC" +
            "AAAAAAAEAAAAU2l6ZQEAIDUALgBEIDUAAAAJ/////wEB/////wAAAAAVYIkKAgAAAAAACAAAAFdyaXRh" +
            "YmxlAQAhNQAuAEQhNQAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAMAAAAVXNlcldyaXRhYmxlAQAi" +
            "NQAuAEQiNQAAAAH/////AQH/////AAAAABVgiQoCAAAAAAAJAAAAT3BlbkNvdW50AQAjNQAuAEQjNQAA" +
@@ -60274,7 +60935,10 @@ namespace Opc.Ua
            "AAH/////AQH/////AAAAABVgiQoCAAAAAAALAAAATm9ybWFsU3RhdGUBAD5PAC4ARD5PAAAAEf////8B" +
            "Af////8AAAAAFWCJCgIAAAAAAAsAAABUcnVzdExpc3RJZAEAP08ALgBEP08AAAAR/////wEB/////wAA" +
            "AAAVYIkKAgAAAAAADgAAAExhc3RVcGRhdGVUaW1lAQBATwAuAERATwAAAQAmAf////8BAf////8AAAAA" +
-           "FWCJCgIAAAAAAA8AAABVcGRhdGVGcmVxdWVuY3kBAEFPAC4AREFPAAABACIB/////wEB/////wAAAAA=";
+           "FWCJCgIAAAAAAA8AAABVcGRhdGVGcmVxdWVuY3kBAEFPAC4AREFPAAABACIB/////wEB/////wAAAAAE" +
+           "YYIKBAAAAAAADwAAAEdldFJlamVjdGVkTGlzdAEA5lsALwEA5lvmWwAAAQH/////AQAAABdgqQoCAAAA" +
+           "AAAPAAAAT3V0cHV0QXJndW1lbnRzAQDnWwAuAETnWwAAlgEAAAABACoBAR8AAAAMAAAAQ2VydGlmaWNh" +
+           "dGVzAA8BAAAAAQAAAAAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -60355,6 +61019,25 @@ namespace Opc.Ua
                 m_trustListOutOfDate = value;
             }
         }
+
+        /// <remarks />
+        public GetRejectedListMethodState GetRejectedList
+        {
+            get
+            {
+                return m_getRejectedListMethod;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_getRejectedListMethod, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_getRejectedListMethod = value;
+            }
+        }
         #endregion
 
         #region Overridden Methods
@@ -60385,6 +61068,11 @@ namespace Opc.Ua
             if (m_trustListOutOfDate != null)
             {
                 children.Add(m_trustListOutOfDate);
+            }
+
+            if (m_getRejectedListMethod != null)
+            {
+                children.Add(m_getRejectedListMethod);
             }
 
             base.GetChildren(context, children);
@@ -60491,6 +61179,27 @@ namespace Opc.Ua
                     instance = TrustListOutOfDate;
                     break;
                 }
+
+                case Opc.Ua.BrowseNames.GetRejectedList:
+                {
+                    if (createOrReplace)
+                    {
+                        if (GetRejectedList == null)
+                        {
+                            if (replacement == null)
+                            {
+                                GetRejectedList = new GetRejectedListMethodState(this);
+                            }
+                            else
+                            {
+                                GetRejectedList = (GetRejectedListMethodState)replacement;
+                            }
+                        }
+                    }
+
+                    instance = GetRejectedList;
+                    break;
+                }
             }
 
             if (instance != null)
@@ -60507,6 +61216,7 @@ namespace Opc.Ua
         private PropertyState<NodeId[]> m_certificateTypes;
         private CertificateExpirationAlarmState m_certificateExpired;
         private TrustListOutOfDateAlarmState m_trustListOutOfDate;
+        private GetRejectedListMethodState m_getRejectedListMethod;
         #endregion
     }
     #endif
@@ -60543,6 +61253,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -60970,6 +61681,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61042,6 +61754,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61114,6 +61827,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61186,6 +61900,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61258,6 +61973,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61330,6 +62046,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61355,6 +62072,517 @@ namespace Opc.Ua
         private const string InitializationString =
            "//////////8EYIACAQAAAAAAKwAAAFJzYVNoYTI1NkFwcGxpY2F0aW9uQ2VydGlmaWNhdGVUeXBlSW5z" +
            "dGFuY2UBABAxAQAQMRAxAAD/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccApplicationCertificateState : ApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAJQAAAEVjY0FwcGxpY2F0aW9uQ2VydGlmaWNhdGVUeXBlSW5zdGFuY2UB" +
+           "APFbAQDxW/FbAAD/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccNistP256ApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccNistP256ApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccNistP256ApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccNistP256ApplicationCertificateState : EccApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccNistP256ApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccNistP256ApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAALQAAAEVjY05pc3RQMjU2QXBwbGljYXRpb25DZXJ0aWZpY2F0ZVR5cGVJ" +
+           "bnN0YW5jZQEA8lsBAPJb8lsAAP////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccNistP384ApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccNistP384ApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccNistP384ApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccNistP384ApplicationCertificateState : EccApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccNistP384ApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccNistP384ApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAALQAAAEVjY05pc3RQMzg0QXBwbGljYXRpb25DZXJ0aWZpY2F0ZVR5cGVJ" +
+           "bnN0YW5jZQEA81sBAPNb81sAAP////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccBrainpoolP256r1ApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccBrainpoolP256r1ApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccBrainpoolP256r1ApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccBrainpoolP256r1ApplicationCertificateState : EccApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccBrainpoolP256r1ApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccBrainpoolP256r1ApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAANAAAAEVjY0JyYWlucG9vbFAyNTZyMUFwcGxpY2F0aW9uQ2VydGlmaWNh" +
+           "dGVUeXBlSW5zdGFuY2UBAPRbAQD0W/RbAAD/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccBrainpoolP384r1ApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccBrainpoolP384r1ApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccBrainpoolP384r1ApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccBrainpoolP384r1ApplicationCertificateState : EccApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccBrainpoolP384r1ApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccBrainpoolP384r1ApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAANAAAAEVjY0JyYWlucG9vbFAzODRyMUFwcGxpY2F0aW9uQ2VydGlmaWNh" +
+           "dGVUeXBlSW5zdGFuY2UBAPVbAQD1W/VbAAD/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccCurve25519ApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccCurve25519ApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccCurve25519ApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccCurve25519ApplicationCertificateState : EccApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccCurve25519ApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccCurve25519ApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAALwAAAEVjY0N1cnZlMjU1MTlBcHBsaWNhdGlvbkNlcnRpZmljYXRlVHlw" +
+           "ZUluc3RhbmNlAQD2WwEA9lv2WwAA/////wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region EccCurve448ApplicationCertificateState Class
+    #if (!OPCUA_EXCLUDE_EccCurve448ApplicationCertificateState)
+    /// <summary>
+    /// Stores an instance of the EccCurve448ApplicationCertificateType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class EccCurve448ApplicationCertificateState : EccApplicationCertificateState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public EccCurve448ApplicationCertificateState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.EccCurve448ApplicationCertificateType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAALQAAAEVjY0N1cnZlNDQ4QXBwbGljYXRpb25DZXJ0aWZpY2F0ZVR5cGVJ" +
+           "bnN0YW5jZQEA91sBAPdb91sAAP////8AAAAA";
         #endregion
         #endif
         #endregion
@@ -61402,6 +62630,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61489,6 +62718,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61582,9 +62812,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult UpdateCertificateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId certificateGroupId,
         NodeId certificateTypeId,
         byte[] certificate,
@@ -61628,6 +62858,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61718,9 +62949,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CreateSigningRequestMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId certificateGroupId,
         NodeId certificateTypeId,
         string subjectName,
@@ -61763,6 +62994,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -61838,9 +63070,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GetRejectedListMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ref byte[][] certificates);
     #endif
     #endregion
@@ -61876,6 +63108,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -62456,6 +63689,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -62674,6 +63908,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -62759,9 +63994,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult CreateCredentialMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string resourceUri,
         string profileUri,
         string[] endpointUrls,
@@ -62800,6 +64035,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -62976,6 +64212,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -63062,16 +64299,15 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GetEncryptingKeyMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string credentialId,
         string requestedSecurityPolicyUri,
         ref byte[] publicKey,
         ref NodeId revisedSecurityPolicyUri);
     #endif
     #endregion
-
 
     #region KeyCredentialConfigurationState Class
     #if (!OPCUA_EXCLUDE_KeyCredentialConfigurationState)
@@ -63104,6 +64340,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -63605,6 +64842,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -63686,9 +64924,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult KeyCredentialUpdateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string credentialId,
         byte[] credentialSecret,
         string certificateThumbprint,
@@ -63727,6 +64965,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -63896,6 +65135,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -63982,6 +65222,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -64037,6 +65278,79 @@ namespace Opc.Ua
     #endif
     #endregion
 
+    #region AuthorizationServicesConfigurationFolderState Class
+    #if (!OPCUA_EXCLUDE_AuthorizationServicesConfigurationFolderState)
+    /// <summary>
+    /// Stores an instance of the AuthorizationServicesConfigurationFolderType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class AuthorizationServicesConfigurationFolderState : FolderState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public AuthorizationServicesConfigurationFolderState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.AuthorizationServicesConfigurationFolderType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAANAAAAEF1dGhvcml6YXRpb25TZXJ2aWNlc0NvbmZpZ3VyYXRpb25Gb2xk" +
+           "ZXJUeXBlSW5zdGFuY2UBAARcAQAEXARcAAD/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
     #region AuthorizationServiceConfigurationState Class
     #if (!OPCUA_EXCLUDE_AuthorizationServiceConfigurationState)
     /// <summary>
@@ -64068,6 +65382,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -64318,6 +65633,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -64615,6 +65931,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -64935,6 +66252,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -65034,9 +66352,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GetSecurityKeysMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string securityGroupId,
         uint startingTokenId,
         uint requestedKeyCount,
@@ -65081,6 +66399,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -65160,9 +66479,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult GetSecurityGroupMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string securityGroupId,
         ref NodeId securityGroupNodeId);
     #endif
@@ -65201,6 +66520,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -65295,9 +66615,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddSecurityGroupMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string securityGroupName,
         double keyLifetime,
         string securityPolicyUri,
@@ -65341,6 +66661,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -65414,9 +66735,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveSecurityGroupMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId securityGroupNodeId);
     #endif
     #endregion
@@ -65452,6 +66773,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -65664,6 +66986,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -66007,6 +67330,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -66591,6 +67915,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -66679,9 +68004,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult SetSecurityKeysMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string securityGroupId,
         string securityPolicyUri,
         uint currentTokenId,
@@ -66725,6 +68050,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -66804,9 +68130,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddConnectionMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         PubSubConnectionDataType configuration,
         ref NodeId connectionId);
     #endif
@@ -66845,6 +68171,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -66917,9 +68244,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveConnectionMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId connectionId);
     #endif
     #endregion
@@ -66955,6 +68282,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -67284,6 +68612,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -67494,6 +68823,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -67576,9 +68906,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddExtensionFieldMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         QualifiedName fieldName,
         object fieldValue,
         ref NodeId fieldId);
@@ -67618,6 +68948,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -67690,9 +69021,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveExtensionFieldMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId fieldId);
     #endif
     #endregion
@@ -67728,6 +69059,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -68023,6 +69355,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -68115,9 +69448,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PublishedDataItemsAddVariablesMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ConfigurationVersionDataType configurationVersion,
         string[] fieldNameAliases,
         bool[] promotedFields,
@@ -68160,6 +69493,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -68246,9 +69580,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PublishedDataItemsRemoveVariablesMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ConfigurationVersionDataType configurationVersion,
         uint[] variablesToRemove,
         ref ConfigurationVersionDataType newConfigurationVersion,
@@ -68287,6 +69621,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -68609,6 +69944,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -68697,9 +70033,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PublishedEventsTypeModifyFieldSelectionMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ConfigurationVersionDataType configurationVersion,
         string[] fieldNameAliases,
         bool[] promotedFields,
@@ -68739,6 +70075,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -69305,6 +70642,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -69400,9 +70738,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddPublishedDataItemsMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string name,
         string[] fieldNameAliases,
         ushort[] fieldFlags,
@@ -69446,6 +70784,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -69542,9 +70881,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddPublishedEventsMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string name,
         NodeId eventNotifier,
         string[] fieldNameAliases,
@@ -69589,6 +70928,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -69677,9 +71017,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddPublishedDataItemsTemplateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string name,
         DataSetMetaDataType dataSetMetaData,
         PublishedVariableDataType[] variablesToAdd,
@@ -69721,6 +71061,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -69811,9 +71152,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddPublishedEventsTemplateMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string name,
         DataSetMetaDataType dataSetMetaData,
         NodeId eventNotifier,
@@ -69856,6 +71197,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -69929,9 +71271,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemovePublishedDataSetMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId dataSetNodeId);
     #endif
     #endregion
@@ -69969,6 +71311,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -70048,9 +71391,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult AddDataSetFolderMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string name,
         ref NodeId dataSetFolderNodeId);
     #endif
@@ -70089,6 +71432,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -70162,9 +71506,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult RemoveDataSetFolderMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId dataSetFolderNodeId);
     #endif
     #endregion
@@ -70200,6 +71544,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -70919,6 +72264,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -70999,9 +72345,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PubSubConnectionTypeAddWriterGroupMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         WriterGroupDataType configuration,
         ref NodeId groupId);
     #endif
@@ -71040,6 +72386,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -71120,9 +72467,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PubSubConnectionAddReaderGroupGroupMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ReaderGroupDataType configuration,
         ref NodeId groupId);
     #endif
@@ -71161,6 +72508,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -71234,9 +72582,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PubSubConnectionTypeRemoveGroupMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId groupId);
     #endif
     #endregion
@@ -71272,6 +72620,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -71344,6 +72693,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -71753,6 +73103,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -72126,7 +73477,7 @@ namespace Opc.Ua
         }
 
         /// <remarks />
-        public PubSubGroupTypeAddWriterrMethodState AddDataSetWriter
+        public PubSubGroupTypeAddWriterMethodState AddDataSetWriter
         {
             get
             {
@@ -72447,11 +73798,11 @@ namespace Opc.Ua
                         {
                             if (replacement == null)
                             {
-                                AddDataSetWriter = new PubSubGroupTypeAddWriterrMethodState(this);
+                                AddDataSetWriter = new PubSubGroupTypeAddWriterMethodState(this);
                             }
                             else
                             {
-                                AddDataSetWriter = (PubSubGroupTypeAddWriterrMethodState)replacement;
+                                AddDataSetWriter = (PubSubGroupTypeAddWriterMethodState)replacement;
                             }
                         }
                     }
@@ -72501,27 +73852,27 @@ namespace Opc.Ua
         private WriterGroupTransportState m_transportSettings;
         private WriterGroupMessageState m_messageSettings;
         private PubSubDiagnosticsWriterGroupState m_diagnostics;
-        private PubSubGroupTypeAddWriterrMethodState m_addDataSetWriterMethod;
+        private PubSubGroupTypeAddWriterMethodState m_addDataSetWriterMethod;
         private PubSubGroupTypeRemoveWriterMethodState m_removeDataSetWriterMethod;
         #endregion
     }
     #endif
     #endregion
 
-    #region PubSubGroupTypeAddWriterrMethodState Class
-    #if (!OPCUA_EXCLUDE_PubSubGroupTypeAddWriterrMethodState)
+    #region PubSubGroupTypeAddWriterMethodState Class
+    #if (!OPCUA_EXCLUDE_PubSubGroupTypeAddWriterMethodState)
     /// <summary>
-    /// Stores an instance of the PubSubGroupTypeAddWriterrMethodType Method.
+    /// Stores an instance of the PubSubGroupTypeAddWriterMethodType Method.
     /// </summary>
     /// <exclude />
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
-    public partial class PubSubGroupTypeAddWriterrMethodState : MethodState
+    public partial class PubSubGroupTypeAddWriterMethodState : MethodState
     {
         #region Constructors
         /// <summary>
         /// Initializes the type with its default attribute values.
         /// </summary>
-        public PubSubGroupTypeAddWriterrMethodState(NodeState parent) : base(parent)
+        public PubSubGroupTypeAddWriterMethodState(NodeState parent) : base(parent)
         {
         }
 
@@ -72532,7 +73883,7 @@ namespace Opc.Ua
         /// <returns>The new node.</returns>
         public new static NodeState Construct(NodeState parent)
         {
-            return new PubSubGroupTypeAddWriterrMethodState(parent);
+            return new PubSubGroupTypeAddWriterMethodState(parent);
         }
 
         #if (!OPCUA_EXCLUDE_InitializationStrings)
@@ -72541,6 +73892,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -72555,12 +73907,12 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8EYYIKBAAAAAAAIwAAAFB1YlN1Ykdyb3VwVHlwZUFkZFdyaXRlcnJNZXRob2RUeXBlAQBK" +
-           "RgAvAQBKRkpGAAABAf////8CAAAAF2CpCgIAAAAAAA4AAABJbnB1dEFyZ3VtZW50cwEAS0YALgBES0YA" +
-           "AJYBAAAAAQAqAQEeAAAADQAAAENvbmZpZ3VyYXRpb24BAO08/////wAAAAAAAQAoAQEAAAABAAAAAAAA" +
-           "AAEB/////wAAAAAXYKkKAgAAAAAADwAAAE91dHB1dEFyZ3VtZW50cwEATEYALgBETEYAAJYBAAAAAQAq" +
-           "AQEiAAAAEwAAAERhdGFTZXRXcml0ZXJOb2RlSWQAEf////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf//" +
-           "//8AAAAA";
+           "//////////8EYYIKBAAAAAAAIgAAAFB1YlN1Ykdyb3VwVHlwZUFkZFdyaXRlck1ldGhvZFR5cGUBAEpG" +
+           "AC8BAEpGSkYAAAEB/////wIAAAAXYKkKAgAAAAAADgAAAElucHV0QXJndW1lbnRzAQBLRgAuAERLRgAA" +
+           "lgEAAAABACoBAR4AAAANAAAAQ29uZmlndXJhdGlvbgEA7Tz/////AAAAAAABACgBAQAAAAEAAAAAAAAA" +
+           "AQH/////AAAAABdgqQoCAAAAAAAPAAAAT3V0cHV0QXJndW1lbnRzAQBMRgAuAERMRgAAlgEAAAABACoB" +
+           "ASIAAAATAAAARGF0YVNldFdyaXRlck5vZGVJZAAR/////wAAAAAAAQAoAQEAAAABAAAAAAAAAAEB////" +
+           "/wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -72569,7 +73921,7 @@ namespace Opc.Ua
         /// <summary>
         /// Raised when the the method is called.
         /// </summary>
-        public PubSubGroupTypeAddWriterrMethodStateMethodCallHandler OnCall;
+        public PubSubGroupTypeAddWriterMethodStateMethodCallHandler OnCall;
         #endregion
 
         #region Public Properties
@@ -72620,10 +73972,10 @@ namespace Opc.Ua
     /// Used to receive notifications when the method is called.
     /// </summary>
     /// <exclude />
-    public delegate ServiceResult PubSubGroupTypeAddWriterrMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+    public delegate ServiceResult PubSubGroupTypeAddWriterMethodStateMethodCallHandler(
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         DataSetWriterDataType configuration,
         ref NodeId dataSetWriterNodeId);
     #endif
@@ -72662,6 +74014,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -72735,9 +74088,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PubSubGroupTypeRemoveWriterMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId dataSetWriterNodeId);
     #endif
     #endregion
@@ -72773,6 +74126,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -72845,6 +74199,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -72917,6 +74272,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -73407,6 +74763,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -73487,9 +74844,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PubSubGroupTypeAddReaderMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         DataSetReaderDataType configuration,
         ref NodeId dataSetReaderNodeId);
     #endif
@@ -73528,6 +74885,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -73601,9 +74959,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult PubSubGroupTypeRemoveReaderMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         NodeId dataSetReaderNodeId);
     #endif
     #endregion
@@ -73639,6 +74997,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -73711,6 +75070,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -73783,6 +75143,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -74381,6 +75742,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -74453,6 +75815,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -74525,6 +75888,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -75693,6 +77057,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -75765,6 +77130,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -75839,6 +77205,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -75922,9 +77289,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult DataSetReaderTypeCreateTargetVariablesMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ConfigurationVersionDataType configurationVersion,
         FieldTargetDataType[] targetVariablesToAdd,
         ref StatusCode[] addResults);
@@ -75964,6 +77331,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -76046,9 +77414,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult DataSetReaderTypeCreateDataSetMirrorMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         string parentNodeName,
         RolePermissionType[] rolePermissions,
         ref NodeId parentNodeId);
@@ -76086,6 +77454,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -76158,6 +77527,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -76445,6 +77815,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -76528,9 +77899,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult TargetVariablesTypeAddTargetVariablesMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ConfigurationVersionDataType configurationVersion,
         FieldTargetDataType[] targetVariablesToAdd,
         ref StatusCode[] addResults);
@@ -76570,6 +77941,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -76653,9 +78025,9 @@ namespace Opc.Ua
     /// </summary>
     /// <exclude />
     public delegate ServiceResult TargetVariablesTypeRemoveTargetVariablesMethodStateMethodCallHandler(
-        ISystemContext context,
-        MethodState method,
-        NodeId objectId,
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
         ConfigurationVersionDataType configurationVersion,
         uint[] targetsToRemove,
         ref StatusCode[] removeResults);
@@ -76693,6 +78065,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -76765,6 +78138,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -77030,6 +78404,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -77512,6 +78887,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -77818,6 +79194,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -77934,6 +79311,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -78043,6 +79421,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -78171,6 +79550,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -78295,6 +79675,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -78414,6 +79795,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -78541,6 +79923,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -78797,6 +80180,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -79009,6 +80393,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -79174,6 +80559,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -79527,6 +80913,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -79824,6 +81211,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -80356,6 +81744,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -80512,6 +81901,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -80668,6 +82058,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -80871,6 +82262,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -81029,6 +82421,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -81250,6 +82643,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -81453,6 +82847,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -81750,6 +83145,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -82141,6 +83537,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -82485,6 +83882,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -82642,6 +84040,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -82768,6 +84167,365 @@ namespace Opc.Ua
     #endif
     #endregion
 
+    #region AliasNameState Class
+    #if (!OPCUA_EXCLUDE_AliasNameState)
+    /// <summary>
+    /// Stores an instance of the AliasNameType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class AliasNameState : BaseObjectState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public AliasNameState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.AliasNameType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAFQAAAEFsaWFzTmFtZVR5cGVJbnN0YW5jZQEAn1sBAJ9bn1sAAP////8A" +
+           "AAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region AliasNameCategoryState Class
+    #if (!OPCUA_EXCLUDE_AliasNameCategoryState)
+    /// <summary>
+    /// Stores an instance of the AliasNameCategoryType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class AliasNameCategoryState : FolderState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public AliasNameCategoryState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.AliasNameCategoryType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAHQAAAEFsaWFzTmFtZUNhdGVnb3J5VHlwZUluc3RhbmNlAQCgWwEAoFug" +
+           "WwAA/////wEAAAAEYYIKBAAAAAAACQAAAEZpbmRBbGlhcwEAplsALwEAplumWwAAAQH/////AgAAABdg" +
+           "qQoCAAAAAAAOAAAASW5wdXRBcmd1bWVudHMBAKdbAC4ARKdbAACWAgAAAAEAKgEBJQAAABYAAABBbGlh" +
+           "c05hbWVTZWFyY2hQYXR0ZXJuAAz/////AAAAAAABACoBASIAAAATAAAAUmVmZXJlbmNlVHlwZUZpbHRl" +
+           "cgAR/////wAAAAAAAQAoAQEAAAABAAAAAAAAAAEB/////wAAAAAXYKkKAgAAAAAADwAAAE91dHB1dEFy" +
+           "Z3VtZW50cwEAqFsALgBEqFsAAJYBAAAAAQAqAQEiAAAADQAAAEFsaWFzTm9kZUxpc3QBAKxbAQAAAAEA" +
+           "AAAAAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public FindAliasMethodState FindAlias
+        {
+            get
+            {
+                return m_findAliasMethod;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_findAliasMethod, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_findAliasMethod = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_findAliasMethod != null)
+            {
+                children.Add(m_findAliasMethod);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.FindAlias:
+                {
+                    if (createOrReplace)
+                    {
+                        if (FindAlias == null)
+                        {
+                            if (replacement == null)
+                            {
+                                FindAlias = new FindAliasMethodState(this);
+                            }
+                            else
+                            {
+                                FindAlias = (FindAliasMethodState)replacement;
+                            }
+                        }
+                    }
+
+                    instance = FindAlias;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private FindAliasMethodState m_findAliasMethod;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region FindAliasMethodState Class
+    #if (!OPCUA_EXCLUDE_FindAliasMethodState)
+    /// <summary>
+    /// Stores an instance of the FindAliasMethodType Method.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class FindAliasMethodState : MethodState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public FindAliasMethodState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Constructs an instance of a node.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
+        /// <returns>The new node.</returns>
+        public new static NodeState Construct(NodeState parent)
+        {
+            return new FindAliasMethodState(parent);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYYIKBAAAAAAAEwAAAEZpbmRBbGlhc01ldGhvZFR5cGUBAKlbAC8BAKlbqVsAAAEB////" +
+           "/wIAAAAXYKkKAgAAAAAADgAAAElucHV0QXJndW1lbnRzAQCqWwAuAESqWwAAlgIAAAABACoBASUAAAAW" +
+           "AAAAQWxpYXNOYW1lU2VhcmNoUGF0dGVybgAM/////wAAAAAAAQAqAQEiAAAAEwAAAFJlZmVyZW5jZVR5" +
+           "cGVGaWx0ZXIAEf////8AAAAAAAEAKAEBAAAAAQAAAAAAAAABAf////8AAAAAF2CpCgIAAAAAAA8AAABP" +
+           "dXRwdXRBcmd1bWVudHMBAKtbAC4ARKtbAACWAQAAAAEAKgEBIgAAAA0AAABBbGlhc05vZGVMaXN0AQCs" +
+           "WwEAAAABAAAAAAAAAAABACgBAQAAAAEAAAAAAAAAAQH/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Event Callbacks
+        /// <summary>
+        /// Raised when the the method is called.
+        /// </summary>
+        public FindAliasMethodStateMethodCallHandler OnCall;
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Invokes the method, returns the result and output argument.
+        /// </summary>
+        protected override ServiceResult Call(
+            ISystemContext _context,
+            NodeId _objectId,
+            IList<object> _inputArguments,
+            IList<object> _outputArguments)
+        {
+            if (OnCall == null)
+            {
+                return base.Call(_context, _objectId, _inputArguments, _outputArguments);
+            }
+
+            ServiceResult result = null;
+
+            string aliasNameSearchPattern = (string)_inputArguments[0];
+            NodeId referenceTypeFilter = (NodeId)_inputArguments[1];
+
+            AliasNameDataType[] aliasNodeList = (AliasNameDataType[])_outputArguments[0];
+
+            if (OnCall != null)
+            {
+                result = OnCall(
+                    _context,
+                    this,
+                    _objectId,
+                    aliasNameSearchPattern,
+                    referenceTypeFilter,
+                    ref aliasNodeList);
+            }
+
+            _outputArguments[0] = aliasNodeList;
+
+            return result;
+        }
+        #endregion
+
+        #region Private Fields
+        #endregion
+    }
+
+    /// <summary>
+    /// Used to receive notifications when the method is called.
+    /// </summary>
+    /// <exclude />
+    public delegate ServiceResult FindAliasMethodStateMethodCallHandler(
+        ISystemContext _context,
+        MethodState _method,
+        NodeId _objectId,
+        string aliasNameSearchPattern,
+        NodeId referenceTypeFilter,
+        ref AliasNameDataType[] aliasNodeList);
+    #endif
+    #endregion
+
     #region MultiStateDictionaryEntryDiscreteBaseState Class
     #if (!OPCUA_EXCLUDE_MultiStateDictionaryEntryDiscreteBaseState)
     /// <summary>
@@ -82806,7 +84564,7 @@ namespace Opc.Ua
         /// </summary>
         protected override int GetDefaultValueRank()
         {
-            return ValueRanks.Scalar;
+            return ValueRanks.Any;
         }
 
         #if (!OPCUA_EXCLUDE_InitializationStrings)
@@ -82815,6 +84573,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -82847,13 +84606,12 @@ namespace Opc.Ua
            "AQAAAAEAAAAAAAAAAQH/////AAAAAA==";
 
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAAMQAAAE11bHRpU3RhdGVEaWN0aW9uYXJ5RW50cnlEaXNjcmV0ZUJhc2VU" +
-           "eXBlSW5zdGFuY2UBAIVKAQCFSoVKAAAAGv////8BAf////8EAAAAF2CJCgIAAAAAAAoAAABFbnVtVmFs" +
-           "dWVzAQCISgAuAESISgAAAQCqHQEAAAABAAAAAAAAAAEB/////wAAAAAVYIkKAgAAAAAACwAAAFZhbHVl" +
-           "QXNUZXh0AQCJSgAuAESJSgAAABX/////AQH/////AAAAABdgiQoCAAAAAAAVAAAARW51bURpY3Rpb25h" +
-           "cnlFbnRyaWVzAQCKSgAuAESKSgAAABECAAAAAgAAAAAAAAAAAAAAAQH/////AAAAABdgiQoCAAAAAAAY" +
-           "AAAAVmFsdWVBc0RpY3Rpb25hcnlFbnRyaWVzAQCLSgAuAESLSgAAABEBAAAAAQAAAAAAAAABAf////8A" +
-           "AAAA";
+           "//////////8VYIECAgAAAAAAMQAAAE11bHRpU3RhdGVEaWN0aW9uYXJ5RW50cnlEaXNjcmV0ZUJhc2VU" +
+           "eXBlSW5zdGFuY2UBAIVKAQCFSoVKAAAAGgEB/////wQAAAAXYIkKAgAAAAAACgAAAEVudW1WYWx1ZXMB" +
+           "AIhKAC4ARIhKAAABAKodAQAAAAEAAAAAAAAAAQH/////AAAAABVgiQoCAAAAAAALAAAAVmFsdWVBc1Rl" +
+           "eHQBAIlKAC4ARIlKAAAAFf////8BAf////8AAAAAF2CJCgIAAAAAABUAAABFbnVtRGljdGlvbmFyeUVu" +
+           "dHJpZXMBAIpKAC4ARIpKAAAAEQIAAAACAAAAAAAAAAAAAAABAf////8AAAAAF2CJCgIAAAAAABgAAABW" +
+           "YWx1ZUFzRGljdGlvbmFyeUVudHJpZXMBAItKAC4ARItKAAAAEQEAAAABAAAAAAAAAAEB/////wAAAAA=";
         #endregion
         #endif
         #endregion
@@ -83096,7 +84854,7 @@ namespace Opc.Ua
         /// </summary>
         protected override int GetDefaultValueRank()
         {
-            return ValueRanks.Scalar;
+            return ValueRanks.Any;
         }
 
         #if (!OPCUA_EXCLUDE_InitializationStrings)
@@ -83105,6 +84863,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context)
         {
+            base.Initialize(context);
             Initialize(context, InitializationString);
             InitializeOptionalChildren(context);
         }
@@ -83128,12 +84887,12 @@ namespace Opc.Ua
 
         #region Initialization String
         private const string InitializationString =
-           "//////////8VYIkCAgAAAAAALQAAAE11bHRpU3RhdGVEaWN0aW9uYXJ5RW50cnlEaXNjcmV0ZVR5cGVJ" +
-           "bnN0YW5jZQEAjEoBAIxKjEoAAAAa/////wEB/////wQAAAAXYIkKAgAAAAAACgAAAEVudW1WYWx1ZXMB" +
-           "AI9KAC4ARI9KAAABAKodAQAAAAEAAAAAAAAAAQH/////AAAAABVgiQoCAAAAAAALAAAAVmFsdWVBc1Rl" +
-           "eHQBAJBKAC4ARJBKAAAAFf////8BAf////8AAAAAF2CJCgIAAAAAABUAAABFbnVtRGljdGlvbmFyeUVu" +
-           "dHJpZXMBAJFKAC4ARJFKAAAAEQIAAAACAAAAAAAAAAAAAAABAf////8AAAAAF2CJCgIAAAAAABgAAABW" +
-           "YWx1ZUFzRGljdGlvbmFyeUVudHJpZXMBAJJKAC4ARJJKAAAAEQEAAAABAAAAAAAAAAEB/////wAAAAA=";
+           "//////////8VYIECAgAAAAAALQAAAE11bHRpU3RhdGVEaWN0aW9uYXJ5RW50cnlEaXNjcmV0ZVR5cGVJ" +
+           "bnN0YW5jZQEAjEoBAIxKjEoAAAAaAQH/////BAAAABdgiQoCAAAAAAAKAAAARW51bVZhbHVlcwEAj0oA" +
+           "LgBEj0oAAAEAqh0BAAAAAQAAAAAAAAABAf////8AAAAAFWCJCgIAAAAAAAsAAABWYWx1ZUFzVGV4dAEA" +
+           "kEoALgBEkEoAAAAV/////wEB/////wAAAAAXYIkKAgAAAAAAFQAAAEVudW1EaWN0aW9uYXJ5RW50cmll" +
+           "cwEAkUoALgBEkUoAAAARAgAAAAIAAAAAAAAAAAAAAAEB/////wAAAAAXYIkKAgAAAAAAGAAAAFZhbHVl" +
+           "QXNEaWN0aW9uYXJ5RW50cmllcwEAkkoALgBEkkoAAAARAQAAAAEAAAAAAAAAAQH/////AAAAAA==";
         #endregion
         #endif
         #endregion
@@ -83206,6 +84965,3339 @@ namespace Opc.Ua
         #endregion
     }
     #endregion
+    #endif
+    #endregion
+
+    #region IIetfBaseNetworkInterfaceState Class
+    #if (!OPCUA_EXCLUDE_IIetfBaseNetworkInterfaceState)
+    /// <summary>
+    /// Stores an instance of the IIetfBaseNetworkInterfaceType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIetfBaseNetworkInterfaceState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIetfBaseNetworkInterfaceState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIetfBaseNetworkInterfaceType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (PhysAddress != null)
+            {
+                PhysAddress.Initialize(context, PhysAddress_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string PhysAddress_InitializationString =
+           "//////////8VYIkKAgAAAAAACwAAAFBoeXNBZGRyZXNzAQBXXgAvAD9XXgAAAAz/////AQH/////AAAA" +
+           "AA==";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAJQAAAElJZXRmQmFzZU5ldHdvcmtJbnRlcmZhY2VUeXBlSW5zdGFuY2UB" +
+           "AFReAQBUXlReAAD/////BAAAABVgiQoCAAAAAAALAAAAQWRtaW5TdGF0dXMBAFVeAC8AP1VeAAABAJRe" +
+           "/////wEB/////wAAAAAVYIkKAgAAAAAACgAAAE9wZXJTdGF0dXMBAFZeAC8AP1ZeAAABAJZe/////wEB" +
+           "/////wAAAAAVYIkKAgAAAAAACwAAAFBoeXNBZGRyZXNzAQBXXgAvAD9XXgAAAAz/////AQH/////AAAA" +
+           "ABVgiQoCAAAAAAAFAAAAU3BlZWQBAFheAC8BAFlEWF4AAAAJ/////wEB/////wEAAAAVYKkKAgAAAAAA" +
+           "EAAAAEVuZ2luZWVyaW5nVW5pdHMBAF1eAC4ARF1eAAAWAQB5AwFgAAAALwAAAGh0dHA6Ly93d3cub3Bj" +
+           "Zm91bmRhdGlvbi5vcmcvVUEvdW5pdHMvdW4vY2VmYWN0MDFCAAMCAAAAZW4FAAAAYml0L3MDAgAAAGVu" +
+           "DgAAAGJpdCBwZXIgc2Vjb25kAQB3A/////8BAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<InterfaceAdminStatus> AdminStatus
+        {
+            get
+            {
+                return m_adminStatus;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_adminStatus, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_adminStatus = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<InterfaceOperStatus> OperStatus
+        {
+            get
+            {
+                return m_operStatus;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_operStatus, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_operStatus = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<string> PhysAddress
+        {
+            get
+            {
+                return m_physAddress;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_physAddress, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_physAddress = value;
+            }
+        }
+
+        /// <remarks />
+        public AnalogUnitState<ulong> Speed
+        {
+            get
+            {
+                return m_speed;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_speed, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_speed = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_adminStatus != null)
+            {
+                children.Add(m_adminStatus);
+            }
+
+            if (m_operStatus != null)
+            {
+                children.Add(m_operStatus);
+            }
+
+            if (m_physAddress != null)
+            {
+                children.Add(m_physAddress);
+            }
+
+            if (m_speed != null)
+            {
+                children.Add(m_speed);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.AdminStatus:
+                {
+                    if (createOrReplace)
+                    {
+                        if (AdminStatus == null)
+                        {
+                            if (replacement == null)
+                            {
+                                AdminStatus = new BaseDataVariableState<InterfaceAdminStatus>(this);
+                            }
+                            else
+                            {
+                                AdminStatus = (BaseDataVariableState<InterfaceAdminStatus>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = AdminStatus;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.OperStatus:
+                {
+                    if (createOrReplace)
+                    {
+                        if (OperStatus == null)
+                        {
+                            if (replacement == null)
+                            {
+                                OperStatus = new BaseDataVariableState<InterfaceOperStatus>(this);
+                            }
+                            else
+                            {
+                                OperStatus = (BaseDataVariableState<InterfaceOperStatus>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = OperStatus;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.PhysAddress:
+                {
+                    if (createOrReplace)
+                    {
+                        if (PhysAddress == null)
+                        {
+                            if (replacement == null)
+                            {
+                                PhysAddress = new BaseDataVariableState<string>(this);
+                            }
+                            else
+                            {
+                                PhysAddress = (BaseDataVariableState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = PhysAddress;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.Speed:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Speed == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Speed = new AnalogUnitState<ulong>(this);
+                            }
+                            else
+                            {
+                                Speed = (AnalogUnitState<ulong>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Speed;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<InterfaceAdminStatus> m_adminStatus;
+        private BaseDataVariableState<InterfaceOperStatus> m_operStatus;
+        private BaseDataVariableState<string> m_physAddress;
+        private AnalogUnitState<ulong> m_speed;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeBaseEthernetPortState Class
+    #if (!OPCUA_EXCLUDE_IIeeeBaseEthernetPortState)
+    /// <summary>
+    /// Stores an instance of the IIeeeBaseEthernetPortType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeBaseEthernetPortState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeBaseEthernetPortState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeBaseEthernetPortType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAIQAAAElJZWVlQmFzZUV0aGVybmV0UG9ydFR5cGVJbnN0YW5jZQEAXl4B" +
+           "AF5eXl4AAP////8DAAAAFWCJCgIAAAAAAAUAAABTcGVlZAEAX14ALwEAWURfXgAAAAn/////AQH/////" +
+           "AQAAABVgqQoCAAAAAAAQAAAARW5naW5lZXJpbmdVbml0cwEAZF4ALgBEZF4AABYBAHkDAWUAAAAvAAAA" +
+           "aHR0cDovL3d3dy5vcGNmb3VuZGF0aW9uLm9yZy9VQS91bml0cy91bi9jZWZhY3QwMkUAAwIAAABlbgYA" +
+           "AABNYml0L3MDAgAAAGVuEgAAAG1lZ2FiaXQgcGVyIHNlY29uZAEAdwP/////AQH/////AAAAABVgiQoC" +
+           "AAAAAAAGAAAARHVwbGV4AQBlXgAvAD9lXgAAAQCSXv////8BAf////8AAAAAFWCJCgIAAAAAAA4AAABN" +
+           "YXhGcmFtZUxlbmd0aAEAZl4ALwA/Zl4AAAAF/////wEB/////wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public AnalogUnitState<ulong> Speed
+        {
+            get
+            {
+                return m_speed;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_speed, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_speed = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<Duplex> Duplex
+        {
+            get
+            {
+                return m_duplex;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_duplex, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_duplex = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<ushort> MaxFrameLength
+        {
+            get
+            {
+                return m_maxFrameLength;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_maxFrameLength, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_maxFrameLength = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_speed != null)
+            {
+                children.Add(m_speed);
+            }
+
+            if (m_duplex != null)
+            {
+                children.Add(m_duplex);
+            }
+
+            if (m_maxFrameLength != null)
+            {
+                children.Add(m_maxFrameLength);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.Speed:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Speed == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Speed = new AnalogUnitState<ulong>(this);
+                            }
+                            else
+                            {
+                                Speed = (AnalogUnitState<ulong>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Speed;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.Duplex:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Duplex == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Duplex = new BaseDataVariableState<Duplex>(this);
+                            }
+                            else
+                            {
+                                Duplex = (BaseDataVariableState<Duplex>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Duplex;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.MaxFrameLength:
+                {
+                    if (createOrReplace)
+                    {
+                        if (MaxFrameLength == null)
+                        {
+                            if (replacement == null)
+                            {
+                                MaxFrameLength = new BaseDataVariableState<ushort>(this);
+                            }
+                            else
+                            {
+                                MaxFrameLength = (BaseDataVariableState<ushort>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = MaxFrameLength;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private AnalogUnitState<ulong> m_speed;
+        private BaseDataVariableState<Duplex> m_duplex;
+        private BaseDataVariableState<ushort> m_maxFrameLength;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeAutoNegotiationStatusState Class
+    #if (!OPCUA_EXCLUDE_IIeeeAutoNegotiationStatusState)
+    /// <summary>
+    /// Stores an instance of the IIeeeAutoNegotiationStatusType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeAutoNegotiationStatusState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeAutoNegotiationStatusState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeAutoNegotiationStatusType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAJgAAAElJZWVlQXV0b05lZ290aWF0aW9uU3RhdHVzVHlwZUluc3RhbmNl" +
+           "AQCpXgEAqV6pXgAA/////wEAAAAVYIkKAgAAAAAAEQAAAE5lZ290aWF0aW9uU3RhdHVzAQCqXgAvAD+q" +
+           "XgAAAQCYXv////8BAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<NegotiationStatus> NegotiationStatus
+        {
+            get
+            {
+                return m_negotiationStatus;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_negotiationStatus, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_negotiationStatus = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_negotiationStatus != null)
+            {
+                children.Add(m_negotiationStatus);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.NegotiationStatus:
+                {
+                    if (createOrReplace)
+                    {
+                        if (NegotiationStatus == null)
+                        {
+                            if (replacement == null)
+                            {
+                                NegotiationStatus = new BaseDataVariableState<NegotiationStatus>(this);
+                            }
+                            else
+                            {
+                                NegotiationStatus = (BaseDataVariableState<NegotiationStatus>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = NegotiationStatus;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<NegotiationStatus> m_negotiationStatus;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IBaseEthernetCapabilitiesState Class
+    #if (!OPCUA_EXCLUDE_IBaseEthernetCapabilitiesState)
+    /// <summary>
+    /// Stores an instance of the IBaseEthernetCapabilitiesType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IBaseEthernetCapabilitiesState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IBaseEthernetCapabilitiesState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IBaseEthernetCapabilitiesType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAJQAAAElCYXNlRXRoZXJuZXRDYXBhYmlsaXRpZXNUeXBlSW5zdGFuY2UB" +
+           "AGdeAQBnXmdeAAD/////AQAAABVgiQoCAAAAAAAOAAAAVmxhblRhZ0NhcGFibGUBAGheAC8AP2heAAAA" +
+           "Af////8BAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<bool> VlanTagCapable
+        {
+            get
+            {
+                return m_vlanTagCapable;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_vlanTagCapable, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_vlanTagCapable = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_vlanTagCapable != null)
+            {
+                children.Add(m_vlanTagCapable);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.VlanTagCapable:
+                {
+                    if (createOrReplace)
+                    {
+                        if (VlanTagCapable == null)
+                        {
+                            if (replacement == null)
+                            {
+                                VlanTagCapable = new BaseDataVariableState<bool>(this);
+                            }
+                            else
+                            {
+                                VlanTagCapable = (BaseDataVariableState<bool>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = VlanTagCapable;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<bool> m_vlanTagCapable;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region ISrClassState Class
+    #if (!OPCUA_EXCLUDE_ISrClassState)
+    /// <summary>
+    /// Stores an instance of the ISrClassType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class ISrClassState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public ISrClassState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.ISrClassType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAFAAAAElTckNsYXNzVHlwZUluc3RhbmNlAQBpXgEAaV5pXgAA/////wMA" +
+           "AAAVYIkKAgAAAAAAAgAAAElkAQBqXgAvAD9qXgAAAAP/////AQH/////AAAAABVgiQoCAAAAAAAIAAAA" +
+           "UHJpb3JpdHkBAGteAC8AP2teAAAAA/////8BAf////8AAAAAFWCJCgIAAAAAAAMAAABWaWQBAGxeAC8A" +
+           "P2xeAAAABf////8BAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<byte> Id
+        {
+            get
+            {
+                return m_id;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_id, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_id = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<byte> Priority
+        {
+            get
+            {
+                return m_priority;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_priority, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_priority = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<ushort> Vid
+        {
+            get
+            {
+                return m_vid;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_vid, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_vid = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_id != null)
+            {
+                children.Add(m_id);
+            }
+
+            if (m_priority != null)
+            {
+                children.Add(m_priority);
+            }
+
+            if (m_vid != null)
+            {
+                children.Add(m_vid);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.Id:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Id == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Id = new BaseDataVariableState<byte>(this);
+                            }
+                            else
+                            {
+                                Id = (BaseDataVariableState<byte>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Id;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.Priority:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Priority == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Priority = new BaseDataVariableState<byte>(this);
+                            }
+                            else
+                            {
+                                Priority = (BaseDataVariableState<byte>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Priority;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.Vid:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Vid == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Vid = new BaseDataVariableState<ushort>(this);
+                            }
+                            else
+                            {
+                                Vid = (BaseDataVariableState<ushort>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Vid;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<byte> m_id;
+        private BaseDataVariableState<byte> m_priority;
+        private BaseDataVariableState<ushort> m_vid;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeBaseTsnStreamState Class
+    #if (!OPCUA_EXCLUDE_IIeeeBaseTsnStreamState)
+    /// <summary>
+    /// Stores an instance of the IIeeeBaseTsnStreamType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeBaseTsnStreamState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeBaseTsnStreamState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeBaseTsnStreamType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (AccumulatedLatency != null)
+            {
+                AccumulatedLatency.Initialize(context, AccumulatedLatency_InitializationString);
+            }
+
+            if (SrClassId != null)
+            {
+                SrClassId.Initialize(context, SrClassId_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string AccumulatedLatency_InitializationString =
+           "//////////8VYIkKAgAAAAAAEgAAAEFjY3VtdWxhdGVkTGF0ZW5jeQEAcV4ALwA/cV4AAAAH/////wEB" +
+           "/////wAAAAA=";
+
+        private const string SrClassId_InitializationString =
+           "//////////8VYIkKAgAAAAAACQAAAFNyQ2xhc3NJZAEAcl4ALwA/cl4AAAAD/////wEB/////wAAAAA=";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAHgAAAElJZWVlQmFzZVRzblN0cmVhbVR5cGVJbnN0YW5jZQEAbV4BAG1e" +
+           "bV4AAP////8FAAAAF2CJCgIAAAAAAAgAAABTdHJlYW1JZAEAbl4ALwA/bl4AAAADAQAAAAEAAAAIAAAA" +
+           "AQH/////AAAAABVgiQoCAAAAAAAKAAAAU3RyZWFtTmFtZQEAb14ALwA/b14AAAAM/////wEB/////wAA" +
+           "AAAVYIkKAgAAAAAABQAAAFN0YXRlAQBwXgAvAD9wXgAAAQCcXv////8BAf////8AAAAAFWCJCgIAAAAA" +
+           "ABIAAABBY2N1bXVsYXRlZExhdGVuY3kBAHFeAC8AP3FeAAAAB/////8BAf////8AAAAAFWCJCgIAAAAA" +
+           "AAkAAABTckNsYXNzSWQBAHJeAC8AP3JeAAAAA/////8BAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<byte[]> StreamId
+        {
+            get
+            {
+                return m_streamId;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_streamId, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_streamId = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<string> StreamName
+        {
+            get
+            {
+                return m_streamName;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_streamName, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_streamName = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<TsnStreamState> State
+        {
+            get
+            {
+                return m_state;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_state, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_state = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<uint> AccumulatedLatency
+        {
+            get
+            {
+                return m_accumulatedLatency;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_accumulatedLatency, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_accumulatedLatency = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<byte> SrClassId
+        {
+            get
+            {
+                return m_srClassId;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_srClassId, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_srClassId = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_streamId != null)
+            {
+                children.Add(m_streamId);
+            }
+
+            if (m_streamName != null)
+            {
+                children.Add(m_streamName);
+            }
+
+            if (m_state != null)
+            {
+                children.Add(m_state);
+            }
+
+            if (m_accumulatedLatency != null)
+            {
+                children.Add(m_accumulatedLatency);
+            }
+
+            if (m_srClassId != null)
+            {
+                children.Add(m_srClassId);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.StreamId:
+                {
+                    if (createOrReplace)
+                    {
+                        if (StreamId == null)
+                        {
+                            if (replacement == null)
+                            {
+                                StreamId = new BaseDataVariableState<byte[]>(this);
+                            }
+                            else
+                            {
+                                StreamId = (BaseDataVariableState<byte[]>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = StreamId;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.StreamName:
+                {
+                    if (createOrReplace)
+                    {
+                        if (StreamName == null)
+                        {
+                            if (replacement == null)
+                            {
+                                StreamName = new BaseDataVariableState<string>(this);
+                            }
+                            else
+                            {
+                                StreamName = (BaseDataVariableState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = StreamName;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.State:
+                {
+                    if (createOrReplace)
+                    {
+                        if (State == null)
+                        {
+                            if (replacement == null)
+                            {
+                                State = new BaseDataVariableState<TsnStreamState>(this);
+                            }
+                            else
+                            {
+                                State = (BaseDataVariableState<TsnStreamState>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = State;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.AccumulatedLatency:
+                {
+                    if (createOrReplace)
+                    {
+                        if (AccumulatedLatency == null)
+                        {
+                            if (replacement == null)
+                            {
+                                AccumulatedLatency = new BaseDataVariableState<uint>(this);
+                            }
+                            else
+                            {
+                                AccumulatedLatency = (BaseDataVariableState<uint>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = AccumulatedLatency;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.SrClassId:
+                {
+                    if (createOrReplace)
+                    {
+                        if (SrClassId == null)
+                        {
+                            if (replacement == null)
+                            {
+                                SrClassId = new BaseDataVariableState<byte>(this);
+                            }
+                            else
+                            {
+                                SrClassId = (BaseDataVariableState<byte>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = SrClassId;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<byte[]> m_streamId;
+        private BaseDataVariableState<string> m_streamName;
+        private BaseDataVariableState<TsnStreamState> m_state;
+        private BaseDataVariableState<uint> m_accumulatedLatency;
+        private BaseDataVariableState<byte> m_srClassId;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeBaseTsnTrafficSpecificationState Class
+    #if (!OPCUA_EXCLUDE_IIeeeBaseTsnTrafficSpecificationState)
+    /// <summary>
+    /// Stores an instance of the IIeeeBaseTsnTrafficSpecificationType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeBaseTsnTrafficSpecificationState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeBaseTsnTrafficSpecificationState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeBaseTsnTrafficSpecificationType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAALAAAAElJZWVlQmFzZVRzblRyYWZmaWNTcGVjaWZpY2F0aW9uVHlwZUlu" +
+           "c3RhbmNlAQBzXgEAc15zXgAA/////wMAAAAVYIkKAgAAAAAAEQAAAE1heEludGVydmFsRnJhbWVzAQB0" +
+           "XgAvAD90XgAAAAX/////AQH/////AAAAABVgiQoCAAAAAAAMAAAATWF4RnJhbWVTaXplAQB1XgAvAD91" +
+           "XgAAAAf/////AQH/////AAAAABVgiQoCAAAAAAAIAAAASW50ZXJ2YWwBAHZeAC8AP3ZeAAABACte////" +
+           "/wEB/////wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<ushort> MaxIntervalFrames
+        {
+            get
+            {
+                return m_maxIntervalFrames;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_maxIntervalFrames, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_maxIntervalFrames = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<uint> MaxFrameSize
+        {
+            get
+            {
+                return m_maxFrameSize;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_maxFrameSize, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_maxFrameSize = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<UnsignedRationalNumber> Interval
+        {
+            get
+            {
+                return m_interval;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_interval, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_interval = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_maxIntervalFrames != null)
+            {
+                children.Add(m_maxIntervalFrames);
+            }
+
+            if (m_maxFrameSize != null)
+            {
+                children.Add(m_maxFrameSize);
+            }
+
+            if (m_interval != null)
+            {
+                children.Add(m_interval);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.MaxIntervalFrames:
+                {
+                    if (createOrReplace)
+                    {
+                        if (MaxIntervalFrames == null)
+                        {
+                            if (replacement == null)
+                            {
+                                MaxIntervalFrames = new BaseDataVariableState<ushort>(this);
+                            }
+                            else
+                            {
+                                MaxIntervalFrames = (BaseDataVariableState<ushort>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = MaxIntervalFrames;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.MaxFrameSize:
+                {
+                    if (createOrReplace)
+                    {
+                        if (MaxFrameSize == null)
+                        {
+                            if (replacement == null)
+                            {
+                                MaxFrameSize = new BaseDataVariableState<uint>(this);
+                            }
+                            else
+                            {
+                                MaxFrameSize = (BaseDataVariableState<uint>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = MaxFrameSize;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.Interval:
+                {
+                    if (createOrReplace)
+                    {
+                        if (Interval == null)
+                        {
+                            if (replacement == null)
+                            {
+                                Interval = new BaseDataVariableState<UnsignedRationalNumber>(this);
+                            }
+                            else
+                            {
+                                Interval = (BaseDataVariableState<UnsignedRationalNumber>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = Interval;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<ushort> m_maxIntervalFrames;
+        private BaseDataVariableState<uint> m_maxFrameSize;
+        private BaseDataVariableState<UnsignedRationalNumber> m_interval;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeBaseTsnStatusStreamState Class
+    #if (!OPCUA_EXCLUDE_IIeeeBaseTsnStatusStreamState)
+    /// <summary>
+    /// Stores an instance of the IIeeeBaseTsnStatusStreamType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeBaseTsnStatusStreamState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeBaseTsnStatusStreamState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeBaseTsnStatusStreamType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (TalkerStatus != null)
+            {
+                TalkerStatus.Initialize(context, TalkerStatus_InitializationString);
+            }
+
+            if (ListenerStatus != null)
+            {
+                ListenerStatus.Initialize(context, ListenerStatus_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string TalkerStatus_InitializationString =
+           "//////////8VYIkKAgAAAAAADAAAAFRhbGtlclN0YXR1cwEAeF4ALwA/eF4AAAEAnl7/////AQH/////" +
+           "AAAAAA==";
+
+        private const string ListenerStatus_InitializationString =
+           "//////////8VYIkKAgAAAAAADgAAAExpc3RlbmVyU3RhdHVzAQB5XgAvAD95XgAAAQCgXv////8BAf//" +
+           "//8AAAAA";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAJAAAAElJZWVlQmFzZVRzblN0YXR1c1N0cmVhbVR5cGVJbnN0YW5jZQEA" +
+           "d14BAHded14AAP////8EAAAAFWCJCgIAAAAAAAwAAABUYWxrZXJTdGF0dXMBAHheAC8AP3heAAABAJ5e" +
+           "/////wEB/////wAAAAAVYIkKAgAAAAAADgAAAExpc3RlbmVyU3RhdHVzAQB5XgAvAD95XgAAAQCgXv//" +
+           "//8BAf////8AAAAAFWCJCgIAAAAAAAsAAABGYWlsdXJlQ29kZQEAel4ALwA/el4AAAEAml7/////AQH/" +
+           "////AAAAABdgiQoCAAAAAAAXAAAARmFpbHVyZVN5c3RlbUlkZW50aWZpZXIBAHteAC8AP3teAAAAAwIA" +
+           "AAACAAAAAAAAAAgAAAABAf////8AAAAA";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<TsnTalkerStatus> TalkerStatus
+        {
+            get
+            {
+                return m_talkerStatus;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_talkerStatus, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_talkerStatus = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<TsnListenerStatus> ListenerStatus
+        {
+            get
+            {
+                return m_listenerStatus;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_listenerStatus, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_listenerStatus = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<TsnFailureCode> FailureCode
+        {
+            get
+            {
+                return m_failureCode;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_failureCode, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_failureCode = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<byte> FailureSystemIdentifier
+        {
+            get
+            {
+                return m_failureSystemIdentifier;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_failureSystemIdentifier, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_failureSystemIdentifier = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_talkerStatus != null)
+            {
+                children.Add(m_talkerStatus);
+            }
+
+            if (m_listenerStatus != null)
+            {
+                children.Add(m_listenerStatus);
+            }
+
+            if (m_failureCode != null)
+            {
+                children.Add(m_failureCode);
+            }
+
+            if (m_failureSystemIdentifier != null)
+            {
+                children.Add(m_failureSystemIdentifier);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.TalkerStatus:
+                {
+                    if (createOrReplace)
+                    {
+                        if (TalkerStatus == null)
+                        {
+                            if (replacement == null)
+                            {
+                                TalkerStatus = new BaseDataVariableState<TsnTalkerStatus>(this);
+                            }
+                            else
+                            {
+                                TalkerStatus = (BaseDataVariableState<TsnTalkerStatus>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = TalkerStatus;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.ListenerStatus:
+                {
+                    if (createOrReplace)
+                    {
+                        if (ListenerStatus == null)
+                        {
+                            if (replacement == null)
+                            {
+                                ListenerStatus = new BaseDataVariableState<TsnListenerStatus>(this);
+                            }
+                            else
+                            {
+                                ListenerStatus = (BaseDataVariableState<TsnListenerStatus>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = ListenerStatus;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.FailureCode:
+                {
+                    if (createOrReplace)
+                    {
+                        if (FailureCode == null)
+                        {
+                            if (replacement == null)
+                            {
+                                FailureCode = new BaseDataVariableState<TsnFailureCode>(this);
+                            }
+                            else
+                            {
+                                FailureCode = (BaseDataVariableState<TsnFailureCode>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = FailureCode;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.FailureSystemIdentifier:
+                {
+                    if (createOrReplace)
+                    {
+                        if (FailureSystemIdentifier == null)
+                        {
+                            if (replacement == null)
+                            {
+                                FailureSystemIdentifier = new BaseDataVariableState<byte>(this);
+                            }
+                            else
+                            {
+                                FailureSystemIdentifier = (BaseDataVariableState<byte>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = FailureSystemIdentifier;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<TsnTalkerStatus> m_talkerStatus;
+        private BaseDataVariableState<TsnListenerStatus> m_listenerStatus;
+        private BaseDataVariableState<TsnFailureCode> m_failureCode;
+        private BaseDataVariableState<byte> m_failureSystemIdentifier;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeTsnInterfaceConfigurationState Class
+    #if (!OPCUA_EXCLUDE_IIeeeTsnInterfaceConfigurationState)
+    /// <summary>
+    /// Stores an instance of the IIeeeTsnInterfaceConfigurationType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeTsnInterfaceConfigurationState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeTsnInterfaceConfigurationState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeTsnInterfaceConfigurationType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (InterfaceName != null)
+            {
+                InterfaceName.Initialize(context, InterfaceName_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string InterfaceName_InitializationString =
+           "//////////8VYIkKAgAAAAAADQAAAEludGVyZmFjZU5hbWUBAH5eAC8AP35eAAAADP////8BAf////8A" +
+           "AAAA";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAKgAAAElJZWVlVHNuSW50ZXJmYWNlQ29uZmlndXJhdGlvblR5cGVJbnN0" +
+           "YW5jZQEAfF4BAHxefF4AAP////8CAAAAFWCJCgIAAAAAAAoAAABNYWNBZGRyZXNzAQB9XgAvAD99XgAA" +
+           "AAz/////AQH/////AAAAABVgiQoCAAAAAAANAAAASW50ZXJmYWNlTmFtZQEAfl4ALwA/fl4AAAAM////" +
+           "/wEB/////wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<string> MacAddress
+        {
+            get
+            {
+                return m_macAddress;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_macAddress, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_macAddress = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<string> InterfaceName
+        {
+            get
+            {
+                return m_interfaceName;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_interfaceName, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_interfaceName = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_macAddress != null)
+            {
+                children.Add(m_macAddress);
+            }
+
+            if (m_interfaceName != null)
+            {
+                children.Add(m_interfaceName);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.MacAddress:
+                {
+                    if (createOrReplace)
+                    {
+                        if (MacAddress == null)
+                        {
+                            if (replacement == null)
+                            {
+                                MacAddress = new BaseDataVariableState<string>(this);
+                            }
+                            else
+                            {
+                                MacAddress = (BaseDataVariableState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = MacAddress;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.InterfaceName:
+                {
+                    if (createOrReplace)
+                    {
+                        if (InterfaceName == null)
+                        {
+                            if (replacement == null)
+                            {
+                                InterfaceName = new BaseDataVariableState<string>(this);
+                            }
+                            else
+                            {
+                                InterfaceName = (BaseDataVariableState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = InterfaceName;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<string> m_macAddress;
+        private BaseDataVariableState<string> m_interfaceName;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeTsnInterfaceConfigurationTalkerState Class
+    #if (!OPCUA_EXCLUDE_IIeeeTsnInterfaceConfigurationTalkerState)
+    /// <summary>
+    /// Stores an instance of the IIeeeTsnInterfaceConfigurationTalkerType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeTsnInterfaceConfigurationTalkerState : IIeeeTsnInterfaceConfigurationState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeTsnInterfaceConfigurationTalkerState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeTsnInterfaceConfigurationTalkerType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (TimeAwareOffset != null)
+            {
+                TimeAwareOffset.Initialize(context, TimeAwareOffset_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string TimeAwareOffset_InitializationString =
+           "//////////8VYIkKAgAAAAAADwAAAFRpbWVBd2FyZU9mZnNldAEAgl4ALwA/gl4AAAAH/////wEB////" +
+           "/wAAAAA=";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAMAAAAElJZWVlVHNuSW50ZXJmYWNlQ29uZmlndXJhdGlvblRhbGtlclR5" +
+           "cGVJbnN0YW5jZQEAf14BAH9ef14AAP////8CAAAAFWCJCgIAAAAAAAoAAABNYWNBZGRyZXNzAQCAXgAv" +
+           "AD+AXgAAAAz/////AQH/////AAAAABVgiQoCAAAAAAAPAAAAVGltZUF3YXJlT2Zmc2V0AQCCXgAvAD+C" +
+           "XgAAAAf/////AQH/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<uint> TimeAwareOffset
+        {
+            get
+            {
+                return m_timeAwareOffset;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_timeAwareOffset, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_timeAwareOffset = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_timeAwareOffset != null)
+            {
+                children.Add(m_timeAwareOffset);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.TimeAwareOffset:
+                {
+                    if (createOrReplace)
+                    {
+                        if (TimeAwareOffset == null)
+                        {
+                            if (replacement == null)
+                            {
+                                TimeAwareOffset = new BaseDataVariableState<uint>(this);
+                            }
+                            else
+                            {
+                                TimeAwareOffset = (BaseDataVariableState<uint>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = TimeAwareOffset;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<uint> m_timeAwareOffset;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeTsnInterfaceConfigurationListenerState Class
+    #if (!OPCUA_EXCLUDE_IIeeeTsnInterfaceConfigurationListenerState)
+    /// <summary>
+    /// Stores an instance of the IIeeeTsnInterfaceConfigurationListenerType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeTsnInterfaceConfigurationListenerState : IIeeeTsnInterfaceConfigurationState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeTsnInterfaceConfigurationListenerState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeTsnInterfaceConfigurationListenerType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (ReceiveOffset != null)
+            {
+                ReceiveOffset.Initialize(context, ReceiveOffset_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string ReceiveOffset_InitializationString =
+           "//////////8VYIkKAgAAAAAADQAAAFJlY2VpdmVPZmZzZXQBAIZeAC8AP4ZeAAAAB/////8BAf////8A" +
+           "AAAA";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAMgAAAElJZWVlVHNuSW50ZXJmYWNlQ29uZmlndXJhdGlvbkxpc3RlbmVy" +
+           "VHlwZUluc3RhbmNlAQCDXgEAg16DXgAA/////wIAAAAVYIkKAgAAAAAACgAAAE1hY0FkZHJlc3MBAIRe" +
+           "AC8AP4ReAAAADP////8BAf////8AAAAAFWCJCgIAAAAAAA0AAABSZWNlaXZlT2Zmc2V0AQCGXgAvAD+G" +
+           "XgAAAAf/////AQH/////AAAAAA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<uint> ReceiveOffset
+        {
+            get
+            {
+                return m_receiveOffset;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_receiveOffset, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_receiveOffset = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_receiveOffset != null)
+            {
+                children.Add(m_receiveOffset);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.ReceiveOffset:
+                {
+                    if (createOrReplace)
+                    {
+                        if (ReceiveOffset == null)
+                        {
+                            if (replacement == null)
+                            {
+                                ReceiveOffset = new BaseDataVariableState<uint>(this);
+                            }
+                            else
+                            {
+                                ReceiveOffset = (BaseDataVariableState<uint>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = ReceiveOffset;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<uint> m_receiveOffset;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeTsnMacAddressState Class
+    #if (!OPCUA_EXCLUDE_IIeeeTsnMacAddressState)
+    /// <summary>
+    /// Stores an instance of the IIeeeTsnMacAddressType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeTsnMacAddressState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeTsnMacAddressState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeTsnMacAddressType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (SourceAddress != null)
+            {
+                SourceAddress.Initialize(context, SourceAddress_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string SourceAddress_InitializationString =
+           "//////////8XYIkKAgAAAAAADQAAAFNvdXJjZUFkZHJlc3MBAIleAC8AP4leAAAAAwEAAAABAAAABgAA" +
+           "AAEB/////wAAAAA=";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAHgAAAElJZWVlVHNuTWFjQWRkcmVzc1R5cGVJbnN0YW5jZQEAh14BAIde" +
+           "h14AAP////8CAAAAF2CJCgIAAAAAABIAAABEZXN0aW5hdGlvbkFkZHJlc3MBAIheAC8AP4heAAAAAwEA" +
+           "AAABAAAABgAAAAEB/////wAAAAAXYIkKAgAAAAAADQAAAFNvdXJjZUFkZHJlc3MBAIleAC8AP4leAAAA" +
+           "AwEAAAABAAAABgAAAAEB/////wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<byte[]> DestinationAddress
+        {
+            get
+            {
+                return m_destinationAddress;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_destinationAddress, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_destinationAddress = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<byte[]> SourceAddress
+        {
+            get
+            {
+                return m_sourceAddress;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_sourceAddress, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_sourceAddress = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_destinationAddress != null)
+            {
+                children.Add(m_destinationAddress);
+            }
+
+            if (m_sourceAddress != null)
+            {
+                children.Add(m_sourceAddress);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.DestinationAddress:
+                {
+                    if (createOrReplace)
+                    {
+                        if (DestinationAddress == null)
+                        {
+                            if (replacement == null)
+                            {
+                                DestinationAddress = new BaseDataVariableState<byte[]>(this);
+                            }
+                            else
+                            {
+                                DestinationAddress = (BaseDataVariableState<byte[]>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = DestinationAddress;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.SourceAddress:
+                {
+                    if (createOrReplace)
+                    {
+                        if (SourceAddress == null)
+                        {
+                            if (replacement == null)
+                            {
+                                SourceAddress = new BaseDataVariableState<byte[]>(this);
+                            }
+                            else
+                            {
+                                SourceAddress = (BaseDataVariableState<byte[]>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = SourceAddress;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<byte[]> m_destinationAddress;
+        private BaseDataVariableState<byte[]> m_sourceAddress;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IIeeeTsnVlanTagState Class
+    #if (!OPCUA_EXCLUDE_IIeeeTsnVlanTagState)
+    /// <summary>
+    /// Stores an instance of the IIeeeTsnVlanTagType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IIeeeTsnVlanTagState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IIeeeTsnVlanTagState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IIeeeTsnVlanTagType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+        }
+
+        #region Initialization String
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAGwAAAElJZWVlVHNuVmxhblRhZ1R5cGVJbnN0YW5jZQEAil4BAIpeil4A" +
+           "AP////8CAAAAFWCJCgIAAAAAAAYAAABWbGFuSWQBAIteAC8AP4teAAAABf////8BAf////8AAAAAFWCJ" +
+           "CgIAAAAAABEAAABQcmlvcml0eUNvZGVQb2ludAEAjF4ALwA/jF4AAAAD/////wEB/////wAAAAA=";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<ushort> VlanId
+        {
+            get
+            {
+                return m_vlanId;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_vlanId, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_vlanId = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<byte> PriorityCodePoint
+        {
+            get
+            {
+                return m_priorityCodePoint;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_priorityCodePoint, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_priorityCodePoint = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_vlanId != null)
+            {
+                children.Add(m_vlanId);
+            }
+
+            if (m_priorityCodePoint != null)
+            {
+                children.Add(m_priorityCodePoint);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.VlanId:
+                {
+                    if (createOrReplace)
+                    {
+                        if (VlanId == null)
+                        {
+                            if (replacement == null)
+                            {
+                                VlanId = new BaseDataVariableState<ushort>(this);
+                            }
+                            else
+                            {
+                                VlanId = (BaseDataVariableState<ushort>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = VlanId;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.PriorityCodePoint:
+                {
+                    if (createOrReplace)
+                    {
+                        if (PriorityCodePoint == null)
+                        {
+                            if (replacement == null)
+                            {
+                                PriorityCodePoint = new BaseDataVariableState<byte>(this);
+                            }
+                            else
+                            {
+                                PriorityCodePoint = (BaseDataVariableState<byte>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = PriorityCodePoint;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<ushort> m_vlanId;
+        private BaseDataVariableState<byte> m_priorityCodePoint;
+        #endregion
+    }
+    #endif
+    #endregion
+
+    #region IPriorityMappingEntryState Class
+    #if (!OPCUA_EXCLUDE_IPriorityMappingEntryState)
+    /// <summary>
+    /// Stores an instance of the IPriorityMappingEntryType ObjectType.
+    /// </summary>
+    /// <exclude />
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("Opc.Ua.ModelCompiler", "1.0.0.0")]
+    public partial class IPriorityMappingEntryState : BaseInterfaceState
+    {
+        #region Constructors
+        /// <summary>
+        /// Initializes the type with its default attribute values.
+        /// </summary>
+        public IPriorityMappingEntryState(NodeState parent) : base(parent)
+        {
+        }
+
+        /// <summary>
+        /// Returns the id of the default type definition node for the instance.
+        /// </summary>
+        protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
+        {
+            return Opc.Ua.NodeId.Create(Opc.Ua.ObjectTypes.IPriorityMappingEntryType, Opc.Ua.Namespaces.OpcUa, namespaceUris);
+        }
+
+        #if (!OPCUA_EXCLUDE_InitializationStrings)
+        /// <summary>
+        /// Initializes the instance.
+        /// </summary>
+        protected override void Initialize(ISystemContext context)
+        {
+            base.Initialize(context);
+            Initialize(context, InitializationString);
+            InitializeOptionalChildren(context);
+        }
+
+        /// <summary>
+        /// Initializes the instance with a node.
+        /// </summary>
+        protected override void Initialize(ISystemContext context, NodeState source)
+        {
+            InitializeOptionalChildren(context);
+            base.Initialize(context, source);
+        }
+
+        /// <summary>
+        /// Initializes the any option children defined for the instance.
+        /// </summary>
+        protected override void InitializeOptionalChildren(ISystemContext context)
+        {
+            base.InitializeOptionalChildren(context);
+
+            if (PriorityValue_PCP != null)
+            {
+                PriorityValue_PCP.Initialize(context, PriorityValue_PCP_InitializationString);
+            }
+
+            if (PriorityValue_DSCP != null)
+            {
+                PriorityValue_DSCP.Initialize(context, PriorityValue_DSCP_InitializationString);
+            }
+        }
+
+        #region Initialization String
+        private const string PriorityValue_PCP_InitializationString =
+           "//////////8VYIkKAgAAAAAAEQAAAFByaW9yaXR5VmFsdWVfUENQAQCQXgAvAD+QXgAAAAP/////AQH/" +
+           "////AAAAAA==";
+
+        private const string PriorityValue_DSCP_InitializationString =
+           "//////////8VYIkKAgAAAAAAEgAAAFByaW9yaXR5VmFsdWVfRFNDUAEAkV4ALwA/kV4AAAAH/////wEB" +
+           "/////wAAAAA=";
+
+        private const string InitializationString =
+           "//////////8EYIACAQAAAAAAIQAAAElQcmlvcml0eU1hcHBpbmdFbnRyeVR5cGVJbnN0YW5jZQEAjV4B" +
+           "AI1ejV4AAP////8EAAAAFWCJCgIAAAAAAAoAAABNYXBwaW5nVXJpAQCOXgAvAD+OXgAAAAz/////AQH/" +
+           "////AAAAABVgiQoCAAAAAAANAAAAUHJpb3JpdHlMYWJlbAEAj14ALwA/j14AAAAM/////wEB/////wAA" +
+           "AAAVYIkKAgAAAAAAEQAAAFByaW9yaXR5VmFsdWVfUENQAQCQXgAvAD+QXgAAAAP/////AQH/////AAAA" +
+           "ABVgiQoCAAAAAAASAAAAUHJpb3JpdHlWYWx1ZV9EU0NQAQCRXgAvAD+RXgAAAAf/////AQH/////AAAA" +
+           "AA==";
+        #endregion
+        #endif
+        #endregion
+
+        #region Public Properties
+        /// <remarks />
+        public BaseDataVariableState<string> MappingUri
+        {
+            get
+            {
+                return m_mappingUri;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_mappingUri, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_mappingUri = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<string> PriorityLabel
+        {
+            get
+            {
+                return m_priorityLabel;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_priorityLabel, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_priorityLabel = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<byte> PriorityValue_PCP
+        {
+            get
+            {
+                return m_priorityValue_PCP;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_priorityValue_PCP, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_priorityValue_PCP = value;
+            }
+        }
+
+        /// <remarks />
+        public BaseDataVariableState<uint> PriorityValue_DSCP
+        {
+            get
+            {
+                return m_priorityValue_DSCP;
+            }
+
+            set
+            {
+                if (!Object.ReferenceEquals(m_priorityValue_DSCP, value))
+                {
+                    ChangeMasks |= NodeStateChangeMasks.Children;
+                }
+
+                m_priorityValue_DSCP = value;
+            }
+        }
+        #endregion
+
+        #region Overridden Methods
+        /// <summary>
+        /// Populates a list with the children that belong to the node.
+        /// </summary>
+        /// <param name="context">The context for the system being accessed.</param>
+        /// <param name="children">The list of children to populate.</param>
+        public override void GetChildren(
+            ISystemContext context,
+            IList<BaseInstanceState> children)
+        {
+            if (m_mappingUri != null)
+            {
+                children.Add(m_mappingUri);
+            }
+
+            if (m_priorityLabel != null)
+            {
+                children.Add(m_priorityLabel);
+            }
+
+            if (m_priorityValue_PCP != null)
+            {
+                children.Add(m_priorityValue_PCP);
+            }
+
+            if (m_priorityValue_DSCP != null)
+            {
+                children.Add(m_priorityValue_DSCP);
+            }
+
+            base.GetChildren(context, children);
+        }
+
+        /// <summary>
+        /// Finds the child with the specified browse name.
+        /// </summary>
+        protected override BaseInstanceState FindChild(
+            ISystemContext context,
+            QualifiedName browseName,
+            bool createOrReplace,
+            BaseInstanceState replacement)
+        {
+            if (QualifiedName.IsNull(browseName))
+            {
+                return null;
+            }
+
+            BaseInstanceState instance = null;
+
+            switch (browseName.Name)
+            {
+                case Opc.Ua.BrowseNames.MappingUri:
+                {
+                    if (createOrReplace)
+                    {
+                        if (MappingUri == null)
+                        {
+                            if (replacement == null)
+                            {
+                                MappingUri = new BaseDataVariableState<string>(this);
+                            }
+                            else
+                            {
+                                MappingUri = (BaseDataVariableState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = MappingUri;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.PriorityLabel:
+                {
+                    if (createOrReplace)
+                    {
+                        if (PriorityLabel == null)
+                        {
+                            if (replacement == null)
+                            {
+                                PriorityLabel = new BaseDataVariableState<string>(this);
+                            }
+                            else
+                            {
+                                PriorityLabel = (BaseDataVariableState<string>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = PriorityLabel;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.PriorityValue_PCP:
+                {
+                    if (createOrReplace)
+                    {
+                        if (PriorityValue_PCP == null)
+                        {
+                            if (replacement == null)
+                            {
+                                PriorityValue_PCP = new BaseDataVariableState<byte>(this);
+                            }
+                            else
+                            {
+                                PriorityValue_PCP = (BaseDataVariableState<byte>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = PriorityValue_PCP;
+                    break;
+                }
+
+                case Opc.Ua.BrowseNames.PriorityValue_DSCP:
+                {
+                    if (createOrReplace)
+                    {
+                        if (PriorityValue_DSCP == null)
+                        {
+                            if (replacement == null)
+                            {
+                                PriorityValue_DSCP = new BaseDataVariableState<uint>(this);
+                            }
+                            else
+                            {
+                                PriorityValue_DSCP = (BaseDataVariableState<uint>)replacement;
+                            }
+                        }
+                    }
+
+                    instance = PriorityValue_DSCP;
+                    break;
+                }
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return base.FindChild(context, browseName, createOrReplace, replacement);
+        }
+        #endregion
+
+        #region Private Fields
+        private BaseDataVariableState<string> m_mappingUri;
+        private BaseDataVariableState<string> m_priorityLabel;
+        private BaseDataVariableState<byte> m_priorityValue_PCP;
+        private BaseDataVariableState<uint> m_priorityValue_DSCP;
+        #endregion
+    }
     #endif
     #endregion
 }

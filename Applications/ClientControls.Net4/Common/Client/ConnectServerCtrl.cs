@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -333,7 +333,7 @@ namespace Opc.Ua.Client.Controls
             catch (Exception e)
             {
                 UpdateStatus(true, DateTime.Now, "Connected, failed to load complex type system.");
-                Utils.Trace(e, "Failed to load complex type system.");
+                Utils.LogWarning(e, "Failed to load complex type system.");
             }
 
             // return the new session.
@@ -369,7 +369,7 @@ namespace Opc.Ua.Client.Controls
             InternalDisconnect();
 
             // select the best endpoint.
-            var endpointDescription = CoreClientUtils.SelectEndpoint(serverUrl, useSecurity, DiscoverTimeout);
+            var endpointDescription = CoreClientUtils.SelectEndpoint(m_configuration, serverUrl, useSecurity, DiscoverTimeout);
             var endpointConfiguration = EndpointConfiguration.Create(m_configuration);
             var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
 
@@ -398,7 +398,7 @@ namespace Opc.Ua.Client.Controls
             catch (Exception e)
             {
                 UpdateStatus(true, DateTime.Now, "Connected, failed to load complex type system.");
-                Utils.Trace(e, "Failed to load complex type system.");
+                Utils.LogError(e, "Failed to load complex type system.");
             }
 
             // return the new session.
@@ -434,7 +434,7 @@ namespace Opc.Ua.Client.Controls
                 UseSecurityCK.Checked = useSecurity;
             }
 
-            return await Task.Run(() => Connect(serverUrl, useSecurity, sessionTimeout));
+            return await Connect(serverUrl, useSecurity, sessionTimeout);
         }
 
         /// <summary>
@@ -565,7 +565,7 @@ namespace Opc.Ua.Client.Controls
                 }
 
                 // return the selected endpoint.
-                return CoreClientUtils.SelectEndpoint(discoveryUrl, UseSecurityCK.Checked, DiscoverTimeout);
+                return CoreClientUtils.SelectEndpoint(m_configuration, discoveryUrl, UseSecurityCK.Checked, DiscoverTimeout);
             }
             finally
             {
@@ -575,6 +575,7 @@ namespace Opc.Ua.Client.Controls
         #endregion
 
         #region Event Handlers
+        private delegate void UpdateStatusCallback(bool error, DateTime time, string status, params object[] arg);
         /// <summary>
         /// Updates the status control.
         /// </summary>
@@ -584,6 +585,12 @@ namespace Opc.Ua.Client.Controls
         /// <param name="args">Arguments used to format the status message.</param>
         private void UpdateStatus(bool error, DateTime time, string status, params object[] args)
         {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new UpdateStatusCallback(UpdateStatus), error, time, status, args);
+                return;
+            }
+
             if (m_ServerStatusLB != null)
             {
                 m_ServerStatusLB.Text = String.Format(status, args);
@@ -634,7 +641,7 @@ namespace Opc.Ua.Client.Controls
                             m_ReconnectStarting(this, e);
                         }
 
-                        m_reconnectHandler = new SessionReconnectHandler();
+                        m_reconnectHandler = new SessionReconnectHandler(true);
                         m_reconnectHandler.BeginReconnect(m_session, ReconnectPeriod * 1000, Server_ReconnectComplete);
                     }
 
@@ -665,6 +672,16 @@ namespace Opc.Ua.Client.Controls
             {
                 await ConnectAsync();
             }
+            catch (ServiceResultException sre)
+            {
+                if (sre.StatusCode == StatusCodes.BadCertificateHostNameInvalid)
+                {
+                    if (GuiUtils.HandleDomainCheckError(this.FindForm().Text, sre.Result))
+                    {
+                        DisableDomainCheck = true;
+                    };
+                }
+            }
             catch (Exception exception)
             {
                 ClientUtils.HandleException(this.Text, exception);
@@ -690,7 +707,12 @@ namespace Opc.Ua.Client.Controls
                     return;
                 }
 
-                m_session = m_reconnectHandler.Session;
+                // only apply session if reconnect was required
+                if (m_reconnectHandler.Session != null)
+                {
+                    m_session = m_reconnectHandler.Session;
+                }
+
                 m_reconnectHandler.Dispose();
                 m_reconnectHandler = null;
 
@@ -719,17 +741,13 @@ namespace Opc.Ua.Client.Controls
 
             try
             {
-                e.Accept = m_configuration.SecurityConfiguration.AutoAcceptUntrustedCertificates;
-
                 if (!m_configuration.SecurityConfiguration.AutoAcceptUntrustedCertificates)
                 {
-                    DialogResult result = MessageBox.Show(
-                        e.Certificate.Subject,
-                        "Untrusted Certificate",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning);
-
-                    e.Accept = (result == DialogResult.Yes);
+                    GuiUtils.HandleCertificateValidationError(this.FindForm(), sender, e);
+                }
+                else
+                {
+                    e.Accept = true;
                 }
             }
             catch (Exception exception)
