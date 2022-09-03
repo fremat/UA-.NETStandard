@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -30,7 +30,7 @@ namespace Opc.Ua
         /// <summary>
         /// Initializes the object with default values.
         /// </summary>
-        public XmlEncoder(ServiceMessageContext context)
+        public XmlEncoder(IServiceMessageContext context)
         {
             Initialize();
 
@@ -38,9 +38,11 @@ namespace Opc.Ua
             m_context = context;
             m_nestingLevel = 0;
 
-            XmlWriterSettings settings = new XmlWriterSettings();
+            XmlWriterSettings settings = Utils.DefaultXmlWriterSettings();
             settings.CheckCharacters = false;
             settings.ConformanceLevel = ConformanceLevel.Auto;
+            settings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
+            settings.NewLineHandling = NewLineHandling.Replace;
 
             m_writer = XmlWriter.Create(m_destination, settings);
         }
@@ -48,7 +50,7 @@ namespace Opc.Ua
         /// <summary>
         /// Initializes the object with a system type to encode and a XML writer.
         /// </summary>
-        public XmlEncoder(System.Type systemType, XmlWriter writer, ServiceMessageContext context)
+        public XmlEncoder(System.Type systemType, XmlWriter writer, IServiceMessageContext context)
         :
             this(EncodeableFactory.GetXmlName(systemType), writer, context)
         {
@@ -57,7 +59,7 @@ namespace Opc.Ua
         /// <summary>
         /// Initializes the object with a system type to encode and a XML writer.
         /// </summary>
-        public XmlEncoder(XmlQualifiedName root, XmlWriter writer, ServiceMessageContext context)
+        public XmlEncoder(XmlQualifiedName root, XmlWriter writer, IServiceMessageContext context)
         {
             Initialize();
 
@@ -261,7 +263,7 @@ namespace Opc.Ua
         /// <summary>
         /// The message context associated with the encoder.
         /// </summary>
-        public ServiceMessageContext Context => m_context;
+        public IServiceMessageContext Context => m_context;
 
         /// <summary>
         /// Xml Encoder always produces reversible encoding.
@@ -437,7 +439,12 @@ namespace Opc.Ua
         /// </summary>
         public void WriteString(string fieldName, string value)
         {
-            if (BeginField(fieldName, value == null, true))
+            WriteString(fieldName, value, false);
+        }
+
+        private void WriteString(string fieldName, string value, bool isArrayElement)
+        {
+            if (BeginField(fieldName, value == null, true, isArrayElement))
             {
                 // check the length.
                 if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < value.Length)
@@ -445,7 +452,11 @@ namespace Opc.Ua
                     throw new ServiceResultException(StatusCodes.BadEncodingLimitsExceeded);
                 }
 
-                m_writer.WriteString(value);
+                if (!String.IsNullOrWhiteSpace(value))
+                {
+                    m_writer.WriteString(value);
+                }
+
                 EndField(fieldName);
             }
         }
@@ -498,7 +509,12 @@ namespace Opc.Ua
         /// </summary>
         public void WriteByteString(string fieldName, byte[] value)
         {
-            if (BeginField(fieldName, value == null, true))
+            WriteByteString(fieldName, value, false);
+        }
+
+        private void WriteByteString(string fieldName, byte[] value, bool isArrayElement = false)
+        {
+            if (BeginField(fieldName, value == null, true, isArrayElement))
             {
                 // check the length.
                 if (m_context.MaxByteStringLength > 0 && m_context.MaxByteStringLength < value.Length)
@@ -506,7 +522,7 @@ namespace Opc.Ua
                     throw new ServiceResultException(StatusCodes.BadEncodingLimitsExceeded);
                 }
 
-                m_writer.WriteValue(Convert.ToBase64String(value));
+                m_writer.WriteValue(Convert.ToBase64String(value, Base64FormattingOptions.InsertLineBreaks));
                 EndField(fieldName);
             }
         }
@@ -516,7 +532,12 @@ namespace Opc.Ua
         /// </summary>
         public void WriteXmlElement(string fieldName, XmlElement value)
         {
-            if (BeginField(fieldName, value == null, true))
+            WriteXmlElement(fieldName, value, false);
+        }
+
+        private void WriteXmlElement(string fieldName, XmlElement value, bool isArrayElement)
+        {
+            if (BeginField(fieldName, value == null, true, isArrayElement))
             {
                 m_writer.WriteRaw(value.OuterXml);
                 EndField(fieldName);
@@ -597,10 +618,7 @@ namespace Opc.Ua
             {
                 PushNamespace(Namespaces.OpcUaXsd);
 
-                if (value != null)
-                {
-                    WriteUInt32("Code", value.Code);
-                }
+                WriteUInt32("Code", value.Code);
 
                 PopNamespace();
 
@@ -686,8 +704,15 @@ namespace Opc.Ua
 
                 if (value != null)
                 {
-                    WriteString("Locale", value.Locale);
-                    WriteString("Text", value.Text);
+                    if (!String.IsNullOrEmpty(value.Locale))
+                    {
+                        WriteString("Locale", value.Locale);
+                    }
+
+                    if (!String.IsNullOrEmpty(value.Text))
+                    {
+                        WriteString("Text", value.Text);
+                    }
                 }
 
                 PopNamespace();
@@ -899,7 +924,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteBooleanArray(string fieldName, IList<bool> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -928,7 +953,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteSByteArray(string fieldName, IList<sbyte> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -957,7 +982,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteByteArray(string fieldName, IList<byte> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -986,7 +1011,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteInt16Array(string fieldName, IList<short> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1015,7 +1040,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteUInt16Array(string fieldName, IList<ushort> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1044,7 +1069,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteInt32Array(string fieldName, IList<int> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1073,7 +1098,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteUInt32Array(string fieldName, IList<uint> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1102,7 +1127,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteInt64Array(string fieldName, IList<long> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1131,7 +1156,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteUInt64Array(string fieldName, IList<ulong> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1160,7 +1185,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteFloatArray(string fieldName, IList<float> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1189,7 +1214,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteDoubleArray(string fieldName, IList<double> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1218,7 +1243,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteStringArray(string fieldName, IList<string> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1232,7 +1257,7 @@ namespace Opc.Ua
                 {
                     for (int ii = 0; ii < values.Count; ii++)
                     {
-                        WriteString("String", values[ii]);
+                        WriteString("String", values[ii], true);
                     }
                 }
 
@@ -1247,7 +1272,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteDateTimeArray(string fieldName, IList<DateTime> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1276,7 +1301,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteGuidArray(string fieldName, IList<Uuid> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1305,7 +1330,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteGuidArray(string fieldName, IList<Guid> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1334,7 +1359,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteByteStringArray(string fieldName, IList<byte[]> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1348,7 +1373,7 @@ namespace Opc.Ua
                 {
                     for (int ii = 0; ii < values.Count; ii++)
                     {
-                        WriteByteString("ByteString", values[ii]);
+                        WriteByteString("ByteString", values[ii], true);
                     }
                 }
 
@@ -1363,7 +1388,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteXmlElementArray(string fieldName, IList<XmlElement> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1377,7 +1402,7 @@ namespace Opc.Ua
                 {
                     for (int ii = 0; ii < values.Count; ii++)
                     {
-                        WriteXmlElement("XmlElement", values[ii]);
+                        WriteXmlElement("XmlElement", values[ii], true);
                     }
                 }
 
@@ -1392,7 +1417,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteNodeIdArray(string fieldName, IList<NodeId> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1421,7 +1446,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteExpandedNodeIdArray(string fieldName, IList<ExpandedNodeId> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1450,7 +1475,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteStatusCodeArray(string fieldName, IList<StatusCode> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1479,7 +1504,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteDiagnosticInfoArray(string fieldName, IList<DiagnosticInfo> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1508,7 +1533,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteQualifiedNameArray(string fieldName, IList<QualifiedName> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1537,7 +1562,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteLocalizedTextArray(string fieldName, IList<LocalizedText> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1566,7 +1591,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteVariantArray(string fieldName, IList<Variant> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1595,7 +1620,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteDataValueArray(string fieldName, IList<DataValue> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1624,7 +1649,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteExtensionObjectArray(string fieldName, IList<ExtensionObject> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1653,7 +1678,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteEncodeableArray(string fieldName, IList<IEncodeable> values, System.Type systemType)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
@@ -1700,7 +1725,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteEnumeratedArray(string fieldName, Array values, System.Type systemType)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
                 if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Length)
@@ -1832,6 +1857,7 @@ namespace Opc.Ua
                                     ints[ii] = (int)(object)enums[ii];
                                 }
                             }
+
                             WriteInt32Array("ListOfInt32", ints);
                             return;
                         }
@@ -1897,24 +1923,23 @@ namespace Opc.Ua
             if (bytes != null)
             {
                 m_writer.WriteStartElement("ByteString", Namespaces.OpcUaXsd);
-                m_writer.WriteString(Convert.ToBase64String(bytes));
+                m_writer.WriteString(Convert.ToBase64String(bytes, Base64FormattingOptions.InsertLineBreaks));
                 m_writer.WriteEndElement();
                 return;
             }
 
             // encode xml body.
             XmlElement xml = body as XmlElement;
-
             if (xml != null)
             {
-                XmlReader reader = XmlReader.Create(new StringReader(xml.OuterXml));
-                m_writer.WriteNode(reader, false);
-                reader.Dispose();
-                return;
+                using (XmlReader reader = XmlReader.Create(new StringReader(xml.OuterXml), Utils.DefaultXmlReaderSettings()))
+                {
+                    m_writer.WriteNode(reader, false);
+                    return;
+                }
             }
 
             IEncodeable encodeable = body as IEncodeable;
-
             if (encodeable == null)
             {
                 throw new ServiceResultException(
@@ -1928,42 +1953,16 @@ namespace Opc.Ua
             encodeable.Encode(this);
             m_writer.WriteEndElement();
         }
-        #endregion
-
-        #region Private Methods
-        /// <summary>
-        /// Writes an DataValue array to the stream.
-        /// </summary>
-        private void WriteMatrix(string fieldName, Matrix value)
-        {
-            if (BeginField(fieldName, value == null, true))
-            {
-                PushNamespace(Namespaces.OpcUaXsd);
-
-                if (value != null)
-                {
-                    m_writer.WriteStartElement("Elements", Namespaces.OpcUaXsd);
-                    WriteVariantContents(value.Elements, new TypeInfo(value.TypeInfo.BuiltInType, ValueRanks.OneDimension));
-                    m_writer.WriteEndElement();
-
-                    WriteInt32Array("Dimensions", value.Dimensions);
-                }
-
-                PopNamespace();
-
-                EndField(fieldName);
-            }
-        }
 
         /// <summary>
         /// Writes an Variant array to the stream.
         /// </summary>
         public void WriteObjectArray(string fieldName, IList<object> values)
         {
-            if (BeginField(fieldName, values == null, true))
+            if (BeginField(fieldName, values == null, true, true))
             {
                 // check the length.
-                if (m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
+                if (values != null && m_context.MaxArrayLength > 0 && m_context.MaxArrayLength < values.Count)
                 {
                     throw new ServiceResultException(StatusCodes.BadEncodingLimitsExceeded);
                 }
@@ -1985,13 +1984,202 @@ namespace Opc.Ua
         }
 
         /// <summary>
+        /// Encode an array according to its valueRank and BuiltInType
+        /// </summary>
+        public void WriteArray(string fieldName, object array, int valueRank, BuiltInType builtInType)
+        {
+            // check the nesting level for avoiding a stack overflow.
+            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of {0} was exceeded",
+                    m_context.MaxEncodingNestingLevels);
+            }
+
+            m_nestingLevel++;
+
+            try
+            {
+                // write array.
+                if (valueRank == ValueRanks.OneDimension)
+                {
+                    try
+                    {
+                        m_namespaces.Push(Namespaces.OpcUaXsd);
+
+                        /*One dimensional Array parameters are always encoded by wrapping the elements in a container element 
+                     * and inserting the container into the structure. The name of the container element should be the name of the parameter. 
+                     * The name of the element in the array shall be the type name.*/
+                        switch (builtInType)
+                        {
+                            case BuiltInType.Boolean: { WriteBooleanArray(fieldName, (bool[])array); return; }
+                            case BuiltInType.SByte: { WriteSByteArray(fieldName, (sbyte[])array); return; }
+                            case BuiltInType.Byte: { WriteByteArray(fieldName, (byte[])array); return; }
+                            case BuiltInType.Int16: { WriteInt16Array(fieldName, (short[])array); return; }
+                            case BuiltInType.UInt16: { WriteUInt16Array(fieldName, (ushort[])array); return; }
+                            case BuiltInType.Int32: { WriteInt32Array(fieldName, (int[])array); return; }
+                            case BuiltInType.UInt32: { WriteUInt32Array(fieldName, (uint[])array); return; }
+                            case BuiltInType.Int64: { WriteInt64Array(fieldName, (long[])array); return; }
+                            case BuiltInType.UInt64: { WriteUInt64Array(fieldName, (ulong[])array); return; }
+                            case BuiltInType.Float: { WriteFloatArray(fieldName, (float[])array); return; }
+                            case BuiltInType.Double: { WriteDoubleArray(fieldName, (double[])array); return; }
+                            case BuiltInType.String: { WriteStringArray(fieldName, (string[])array); return; }
+                            case BuiltInType.DateTime: { WriteDateTimeArray(fieldName, (DateTime[])array); return; }
+                            case BuiltInType.Guid: { WriteGuidArray(fieldName, (Uuid[])array); return; }
+                            case BuiltInType.ByteString: { WriteByteStringArray(fieldName, (byte[][])array); return; }
+                            case BuiltInType.XmlElement: { WriteXmlElementArray(fieldName, (XmlElement[])array); return; }
+                            case BuiltInType.NodeId: { WriteNodeIdArray(fieldName, (NodeId[])array); return; }
+                            case BuiltInType.ExpandedNodeId: { WriteExpandedNodeIdArray(fieldName, (ExpandedNodeId[])array); return; }
+                            case BuiltInType.StatusCode: { WriteStatusCodeArray(fieldName, (StatusCode[])array); return; }
+                            case BuiltInType.QualifiedName: { WriteQualifiedNameArray(fieldName, (QualifiedName[])array); return; }
+                            case BuiltInType.LocalizedText: { WriteLocalizedTextArray(fieldName, (LocalizedText[])array); return; }
+                            case BuiltInType.ExtensionObject: { WriteExtensionObjectArray(fieldName, (ExtensionObject[])array); return; }
+                            case BuiltInType.DataValue: { WriteDataValueArray(fieldName, (DataValue[])array); return; }
+                            case BuiltInType.DiagnosticInfo: { WriteDiagnosticInfoArray(fieldName, (DiagnosticInfo[])array); return; }
+                            case BuiltInType.Enumeration:
+                            {
+                                int[] ints = array as int[];
+                                if (ints == null)
+                                {
+                                    Enum[] enums = array as Enum[];
+                                    if (enums == null)
+                                    {
+                                        throw new ServiceResultException(
+                                            StatusCodes.BadEncodingError,
+                                            Utils.Format("Type '{0}' is not allowed in an Enumeration.", array.GetType().FullName));
+                                    }
+                                    ints = new int[enums.Length];
+                                    for (int ii = 0; ii < enums.Length; ii++)
+                                    {
+                                        ints[ii] = (int)(object)enums[ii];
+                                    }
+                                }
+
+                                WriteInt32Array(fieldName, ints);
+                                return;
+                            }
+
+                            case BuiltInType.Variant:
+                            {
+                                Variant[] variants = array as Variant[];
+
+                                if (variants != null)
+                                {
+                                    WriteVariantArray(fieldName, variants);
+                                    return;
+                                }
+
+                                // try to write IEncodeable Array
+                                IEncodeable[] encodeableArray = array as IEncodeable[];
+                                if (encodeableArray != null)
+                                {
+                                    WriteEncodeableArray(fieldName, encodeableArray, array.GetType().GetElementType());
+                                    return;
+                                }
+
+                                object[] objects = array as object[];
+
+                                if (objects != null)
+                                {
+                                    WriteObjectArray(fieldName, objects);
+                                    return;
+                                }
+
+                                throw ServiceResultException.Create(
+                                    StatusCodes.BadEncodingError,
+                                    "Unexpected type encountered while encoding an array of Variants: {0}",
+                                    array.GetType());
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        m_namespaces.Pop();
+                    }
+                }
+
+                // write matrix.
+                else if (valueRank > ValueRanks.OneDimension)
+                {
+                    Matrix matrix = (Matrix)array;
+                    if (BeginField(fieldName, matrix == null, true, true))
+                    {
+                        PushNamespace(Namespaces.OpcUaXsd);
+
+                        if (matrix != null)
+                        {
+                            // dimensions element is written first
+                            WriteInt32Array("Dimensions", matrix.Dimensions);
+
+                            WriteArray("Elements", matrix.Elements, ValueRanks.OneDimension, builtInType);
+                        }
+
+                        PopNamespace();
+
+                        EndField(fieldName);
+                    }
+                }
+            }
+            finally
+            {
+                m_nestingLevel--;
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
+        /// <summary>
+        /// Writes an DataValue array to the stream.
+        /// </summary>
+        private void WriteMatrix(string fieldName, Matrix value)
+        {
+            // check the nesting level for avoiding a stack overflow.
+            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of {0} was exceeded",
+                    m_context.MaxEncodingNestingLevels);
+            }
+
+            m_nestingLevel++;
+
+            if (BeginField(fieldName, value == null, true, true))
+            {
+                PushNamespace(Namespaces.OpcUaXsd);
+
+                if (value != null)
+                {
+                    m_writer.WriteStartElement("Elements", Namespaces.OpcUaXsd);
+                    WriteVariantContents(value.Elements, new TypeInfo(value.TypeInfo.BuiltInType, ValueRanks.OneDimension));
+                    m_writer.WriteEndElement();
+
+                    WriteInt32Array("Dimensions", value.Dimensions);
+                }
+
+                PopNamespace();
+
+                EndField(fieldName);
+            }
+
+            m_nestingLevel--;
+        }
+
+        /// <summary>
         /// Writes the start element for a field.
         /// </summary>
-        private bool BeginField(string fieldName, bool isDefault, bool isNillable)
+        private bool BeginField(string fieldName, bool isDefault, bool isNillable, bool isArrayElement = false)
         {
             // specifying a null field name means the start/end tags should not be written.
             if (!String.IsNullOrEmpty(fieldName))
             {
+                if (isNillable && isDefault && !isArrayElement)
+                {
+                    return false;
+                }
+
                 m_writer.WriteStartElement(fieldName, m_namespaces.Peek());
 
                 if (isDefault)
@@ -2026,7 +2214,7 @@ namespace Opc.Ua
         private XmlWriter m_writer;
         private Stack<string> m_namespaces;
         private XmlQualifiedName m_root;
-        private readonly ServiceMessageContext m_context;
+        private IServiceMessageContext m_context;
         private ushort[] m_namespaceMappings;
         private ushort[] m_serverMappings;
         private uint m_nestingLevel;

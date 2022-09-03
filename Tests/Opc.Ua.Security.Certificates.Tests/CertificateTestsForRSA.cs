@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2018 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2021 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -29,14 +29,11 @@
 
 
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using NUnit.Framework;
+using Opc.Ua.Tests;
 
 namespace Opc.Ua.Security.Certificates.Tests
 {
@@ -49,13 +46,13 @@ namespace Opc.Ua.Security.Certificates.Tests
     public class CertificateTestsForRSA
     {
         #region DataPointSources
-        public const string Subject = "CN=Test Cert Subject";
+        public const string Subject = "CN=Test Cert Subject, C=US, S=Arizona, O=OPC Foundation";
 
         [DatapointSource]
-        public CertificateAsset[] CertificateTestCases = new AssetCollection<CertificateAsset>(TestUtils.EnumerateTestAssets("*.?er")).ToArray();
+        public static readonly CertificateAsset[] CertificateTestCases = new AssetCollection<CertificateAsset>(TestUtils.EnumerateTestAssets("*.?er")).ToArray();
 
         [DatapointSource]
-        public KeyHashPair[] KeyHashPairs = new KeyHashPairCollection {
+        public static readonly KeyHashPair[] KeyHashPairs = new KeyHashPairCollection {
             { 2048, HashAlgorithmName.SHA256 },
             { 3072, HashAlgorithmName.SHA384 },
             { 4096, HashAlgorithmName.SHA512 } }.ToArray();
@@ -105,6 +102,9 @@ namespace Opc.Ua.Security.Certificates.Tests
                     Assert.AreNotEqual(previousSerialNumber, cert.GetSerialNumber());
                     X509PfxUtils.VerifyRSAKeyPair(cert, cert, true);
                     Assert.True(X509Utils.VerifySelfSigned(cert));
+                    Assert.AreEqual(cert.SubjectName.Name, cert.IssuerName.Name);
+                    Assert.AreEqual(cert.SubjectName.RawData, cert.IssuerName.RawData);
+                    CheckPEMWriter(cert);
                 }
             }
         }
@@ -131,6 +131,8 @@ namespace Opc.Ua.Security.Certificates.Tests
                 Assert.AreEqual(X509Defaults.RSAKeySize, publicKey.KeySize);
                 publicKey.ExportParameters(false);
             }
+            Assert.AreEqual(cert.SubjectName.Name, cert.IssuerName.Name);
+            Assert.AreEqual(cert.SubjectName.RawData, cert.IssuerName.RawData);
             Assert.AreEqual(X509Defaults.HashAlgorithmName, Oids.GetHashAlgorithmName(cert.SignatureAlgorithm.Value));
             Assert.GreaterOrEqual(DateTime.UtcNow, cert.NotBefore);
             Assert.GreaterOrEqual(DateTime.UtcNow.AddMonths(X509Defaults.LifeTime), cert.NotAfter.ToUniversalTime());
@@ -157,6 +159,8 @@ namespace Opc.Ua.Security.Certificates.Tests
             var basicConstraintsExtension = X509Extensions.FindExtension<X509BasicConstraintsExtension>(cert.Extensions);
             Assert.NotNull(basicConstraintsExtension);
             Assert.True(basicConstraintsExtension.CertificateAuthority);
+            Assert.AreEqual(cert.SubjectName.Name, cert.IssuerName.Name);
+            Assert.AreEqual(cert.SubjectName.RawData, cert.IssuerName.RawData);
             X509Utils.VerifyRSAKeyPair(cert, cert, true);
             Assert.True(X509Utils.VerifySelfSigned(cert));
         }
@@ -218,6 +222,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.True(basicConstraintsExtension.CertificateAuthority);
             X509Utils.VerifyRSAKeyPair(cert, cert, true);
             Assert.True(X509Utils.VerifySelfSigned(cert));
+            CheckPEMWriter(cert);
         }
 
         [Theory]
@@ -242,6 +247,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.False(basicConstraintsExtension.HasPathLengthConstraint);
             X509Utils.VerifyRSAKeyPair(cert, cert, true);
             Assert.True(X509Utils.VerifySelfSigned(cert));
+            CheckPEMWriter(cert);
         }
 
         [Test]
@@ -282,7 +288,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.Throws<ArgumentOutOfRangeException>(
                 () => {
                     CertificateBuilder.Create(Subject)
-                    .SetSerialNumber(new byte[0])
+                    .SetSerialNumber(Array.Empty<byte>())
                     .CreateForRSA();
                 }
             );
@@ -320,6 +326,77 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.AreNotEqual(cert1.SerialNumber, cert2.SerialNumber);
         }
 
+        [Test]
+        public void CreateIssuerRSAWithSuppliedKeyPair()
+        {
+            X509Certificate2 issuer = null;
+            using (RSA rsaKeyPair = RSA.Create())
+            {
+                // create cert with supplied keys
+                var generator = X509SignatureGenerator.CreateForRSA(rsaKeyPair, RSASignaturePadding.Pkcs1);
+                using (var cert = CertificateBuilder.Create("CN=Root Cert")
+                    .SetCAConstraint(-1)
+                    .SetRSAPublicKey(rsaKeyPair)
+                    .CreateForRSA(generator))
+                {
+                    Assert.NotNull(cert);
+                    issuer = new X509Certificate2(cert.RawData);
+                    WriteCertificate(cert, "Default root cert with supplied RSA cert");
+                    CheckPEMWriter(cert);
+                }
+
+                // now sign a cert with supplied private key
+                using (var appCert = CertificateBuilder.Create("CN=App Cert")
+                    .SetIssuer(issuer)
+                    .CreateForRSA(generator))
+                {
+                    Assert.NotNull(appCert);
+                    WriteCertificate(appCert, "Signed RSA app cert");
+                    CheckPEMWriter(appCert);
+                }
+            }
+        }
+
+#if NETFRAMEWORK || NETCOREAPP3_1
+        [Test]
+        public void CreateIssuerRSACngWithSuppliedKeyPair()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("Cng provider only available on windows");
+            }
+            X509Certificate2 issuer = null;
+            CngKey cngKey = CngKey.Create(CngAlgorithm.Rsa);
+            using (RSA rsaKeyPair = new RSACng(cngKey))
+            {
+                // create cert with supplied keys
+                var generator = X509SignatureGenerator.CreateForRSA(rsaKeyPair, RSASignaturePadding.Pkcs1);
+                using (var cert = CertificateBuilder.Create("CN=Root Cert")
+                    .SetCAConstraint(-1)
+                    .SetRSAPublicKey(rsaKeyPair)
+                    .CreateForRSA(generator))
+                {
+                    Assert.NotNull(cert);
+                    issuer = new X509Certificate2(cert.RawData);
+                    WriteCertificate(cert, "Default root cert with supplied RSA cert");
+                    CheckPEMWriter(cert);
+                }
+
+                // now sign a cert with supplied private key
+                using (var appCert = CertificateBuilder.Create("CN=App Cert")
+                    .SetIssuer(issuer)
+                    .CreateForRSA(generator))
+                {
+                    Assert.NotNull(appCert);
+                    Assert.AreEqual(issuer.SubjectName.Name, appCert.IssuerName.Name);
+                    Assert.AreEqual(issuer.SubjectName.RawData, appCert.IssuerName.RawData);
+                    WriteCertificate(appCert, "Signed RSA app cert");
+                    CheckPEMWriter(appCert);
+                }
+            }
+        }
+#endif
+
         [Theory]
         public void CreateForRSAWithGeneratorTest(
             KeyHashPair keyHashPair
@@ -343,7 +420,10 @@ namespace Opc.Ua.Security.Certificates.Tests
                         .CreateForRSA(generator))
                     {
                         Assert.NotNull(cert);
-                        WriteCertificate(cert, $"Default signed RSA cert");
+                        Assert.AreEqual(issuer.SubjectName.Name, cert.IssuerName.Name);
+                        Assert.AreEqual(issuer.SubjectName.RawData, cert.IssuerName.RawData);
+                        WriteCertificate(cert, "Default signed RSA cert");
+                        CheckPEMWriter(cert);
                     }
                 }
 
@@ -359,7 +439,7 @@ namespace Opc.Ua.Security.Certificates.Tests
                         .CreateForRSA(generator))
                     {
                         Assert.NotNull(cert);
-                        WriteCertificate(cert, $"Default signed RSA cert with Public Key");
+                        WriteCertificate(cert, "Default signed RSA cert with Public Key");
                     }
                 }
 
@@ -374,7 +454,10 @@ namespace Opc.Ua.Security.Certificates.Tests
                         .CreateForRSA(generator))
                     {
                         Assert.NotNull(cert);
-                        WriteCertificate(cert, $"Default signed RSA cert");
+                        WriteCertificate(cert, "Default signed RSA cert");
+                        Assert.AreEqual(issuer.SubjectName.Name, cert.IssuerName.Name);
+                        Assert.AreEqual(issuer.SubjectName.RawData, cert.IssuerName.RawData);
+                        CheckPEMWriter(cert);
                     }
                 }
 
@@ -389,6 +472,8 @@ namespace Opc.Ua.Security.Certificates.Tests
                             .CreateForRSA(generator);
                     }
                 });
+
+                CheckPEMWriter(signingCert, password: "123");
             }
         }
         #endregion
@@ -401,6 +486,22 @@ namespace Opc.Ua.Security.Certificates.Tests
             foreach (var ext in cert.Extensions)
             {
                 TestContext.Out.WriteLine(ext.Format(false));
+            }
+        }
+
+        private void CheckPEMWriter(X509Certificate2 certificate, string password = null)
+        {
+            PEMWriter.ExportCertificateAsPEM(certificate);
+            if (certificate.HasPrivateKey)
+            {
+#if NETFRAMEWORK || NETCOREAPP2_1
+                // The implementation based on bouncy castle has no support to export with password
+                password = null;
+#endif
+                PEMWriter.ExportPrivateKeyAsPEM(certificate, password);
+#if NETCOREAPP3_1_OR_GREATER
+                PEMWriter.ExportRSAPrivateKeyAsPEM(certificate);
+#endif
             }
         }
         #endregion

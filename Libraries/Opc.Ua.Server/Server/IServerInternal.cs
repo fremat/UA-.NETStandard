@@ -31,7 +31,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Text;
-using System.ServiceModel;
 using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Security.Cryptography.X509Certificates;
@@ -55,7 +54,7 @@ namespace Opc.Ua.Server
         /// The context to use when serializing/deserializing extension objects.
         /// </summary>
         /// <value>The message context.</value>
-        ServiceMessageContext MessageContext { get; }
+        IServiceMessageContext MessageContext { get; }
 
         /// <summary>
         /// The default system context for the server.
@@ -79,7 +78,7 @@ namespace Opc.Ua.Server
         /// The factory used to create encodeable objects that the server understands.
         /// </summary>
         /// <value>The factory.</value>
-        EncodeableFactory Factory { get; }
+        IEncodeableFactory Factory { get; }
 
         /// <summary>
         /// The datatypes, object types and variable types known to the server.
@@ -92,19 +91,6 @@ namespace Opc.Ua.Server
         /// </remarks>
         TypeTable TypeTree { get; }
         
-#if LEGACY_CORENODEMANAGER
-        /// <summary>
-        /// Returns the source for a types that has shared components defined.
-        /// </summary>
-        /// <value>The type sources.</value>
-        /// <remarks>
-        /// Some types define shared components which are used by all instances of the type. This
-        /// table contains sources for those shared components. The namespace qualified browse name
-        /// is assumed to be a unique identifier for a type.
-        /// </remarks>
-        TypeSourceTable TypeSources { get; }
-#endif
-
         /// <summary>
         /// The master node manager for the server.
         /// </summary>
@@ -246,5 +232,55 @@ namespace Opc.Ua.Server
         /// <param name="context">The context.</param>
         /// <param name="subscriptionId">The subscription identifier.</param>
         void ConditionRefresh(OperationContext context, uint subscriptionId);
+
+        /// <summary>
+        /// Refreshes the conditions for the specified subscription and monitored item.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="subscriptionId">The subscription identifier.</param>
+        /// <param name="monitoredItemId">The monitored item identifier.</param>
+        void ConditionRefresh2(OperationContext context, uint subscriptionId, uint monitoredItemId);
+
+        /// <summary>
+        /// Reports all audit events for client certificate ServiceResultException. It goes recursively for all service results stored in the exception
+        /// </summary>
+        /// <param name="clientCertificate">The client certificate.</param>
+        /// <param name="exception">The Exception that triggers a certificate audit event.</param>
+        void ReportAuditCertificateEvent(X509Certificate2 clientCertificate, Exception exception);
+
+        /// <summary>
+        /// Report the AuditCancelEventState
+        /// </summary>
+        /// <param name="sessionId">Session id of the current session</param>
+        /// <param name="requestHandle">The handle of the canceled request</param>
+        /// <param name="statusCode">The resulted status code of cancel request.</param>
+        void ReportAuditCancelEvent(NodeId sessionId, uint requestHandle, StatusCode statusCode);
+
+        /// <summary>
+        /// Reports a RoleMappingRuleChangedAuditEvent when a method is called on a RoleType instance
+        /// </summary>
+        /// <param name="roleStateObjectId"></param>
+        /// <param name="method"></param>
+        /// <param name="inputArguments"></param>
+        /// <param name="status"></param>
+        void ReportRoleMappingRuleChangedAuditEvent(NodeId roleStateObjectId, MethodState method, object[] inputArguments, bool status);
+
+        /// <summary>
+        /// Reports an audit close session event.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session object that was created.</param>
+        /// <param name="sourceName">Session/CloseSession when the session is closed by request
+        /// “Session/Timeout” for a Session timeout
+        /// “Session/Terminated” for all other cases.</param>
+        void ReportAuditCloseSessionEvent(string auditEntryId, Session session, string sourceName = "Session/Terminated");
+
+        /// <summary>
+        /// Reports an audit session event for the transfer subscription.
+        /// </summary>
+        /// <param name="auditEntryId">The audit entry id.</param>
+        /// <param name="session">The session object that was created.</param>
+        /// <param name="statusCode">The status code resulting .</param>
+        void ReportAuditTransferSubscriptionEvent(string auditEntryId, Session session, StatusCode statusCode);
     }
 }

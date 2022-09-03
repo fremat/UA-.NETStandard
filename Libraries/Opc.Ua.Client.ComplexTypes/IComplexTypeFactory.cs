@@ -27,7 +27,6 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
-
 using System;
 
 namespace Opc.Ua.Client.ComplexTypes
@@ -52,7 +51,7 @@ namespace Opc.Ua.Client.ComplexTypes
     }
 
     /// <summary>
-    /// Interface to dynamically build custom 
+    /// Interface to dynamically build custom
     /// enum types and structured types.
     /// </summary>
     public interface IComplexTypeBuilder
@@ -123,5 +122,10 @@ namespace Opc.Ua.Client.ComplexTypes
         /// Finish the type creation and returns the new type.
         /// </summary>
         Type CreateType();
+
+        /// <summary>
+        /// The type of the structure of the field.
+        /// </summary>
+        Type GetStructureType(int valueRank);
     }
 }//namespace

@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -28,7 +28,7 @@ namespace Opc.Ua
         /// <summary>
         /// Creates a decoder that reads from a memory buffer.
         /// </summary>
-        public BinaryDecoder(byte[] buffer, ServiceMessageContext context)
+        public BinaryDecoder(byte[] buffer, IServiceMessageContext context)
         :
             this(buffer, 0, buffer.Length, context)
         {
@@ -37,7 +37,7 @@ namespace Opc.Ua
         /// <summary>
         /// Creates a decoder that reads from a memory buffer.
         /// </summary>
-        public BinaryDecoder(byte[] buffer, int start, int count, ServiceMessageContext context)
+        public BinaryDecoder(byte[] buffer, int start, int count, IServiceMessageContext context)
         {
             m_istrm = new MemoryStream(buffer, start, count, false);
             m_reader = new BinaryReader(m_istrm);
@@ -48,7 +48,7 @@ namespace Opc.Ua
         /// <summary>
         /// Creates a decoder that reads from a stream.
         /// </summary>
-        public BinaryDecoder(Stream stream, ServiceMessageContext context)
+        public BinaryDecoder(Stream stream, IServiceMessageContext context)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
 
@@ -132,7 +132,7 @@ namespace Opc.Ua
         /// <summary>
         /// Decodes a message from a stream.
         /// </summary>
-        public static IEncodeable DecodeMessage(Stream stream, System.Type expectedType, ServiceMessageContext context)
+        public static IEncodeable DecodeMessage(Stream stream, System.Type expectedType, IServiceMessageContext context)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (context == null) throw new ArgumentNullException(nameof(context));
@@ -152,7 +152,7 @@ namespace Opc.Ua
         /// <summary>
         /// Decodes a session-less message from a buffer.
         /// </summary>
-        public static IEncodeable DecodeSessionLessMessage(byte[] buffer, ServiceMessageContext context)
+        public static IEncodeable DecodeSessionLessMessage(byte[] buffer, IServiceMessageContext context)
         {
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
             if (context == null) throw new ArgumentNullException(nameof(context));
@@ -191,7 +191,7 @@ namespace Opc.Ua
         /// <summary>
         /// Decodes a message from a buffer.
         /// </summary>
-        public static IEncodeable DecodeMessage(byte[] buffer, System.Type expectedType, ServiceMessageContext context)
+        public static IEncodeable DecodeMessage(byte[] buffer, System.Type expectedType, IServiceMessageContext context)
         {
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
             if (context == null) throw new ArgumentNullException(nameof(context));
@@ -230,7 +230,7 @@ namespace Opc.Ua
             }
 
             // read the message.
-            IEncodeable message = ReadEncodeable(null, actualType);
+            IEncodeable message = ReadEncodeable(null, actualType, absoluteId);
 
             // check that the max message size was not exceeded.
             if (m_context.MaxMessageSize > 0 && m_context.MaxMessageSize < (int)(m_istrm.Position - start))
@@ -276,7 +276,7 @@ namespace Opc.Ua
         /// <summary>
         /// The message context associated with the decoder.
         /// </summary>
-        public ServiceMessageContext Context => m_context;
+        public IServiceMessageContext Context => m_context;
 
         /// <summary>
         /// Pushes a namespace onto the namespace stack.
@@ -524,8 +524,11 @@ namespace Opc.Ua
 
             try
             {
-                using (XmlReader reader = XmlReader.Create(new StringReader(xmlString), new XmlReaderSettings()
-                { DtdProcessing = System.Xml.DtdProcessing.Prohibit }))
+                // If 0 terminated, decrease length by one before converting to string
+                var utf8StringLength = bytes[bytes.Length - 1] == 0 ? bytes.Length - 1 : bytes.Length;
+                string xmlString = Encoding.UTF8.GetString(bytes, 0, utf8StringLength);
+                using (StringReader stream = new StringReader(xmlString))
+                using (XmlReader reader = XmlReader.Create(stream, Utils.DefaultXmlReaderSettings()))
                 {
                     document.Load(reader);
                 }
@@ -598,7 +601,6 @@ namespace Opc.Ua
             }
 
             return value;
-
         }
 
         /// <summary>
@@ -788,9 +790,13 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        ///  Reads an encodeable object from the stream.
+        /// Reads an encodeable object from the stream.
         /// </summary>
-        public IEncodeable ReadEncodeable(string fieldName, System.Type systemType)
+        /// <param name="fieldName">The encodeable object field name</param>
+        /// <param name="systemType">The system type of the encopdeable object to be read</param>
+        /// <param name="encodeableTypeId">The TypeId for the <see cref="IEncodeable"/> instance that will be read.</param>
+        /// <returns>An <see cref="IEncodeable"/> object that was read from the stream.</returns>
+        public IEncodeable ReadEncodeable(string fieldName, System.Type systemType, ExpandedNodeId encodeableTypeId = null)
         {
             if (systemType == null) throw new ArgumentNullException(nameof(systemType));
 
@@ -801,6 +807,17 @@ namespace Opc.Ua
                 throw new ServiceResultException(
                     StatusCodes.BadDecodingError,
                     Utils.Format("Cannot decode type '{0}'.", systemType.FullName));
+            }
+
+            if (encodeableTypeId != null)
+            {
+                // set type identifier for custom complex data types before decode.
+                IComplexTypeInstance complexTypeInstance = encodeable as IComplexTypeInstance;
+
+                if (complexTypeInstance != null)
+                {
+                    complexTypeInstance.TypeId = encodeableTypeId;
+                }
             }
 
             // check the nesting level for avoiding a stack overflow.
@@ -1389,9 +1406,13 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        /// Reads an encodeable object array from the stream.
+        /// Reads an encodeable array from the stream.
         /// </summary>
-        public Array ReadEncodeableArray(string fieldName, System.Type systemType)
+        /// <param name="fieldName">The encodeable array field name</param>
+        /// <param name="systemType">The system type of the encopdeable objects to be read object</param>
+        /// <param name="encodeableTypeId">The TypeId for the <see cref="IEncodeable"/> instances that will be read.</param>
+        /// <returns>An <see cref="IEncodeable"/> array that was read from the stream.</returns>
+        public Array ReadEncodeableArray(string fieldName, System.Type systemType, ExpandedNodeId encodeableTypeId = null)
         {
             int length = ReadArrayLength();
 
@@ -1404,7 +1425,7 @@ namespace Opc.Ua
 
             for (int ii = 0; ii < length; ii++)
             {
-                values.SetValue(ReadEncodeable(null, systemType), ii);
+                values.SetValue(ReadEncodeable(null, systemType, encodeableTypeId), ii);
             }
 
             return values;
@@ -1431,9 +1452,513 @@ namespace Opc.Ua
 
             return values;
         }
+
+        /// <summary>
+        /// Reads an array with the specified valueRank and the specified BuiltInType
+        /// </summary>
+        public object ReadArray(string fieldName, int valueRank, BuiltInType builtInType, ExpandedNodeId encodeableTypeId = null)
+        {
+            if (valueRank == ValueRanks.OneDimension)
+            {
+                switch (builtInType)
+                {
+                    case BuiltInType.Boolean:
+                        return ReadBooleanArray(fieldName).ToArray();
+                    case BuiltInType.SByte:
+                        return ReadSByteArray(fieldName).ToArray();
+                    case BuiltInType.Byte:
+                        return ReadByteArray(fieldName).ToArray();
+                    case BuiltInType.Int16:
+                        return ReadInt16Array(fieldName).ToArray();
+                    case BuiltInType.UInt16:
+                        return ReadUInt16Array(fieldName).ToArray();
+                    case BuiltInType.Int32:
+                    case BuiltInType.Enumeration:
+                        return ReadInt32Array(fieldName).ToArray();
+                    case BuiltInType.UInt32:
+                        return ReadUInt32Array(fieldName).ToArray();
+                    case BuiltInType.Int64:
+                        return ReadInt64Array(fieldName).ToArray();
+                    case BuiltInType.UInt64:
+                        return ReadUInt64Array(fieldName).ToArray();
+                    case BuiltInType.Float:
+                        return ReadFloatArray(fieldName).ToArray();
+                    case BuiltInType.Double:
+                        return ReadDoubleArray(fieldName).ToArray();
+                    case BuiltInType.String:
+                        return ReadStringArray(fieldName).ToArray();
+                    case BuiltInType.DateTime:
+                        return ReadDateTimeArray(fieldName).ToArray();
+                    case BuiltInType.Guid:
+                        return ReadGuidArray(fieldName).ToArray();
+                    case BuiltInType.ByteString:
+                        return ReadByteStringArray(fieldName).ToArray();
+                    case BuiltInType.XmlElement:
+                        return ReadXmlElementArray(fieldName).ToArray();
+                    case BuiltInType.NodeId:
+                        return ReadNodeIdArray(fieldName).ToArray();
+                    case BuiltInType.ExpandedNodeId:
+                        return ReadExpandedNodeIdArray(fieldName).ToArray();
+                    case BuiltInType.StatusCode:
+                        return ReadStatusCodeArray(fieldName).ToArray();
+                    case BuiltInType.QualifiedName:
+                        return ReadQualifiedNameArray(fieldName).ToArray();
+                    case BuiltInType.LocalizedText:
+                        return ReadLocalizedTextArray(fieldName).ToArray();
+                    case BuiltInType.DataValue:
+                        return ReadDataValueArray(fieldName).ToArray();
+                    case BuiltInType.Variant:
+                        if (encodeableTypeId != null)
+                        {
+                            Type systemType = Context.Factory.GetSystemType(encodeableTypeId);
+                            if (systemType != null)
+                            {
+                                return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
+                            }
+                        }
+                        return ReadVariantArray(fieldName).ToArray();
+                    case BuiltInType.ExtensionObject:
+                        return ReadExtensionObjectArray(fieldName).ToArray();
+                    case BuiltInType.DiagnosticInfo:
+                        return ReadDiagnosticInfoArray(fieldName).ToArray();
+                    default:
+                    {
+                        throw new ServiceResultException(
+                            StatusCodes.BadDecodingError,
+                            Utils.Format("Cannot decode unknown type in Array object with BuiltInType: {0}.", builtInType));
+                    }
+                }
+            }
+            // two or more dimensions
+            if (valueRank > ValueRanks.OneDimension)
+            {
+                // read dimensions array
+                Int32Collection dimensions = ReadInt32Array(null);
+                if (dimensions != null && dimensions.Count > 0)
+                {
+                    int length = 1;
+
+                    for (int ii = 0; ii < dimensions.Count; ii++)
+                    {
+                        if (dimensions[ii] <= 0)
+                        {
+                            /* The number of values is 0 if one or more dimension is less than or equal to 0.*/
+                            Utils.LogTrace("ReadArray read dimensions[{0}] = {1}. Matrix will have 0 elements.", ii, dimensions[ii]);
+                            dimensions[ii] = 0;
+                            length = 0;
+                            break;
+                        }
+                        else if (dimensions[ii] > m_context.MaxArrayLength)
+                        {
+                            throw ServiceResultException.Create(
+                                StatusCodes.BadEncodingLimitsExceeded,
+                                "ArrayDimensions [{0}] = {1} is greater than MaxArrayLength {2}.",
+                                ii,
+                                dimensions[ii],
+                                m_context.MaxArrayLength);
+                        }
+
+                        length *= dimensions[ii];
+                    }
+                    if (length > m_context.MaxArrayLength)
+                    {
+                        throw ServiceResultException.Create(
+                            StatusCodes.BadEncodingLimitsExceeded,
+                            "Maximum array length of {0} was exceeded while summing up to {1} from the array dimensions",
+                            m_context.MaxArrayLength,
+                            length
+                            );
+                    }
+                    // read the elements
+                    Array elements = null;
+                    if (encodeableTypeId != null)
+                    {
+                        Type systemType = Context.Factory.GetSystemType(encodeableTypeId);
+                        if (systemType != null)
+                        {
+                            elements = Array.CreateInstance(systemType, length);
+                            for (int i = 0; i < length; i++)
+                            {
+                                IEncodeable element = ReadEncodeable(null, systemType, encodeableTypeId);
+
+                                elements.SetValue(Convert.ChangeType(element, systemType), i);
+                            }
+                        }
+                    }
+                    if (elements == null)
+                    {
+                        elements = ReadArrayElements(length, builtInType);
+                    }
+
+                    if (elements == null)
+                    {
+                        throw new ServiceResultException(
+                               StatusCodes.BadDecodingError,
+                               Utils.Format("Unexpected null Array for multidimensional matrix with {0} elements.", length));
+                    }
+                    return new Matrix(elements, builtInType, dimensions.ToArray());
+                }
+                throw new ServiceResultException(
+                               StatusCodes.BadDecodingError,
+                               "Unexpected null or empty Dimensions for multidimensional matrix.");
+            }
+            return null;
+        }
+
         #endregion
 
         #region Private Methods
+        /// <summary>
+        /// Reads and returns an array of elements of the specified length and builtInType 
+        /// </summary>
+        private Array ReadArrayElements(int length, BuiltInType builtInType)
+        {
+            Array array = null;
+            switch (builtInType)
+            {
+                case BuiltInType.Boolean:
+                {
+                    bool[] values = new bool[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadBoolean(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.SByte:
+                {
+                    sbyte[] values = new sbyte[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadSByte(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Byte:
+                {
+                    byte[] values = new byte[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadByte(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Int16:
+                {
+                    short[] values = new short[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadInt16(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.UInt16:
+                {
+                    ushort[] values = new ushort[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadUInt16(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Int32:
+                case BuiltInType.Enumeration:
+                {
+                    int[] values = new int[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadInt32(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.UInt32:
+                {
+                    uint[] values = new uint[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadUInt32(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Int64:
+                {
+                    long[] values = new long[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadInt64(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.UInt64:
+                {
+                    ulong[] values = new ulong[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadUInt64(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Float:
+                {
+                    float[] values = new float[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadFloat(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Double:
+                {
+                    double[] values = new double[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadDouble(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.String:
+                {
+                    string[] values = new string[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadString(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.DateTime:
+                {
+                    DateTime[] values = new DateTime[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadDateTime(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Guid:
+                {
+                    Uuid[] values = new Uuid[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadGuid(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.ByteString:
+                {
+                    byte[][] values = new byte[length][];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadByteString(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.XmlElement:
+                {
+                    try
+                    {
+                        XmlElement[] values = new XmlElement[length];
+
+                        for (int ii = 0; ii < values.Length; ii++)
+                        {
+                            values[ii] = ReadXmlElement(null);
+                        }
+
+                        array = values;
+                    }
+                    catch (Exception ex)
+                    {
+                        Utils.LogError(ex, "Error reading array of XmlElement.");
+                    }
+
+                    break;
+                }
+
+                case BuiltInType.NodeId:
+                {
+                    NodeId[] values = new NodeId[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadNodeId(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.ExpandedNodeId:
+                {
+                    ExpandedNodeId[] values = new ExpandedNodeId[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadExpandedNodeId(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.StatusCode:
+                {
+                    StatusCode[] values = new StatusCode[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadStatusCode(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.QualifiedName:
+                {
+                    QualifiedName[] values = new QualifiedName[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadQualifiedName(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.LocalizedText:
+                {
+                    LocalizedText[] values = new LocalizedText[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadLocalizedText(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.ExtensionObject:
+                {
+                    ExtensionObject[] values = new ExtensionObject[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadExtensionObject();
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.DataValue:
+                {
+                    DataValue[] values = new DataValue[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadDataValue(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+
+                case BuiltInType.Variant:
+                {
+                    Variant[] values = new Variant[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadVariant(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+                case BuiltInType.DiagnosticInfo:
+                {
+                    DiagnosticInfo[] values = new DiagnosticInfo[length];
+
+                    for (int ii = 0; ii < values.Length; ii++)
+                    {
+                        values[ii] = ReadDiagnosticInfo(null);
+                    }
+
+                    array = values;
+                    break;
+                }
+                default:
+                {
+                    throw new ServiceResultException(
+                        StatusCodes.BadDecodingError,
+                        Utils.Format("Cannot decode unknown type in Variant object with BuiltInType: {0}.", builtInType));
+                }
+            }
+
+            return array;
+        }
+
         /// <summary>
         /// Reads the length of an array.
         /// </summary>
@@ -1531,13 +2056,13 @@ namespace Opc.Ua
 
             if (!NodeId.IsNull(typeId) && NodeId.IsNull(extension.TypeId))
             {
-                if (Utils.IsTraceEnabled) Utils.Trace(
+                Utils.LogWarning(
                     "Cannot de-serialized extension objects if the NamespaceUri is not in the NamespaceTable: Type = {0}",
                     typeId);
             }
 
             // read encoding.
-            ExtensionObjectEncoding encoding = (ExtensionObjectEncoding)m_reader.ReadByte();
+            ExtensionObjectEncoding encoding = (ExtensionObjectEncoding)Enum.ToObject(typeof(ExtensionObjectEncoding), m_reader.ReadByte());
 
             // nothing more to do for empty bodies.
             if (encoding == ExtensionObjectEncoding.None)
@@ -1562,7 +2087,7 @@ namespace Opc.Ua
                     try
                     {
                         xmlDecoder.PushNamespace(element.NamespaceURI);
-                        IEncodeable body = xmlDecoder.ReadEncodeable(element.LocalName, systemType);
+                        IEncodeable body = xmlDecoder.ReadEncodeable(element.LocalName, systemType, extension.TypeId);
                         xmlDecoder.PopNamespace();
 
                         // update body.
@@ -1570,7 +2095,7 @@ namespace Opc.Ua
                     }
                     catch (Exception e)
                     {
-                        if (Utils.IsTraceEnabled) Utils.Trace("Could not decode known type {0}. Error={1}, Value={2}", systemType.FullName, e.Message, element.OuterXml);
+                        Utils.LogError("Could not decode known type {0}. Error={1}, Value={2}", systemType.FullName, e.Message, element.OuterXml);
                     }
                 }
 
@@ -1582,7 +2107,7 @@ namespace Opc.Ua
 
             if (systemType != null)
             {
-                encodeable = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
+                encodeable = Activator.CreateInstance(systemType) as IEncodeable;
 
                 // set type identifier for custom complex data types before decode.
                 IComplexTypeInstance complexTypeInstance = encodeable as IComplexTypeInstance;
@@ -1646,10 +2171,7 @@ namespace Opc.Ua
 
             if (unused > 0)
             {
-                if (m_reader.BaseStream.CanSeek)
-                    m_reader.BaseStream.Seek(unused, SeekOrigin.Current);
-                else
-                    m_reader.ReadBytes(unused);
+                m_reader.ReadBytes(unused);
             }
 
             if (encodeable != null)
@@ -1676,347 +2198,16 @@ namespace Opc.Ua
             if ((encodingByte & (byte)VariantArrayEncodingBits.Array) != 0)
             {
                 // read the array length.
-                int length = m_reader.ReadInt32();
+                int length = ReadArrayLength();
 
                 if (length < 0)
                 {
                     return value;
                 }
 
-                Array array = null;
-
                 BuiltInType builtInType = (BuiltInType)(encodingByte & (byte)VariantArrayEncodingBits.TypeMask);
 
-                switch (builtInType)
-                {
-                    case BuiltInType.Boolean:
-                    {
-                        bool[] values = new bool[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadBoolean(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.SByte:
-                    {
-                        sbyte[] values = new sbyte[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadSByte(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Byte:
-                    {
-                        byte[] values = new byte[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadByte(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Int16:
-                    {
-                        short[] values = new short[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadInt16(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.UInt16:
-                    {
-                        ushort[] values = new ushort[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadUInt16(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Int32:
-                    case BuiltInType.Enumeration:
-                    {
-                        int[] values = new int[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadInt32(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.UInt32:
-                    {
-                        uint[] values = new uint[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadUInt32(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Int64:
-                    {
-                        long[] values = new long[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadInt64(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.UInt64:
-                    {
-                        ulong[] values = new ulong[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadUInt64(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Float:
-                    {
-                        float[] values = new float[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadFloat(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Double:
-                    {
-                        double[] values = new double[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadDouble(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.String:
-                    {
-                        string[] values = new string[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadString(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.DateTime:
-                    {
-                        DateTime[] values = new DateTime[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadDateTime(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Guid:
-                    {
-                        Uuid[] values = new Uuid[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadGuid(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.ByteString:
-                    {
-                        byte[][] values = new byte[length][];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadByteString(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.XmlElement:
-                    {
-                        try
-                        {
-                            XmlElement[] values = new XmlElement[length];
-
-                            for (int ii = 0; ii < values.Length; ii++)
-                            {
-                                values[ii] = ReadXmlElement(null);
-                            }
-
-                            array = values;
-                        }
-                        catch (Exception ex)
-                        {
-                            if (Utils.IsTraceEnabled) Utils.Trace(ex, "Error reading variant.");
-                        }
-
-                        break;
-                    }
-
-                    case BuiltInType.NodeId:
-                    {
-                        NodeId[] values = new NodeId[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadNodeId(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.ExpandedNodeId:
-                    {
-                        ExpandedNodeId[] values = new ExpandedNodeId[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadExpandedNodeId(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.StatusCode:
-                    {
-                        StatusCode[] values = new StatusCode[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadStatusCode(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.QualifiedName:
-                    {
-                        QualifiedName[] values = new QualifiedName[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadQualifiedName(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.LocalizedText:
-                    {
-                        LocalizedText[] values = new LocalizedText[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadLocalizedText(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.ExtensionObject:
-                    {
-                        ExtensionObject[] values = new ExtensionObject[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadExtensionObject();
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.DataValue:
-                    {
-                        DataValue[] values = new DataValue[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadDataValue(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    case BuiltInType.Variant:
-                    {
-                        Variant[] values = new Variant[length];
-
-                        for (int ii = 0; ii < values.Length; ii++)
-                        {
-                            values[ii] = ReadVariant(null);
-                        }
-
-                        array = values;
-                        break;
-                    }
-
-                    default:
-                    {
-                        throw new ServiceResultException(
-                            StatusCodes.BadDecodingError,
-                            Utils.Format("Cannot decode unknown type in Variant object (0x{0:X2}).", encodingByte));
-                    }
-                }
+                Array array = ReadArrayElements(length, builtInType);
 
                 if (array == null)
                 {
@@ -2048,6 +2239,12 @@ namespace Opc.Ua
                                     StatusCodes.BadDecodingError,
                                     Utils.Format("ArrayDimensions [{0}] is zero in Variant object.", ii));
                             }
+                            else if (dimensionsArray[ii] > length && length > 0)
+                            {
+                                throw new ServiceResultException(
+                                    StatusCodes.BadDecodingError,
+                                    Utils.Format("ArrayDimensions [{0}] = {1} is greater than length {2}.", ii, dimensionsArray[ii], length));
+                            }
 
                             matrixLength *= dimensionsArray[ii];
                         }
@@ -2061,11 +2258,10 @@ namespace Opc.Ua
                     }
                     else
                     {
-                        value = new Variant(array);
+                        value = new Variant(array, new TypeInfo(builtInType, 1));
                     }
                 }
             }
-
             else
             {
                 switch ((BuiltInType)encodingByte)
@@ -2175,7 +2371,7 @@ namespace Opc.Ua
                         }
                         catch (Exception ex)
                         {
-                            if (Utils.IsTraceEnabled) Utils.Trace(ex, "Error reading xml element for variant.");
+                            Utils.LogError(ex, "Error reading xml element for variant.");
                             value.Set(StatusCodes.BadEncodingError);
                         }
                         break;
@@ -2239,7 +2435,7 @@ namespace Opc.Ua
         #region Private Fields
         private Stream m_istrm;
         private BinaryReader m_reader;
-        private ServiceMessageContext m_context;
+        private IServiceMessageContext m_context;
         private ushort[] m_namespaceMappings;
         private ushort[] m_serverMappings;
         private uint m_nestingLevel;

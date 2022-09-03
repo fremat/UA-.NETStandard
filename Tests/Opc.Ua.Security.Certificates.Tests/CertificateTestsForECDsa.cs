@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2018 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2021 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  * 
@@ -29,15 +29,11 @@
 
 #if ECC_SUPPORT
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using NUnit.Framework;
+using Opc.Ua.Tests;
 
 namespace Opc.Ua.Security.Certificates.Tests
 {
@@ -50,14 +46,14 @@ namespace Opc.Ua.Security.Certificates.Tests
     public class CertificateTestsForECDsa
     {
         #region DataPointSources
-        public const string Subject = "CN=Test Cert Subject";
+        public const string Subject = "CN=Test Cert Subject, O=OPC Foundation";
 
         [DatapointSource]
-        public CertificateAsset[] CertificateTestCases =
+        public static readonly CertificateAsset[] CertificateTestCases =
             new AssetCollection<CertificateAsset>(TestUtils.EnumerateTestAssets("*.?er")).ToArray();
 
         [DatapointSource]
-        public ECCurveHashPair[] ECCurveHashPairs = GetECCurveHashPairs();
+        public static readonly ECCurveHashPair[] ECCurveHashPairs = GetECCurveHashPairs();
         #endregion
 
         #region Test Setup
@@ -105,6 +101,7 @@ namespace Opc.Ua.Security.Certificates.Tests
                     Assert.AreNotEqual(previousSerialNumber, cert.GetSerialNumber());
                     X509PfxUtils.VerifyECDsaKeyPair(cert, cert, true);
                     Assert.True(X509Utils.VerifySelfSigned(cert));
+                    CheckPEMWriter(cert);
                 }
             }
         }
@@ -143,6 +140,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.NotNull(keyUsage);
             X509PfxUtils.VerifyECDsaKeyPair(cert, cert, true);
             Assert.True(X509Utils.VerifySelfSigned(cert), "Verify self signed.");
+            CheckPEMWriter(cert);
         }
 
         [Theory, Repeat(10)]
@@ -180,6 +178,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.True(basicConstraintsExtension.CertificateAuthority);
             X509PfxUtils.VerifyECDsaKeyPair(cert, cert, true);
             Assert.True(X509Utils.VerifySelfSigned(cert));
+            CheckPEMWriter(cert);
         }
 
         [Theory, Repeat(10)]
@@ -191,7 +190,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             var cert = CertificateBuilder.Create(Subject)
                 .SetCAConstraint()
                 .SetHashAlgorithm(ecCurveHashPair.HashAlgorithmName)
-                .AddExtension(X509Extensions.BuildX509CRLDistributionPoints("http://myca/mycert.crl"))
+                .AddExtension(X509Extensions.BuildX509CRLDistributionPoints(new string[] { "http://myca/mycert.crl", "http://myaltca/mycert.crl" }))
                 .SetECCurve(ecCurveHashPair.Curve)
                 .CreateForECDsa();
             Assert.NotNull(cert);
@@ -203,6 +202,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.False(basicConstraintsExtension.HasPathLengthConstraint);
             X509PfxUtils.VerifyECDsaKeyPair(cert, cert, true);
             Assert.True(X509Utils.VerifySelfSigned(cert));
+            CheckPEMWriter(cert);
         }
 
         [Test]
@@ -248,7 +248,7 @@ namespace Opc.Ua.Security.Certificates.Tests
             Assert.Throws<ArgumentOutOfRangeException>(
                 () => {
                     CertificateBuilder.Create(Subject)
-                    .SetSerialNumber(new byte[0])
+                    .SetSerialNumber(Array.Empty<byte>())
                     .SetECCurve(eccurve)
                     .CreateForECDsa();
                 }
@@ -310,7 +310,7 @@ namespace Opc.Ua.Security.Certificates.Tests
                     .SetIssuer(new X509Certificate2(signingCert.RawData))
                     .CreateForRSA(generator);
                 Assert.NotNull(cert);
-                WriteCertificate(cert, $"Default signed ECDsa cert");
+                WriteCertificate(cert, "Default signed ECDsa cert");
             }
 
             using (ECDsa ecdsaPrivateKey = signingCert.GetECDsaPrivateKey())
@@ -323,7 +323,7 @@ namespace Opc.Ua.Security.Certificates.Tests
                     .SetECDsaPublicKey(ecdsaPublicKey)
                     .CreateForECDsa(generator);
                 Assert.NotNull(cert);
-                WriteCertificate(cert, $"Default signed ECDsa cert with Public Key");
+                WriteCertificate(cert, "Default signed ECDsa cert with Public Key");
             }
 
             using (ECDsa ecdsaPrivateKey = signingCert.GetECDsaPrivateKey())
@@ -335,7 +335,8 @@ namespace Opc.Ua.Security.Certificates.Tests
                     .SetECCurve(ecCurveHashPair.Curve)
                     .CreateForECDsa(generator);
                 Assert.NotNull(cert);
-                WriteCertificate(cert, $"Default signed RSA cert");
+                WriteCertificate(cert, "Default signed RSA cert");
+                CheckPEMWriter(cert);
             }
 
             // ensure invalid path throws argument exception
@@ -374,6 +375,16 @@ namespace Opc.Ua.Security.Certificates.Tests
             foreach (var ext in cert.Extensions)
             {
                 TestContext.Out.WriteLine(ext.Format(false));
+            }
+        }
+
+        private void CheckPEMWriter(X509Certificate2 certificate, string password = null)
+        {
+            PEMWriter.ExportCertificateAsPEM(certificate);
+            if (certificate.HasPrivateKey)
+            {
+                PEMWriter.ExportPrivateKeyAsPEM(certificate, password);
+                PEMWriter.ExportECDsaPrivateKeyAsPEM(certificate);
             }
         }
         #endregion

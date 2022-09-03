@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -84,17 +84,37 @@ namespace Opc.Ua
                 // do not enable if unsupported
                 if (Stopwatch.IsHighResolution)
                 {
-                    if (s_Default.m_disabled && !value)
+                    // check if already initialized.
+                    if (!s_Default.m_initialized)
                     {
-                        // reset baseline
-                        s_Default = new HiResClock();
+                        if (s_Default.m_disabled && !value)
+                        {
+                            // reset baseline
+                            s_Default = new HiResClock();
+                        }
+                        else
+                        {
+                            s_Default.m_disabled = value;
+                        }
+
+                        s_Default.m_initialized = true;
                     }
                     else
                     {
-                        s_Default.m_disabled = value;
+                        // do not allow to set the value multiple times since 
+                        // it affects the notifications for existing monitored items.
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Reset the baseline and allow a new initialization.
+        /// </summary>
+        public static void Reset()
+        {
+            // reset baseline
+            s_Default = new HiResClock();
         }
 
         /// <summary>
@@ -102,6 +122,7 @@ namespace Opc.Ua
         /// </summary>
         private HiResClock()
         {
+            m_initialized = false;
             m_offset = DateTime.UtcNow.Ticks;
             if (!Stopwatch.IsHighResolution)
             {
@@ -130,6 +151,7 @@ namespace Opc.Ua
         private double m_ticksPerMillisecond;
         private decimal m_ratio;
         private bool m_disabled;
+        private bool m_initialized;
     }
 
 }

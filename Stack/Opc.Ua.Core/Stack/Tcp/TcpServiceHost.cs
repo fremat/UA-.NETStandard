@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -13,7 +13,6 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 
 namespace Opc.Ua.Bindings
 {
@@ -38,7 +37,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         public List<EndpointDescription> CreateServiceHost(
             ServerBase serverBase,
-            IDictionary<string, Task> hosts,
+            IDictionary<string, ServiceHost> hosts,
             ApplicationConfiguration configuration,
             IList<string> baseAddresses,
             ApplicationDescription serverDescription,
@@ -47,12 +46,7 @@ namespace Opc.Ua.Bindings
             X509Certificate2Collection instanceCertificateChain)
         {
             // generate a unique host name.
-            string hostName = String.Empty;
-
-            if (hosts.ContainsKey(hostName))
-            {
-                hostName = "/Tcp";
-            }
+            string hostName = "/Tcp";
 
             if (hosts.ContainsKey(hostName))
             {
@@ -77,7 +71,7 @@ namespace Opc.Ua.Bindings
 
                 UriBuilder uri = new UriBuilder(baseAddresses[ii]);
 
-                if (String.Compare(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) == 0)
+                if (String.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
                 {
                     uri.Host = computerName;
                 }
@@ -128,16 +122,17 @@ namespace Opc.Ua.Bindings
                     }
 
                     serverBase.CreateServiceHostEndpoint(uri.Uri, listenerEndpoints, endpointConfiguration, listener,
-                        configuration.CertificateValidator.GetChannelValidator()
-                        );
+                        configuration.CertificateValidator.GetChannelValidator());
 
                     endpoints.AddRange(listenerEndpoints);
                 }
                 else
                 {
-                    Utils.Trace(Utils.TraceMasks.Error, "Failed to create endpoint {0} because the transport profile is unsupported.", uri);
+                    Utils.LogError("Failed to create endpoint {0} because the transport profile is unsupported.", uri);
                 }
             }
+
+            hosts[hostName] = serverBase.CreateServiceHost(serverBase, uris.ToArray());
 
             return endpoints;
         }

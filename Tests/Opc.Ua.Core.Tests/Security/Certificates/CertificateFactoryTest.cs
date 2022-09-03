@@ -86,7 +86,9 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             )
         {
             var appTestGenerator = new ApplicationTestDataGenerator(keyHashPair.KeySize);
-            ApplicationTestData app = appTestGenerator.ApplicationTestSet(1).First();
+            ApplicationTestData app = appTestGenerator
+                .ApplicationTestSet(1)
+                .First();
             var cert = CertificateFactory.CreateCertificate(app.ApplicationUri, app.ApplicationName, app.Subject, app.DomainNames)
                 .SetHashAlgorithm(keyHashPair.HashAlgorithmName)
                 .SetRSAKeySize(keyHashPair.KeySize)
@@ -106,7 +108,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             Assert.NotNull(plainCert);
             VerifyApplicationCert(app, plainCert);
             X509Utils.VerifyRSAKeyPair(cert, cert, true);
-            Assert.True(X509Utils.VerifySelfSigned(cert));
+            Assert.True(X509Utils.VerifySelfSigned(cert), "Verify Self signed.");
         }
 
         /// <summary>
@@ -140,7 +142,6 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             }
         }
 
-
         /// <summary>
         /// Verify CA signed app certs.
         /// </summary>
@@ -149,7 +150,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             KeyHashPair keyHashPair
             )
         {
-            var subject = "CN=CA Test Cert";
+            const string subject = "CN=CA Test Cert,O=OPC Foundation,C=US,S=Arizona";
             int pathLengthConstraint = (keyHashPair.KeySize / 512) - 3;
             var cert = CertificateFactory.CreateCertificate(subject)
                 .SetLifeTime(25 * 12)
@@ -190,9 +191,9 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             X509Certificate2Collection revokedCerts = new X509Certificate2Collection();
             for (int i = 0; i < 10; i++)
             {
-                var cert = CertificateFactory.CreateCertificate($"CN=Test Cert {i}")
+                var cert = CertificateFactory.CreateCertificate($"CN=Test Cert {i}, O=Contoso")
                     .SetIssuer(issuerCertificate)
-                    .SetRSAKeySize(keyHashPair.KeySize <= 2048 ? keyHashPair.KeySize : 2048)
+                    .SetRSAKeySize((ushort) (keyHashPair.KeySize <= 2048 ? keyHashPair.KeySize : 2048))
                     .CreateForRSA();
                 revokedCerts.Add(cert);
                 Assert.False(X509Utils.VerifySelfSigned(cert));
@@ -217,11 +218,12 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             var crl = CertificateFactory.RevokeCertificate(issuerCertificate, null, null);
             Assert.NotNull(crl);
             Assert.True(crl.VerifySignature(issuerCertificate, true));
-            var extension = X509Extensions.FindExtension<X509CrlNumberExtension>(crl.CrlExtensions);
+            var extension = crl.CrlExtensions.FindExtension<X509CrlNumberExtension>();
             var crlCounter = new BigInteger(1);
             Assert.AreEqual(crlCounter, extension.CrlNumber);
-            var revokedList = new List<X509CRL>();
-            revokedList.Add(crl);
+            var revokedList = new X509CRLCollection {
+                crl
+            };
             foreach (var cert in revokedCerts)
             {
                 Assert.Throws<CryptographicException>(() => crl.VerifySignature(otherIssuerCertificate, true));
@@ -230,7 +232,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
                 crlCounter++;
                 Assert.NotNull(nextCrl);
                 Assert.True(nextCrl.IsRevoked(cert));
-                extension = X509Extensions.FindExtension<X509CrlNumberExtension>(nextCrl.CrlExtensions);
+                extension = nextCrl.CrlExtensions.FindExtension<X509CrlNumberExtension>();
                 Assert.AreEqual(crlCounter, extension.CrlNumber);
                 Assert.True(crl.VerifySignature(issuerCertificate, true));
                 revokedList.Add(nextCrl);
@@ -255,13 +257,13 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
                     VerifyCACerts(keyHashPair);
                     if (!m_rootCACertificate.TryGetValue(keyHashPair.KeySize, out issuerCertificate))
                     {
-                        Assert.Ignore($"Could not load Issuer Cert.");
+                        Assert.Ignore("Could not load Issuer Cert.");
                     }
                 }
             }
             catch
             {
-                Assert.Ignore($"Could not load create Issuer Cert.");
+                Assert.Ignore("Could not load create Issuer Cert.");
             }
             return issuerCertificate;
         }
@@ -280,8 +282,11 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             Assert.True(X509Utils.CompareDistinguishedName(testApp.Subject, cert.Subject));
             Assert.True(X509Utils.CompareDistinguishedName(issuerCert.Subject, cert.Issuer));
 
+            Assert.AreEqual(cert.IssuerName.Name, issuerCert.SubjectName.Name);
+            Assert.AreEqual(cert.IssuerName.RawData, issuerCert.SubjectName.RawData);
+
             // test basic constraints
-            X509BasicConstraintsExtension constraints = X509Extensions.FindExtension<X509BasicConstraintsExtension>(cert);
+            X509BasicConstraintsExtension constraints = cert.FindExtension<X509BasicConstraintsExtension>();
             Assert.NotNull(constraints);
             TestContext.Out.WriteLine(constraints.Format(true));
             Assert.True(constraints.Critical);
@@ -298,7 +303,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             }
 
             // key usage
-            X509KeyUsageExtension keyUsage = X509Extensions.FindExtension<X509KeyUsageExtension>(cert);
+            X509KeyUsageExtension keyUsage = cert.FindExtension<X509KeyUsageExtension>();
             Assert.NotNull(keyUsage);
             TestContext.Out.WriteLine(keyUsage.Format(true));
             Assert.True(keyUsage.Critical);
@@ -378,6 +383,9 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             Assert.True(X509Utils.CompareDistinguishedName(subject, cert.Subject));
             Assert.True(X509Utils.CompareDistinguishedName(subject, cert.Issuer));
 
+            Assert.AreEqual(cert.Subject, cert.Issuer);
+            Assert.AreEqual(cert.SubjectName.RawData, cert.IssuerName.RawData);
+
             // test basic constraints
             var constraints = X509Extensions.FindExtension<X509BasicConstraintsExtension>(cert);
             Assert.NotNull(constraints);
@@ -421,6 +429,8 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             Assert.NotNull(authority.GetSerialNumber());
             Assert.NotNull(authority.KeyIdentifier);
             Assert.NotNull(authority.Issuer);
+            Assert.AreEqual(cert.IssuerName.RawData, authority.Issuer.RawData);
+            Assert.AreEqual(cert.IssuerName.Name, authority.Issuer.Name);
             Assert.NotNull(authority.ToString());
             Assert.AreEqual(authority.SerialNumber, Utils.ToHexString(authority.GetSerialNumber(), true));
 
@@ -440,5 +450,4 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
         private ConcurrentDictionary<int, X509Certificate2> m_rootCACertificate;
         #endregion
     }
-
 }

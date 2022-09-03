@@ -2,7 +2,7 @@
  * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
- * 
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -11,7 +11,7 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,9 +30,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.InteropServices;
+using System.Threading;
 using System.Xml;
-using static Opc.Ua.Utils;
 
 namespace Opc.Ua.Server
 {
@@ -45,6 +44,7 @@ namespace Opc.Ua.Server
         /// <summary>
         /// Initializes the object with its node type.
         /// </summary>
+        [Obsolete("Use MonitoredItem constructor without the session parameter.")]
         public MonitoredItem(
             IServerInternal server,
             INodeManager nodeManager,
@@ -52,6 +52,34 @@ namespace Opc.Ua.Server
             uint subscriptionId,
             uint id,
             Session session,
+            ReadValueId itemToMonitor,
+            DiagnosticsMasks diagnosticsMasks,
+            TimestampsToReturn timestampsToReturn,
+            MonitoringMode monitoringMode,
+            uint clientHandle,
+            MonitoringFilter originalFilter,
+            MonitoringFilter filterToUse,
+            Range range,
+            double samplingInterval,
+            uint queueSize,
+            bool discardOldest,
+            double sourceSamplingInterval)
+         : this(server, nodeManager, mangerHandle, subscriptionId,
+            id, itemToMonitor, diagnosticsMasks, timestampsToReturn, monitoringMode,
+            clientHandle, originalFilter, filterToUse, range, samplingInterval,
+            queueSize, discardOldest, sourceSamplingInterval)
+        {
+        }
+
+        /// <summary>
+        /// Initializes the object with its node type.
+        /// </summary>
+        public MonitoredItem(
+            IServerInternal server,
+            INodeManager nodeManager,
+            object mangerHandle,
+            uint subscriptionId,
+            uint id,
             ReadValueId itemToMonitor,
             DiagnosticsMasks diagnosticsMasks,
             TimestampsToReturn timestampsToReturn,
@@ -74,7 +102,6 @@ namespace Opc.Ua.Server
             m_managerHandle = mangerHandle;
             m_subscriptionId = subscriptionId;
             m_id = id;
-            m_session = session;
             m_nodeId = itemToMonitor.NodeId;
             m_attributeId = itemToMonitor.AttributeId;
             m_indexRange = itemToMonitor.IndexRange;
@@ -149,7 +176,6 @@ namespace Opc.Ua.Server
             m_managerHandle = null;
             m_subscriptionId = 0;
             m_id = 0;
-            m_session = null;
             m_nodeId = null;
             m_attributeId = 0;
             m_indexRange = null;
@@ -169,6 +195,7 @@ namespace Opc.Ua.Server
             m_readyToTrigger = false;
             m_sourceSamplingInterval = 0;
             m_samplingError = ServiceResult.Good;
+            m_resendData = false;
         }
         #endregion
 
@@ -213,40 +240,39 @@ namespace Opc.Ua.Server
                     }
                 }
 
-                // check if not ready to publish.
+                // check if not ready to publish in case it doesn't ResendData
                 if (!m_readyToPublish)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace((int)TraceMasks.OperationDetail, "IsReadyToPublish[{0}] FALSE", m_id);
+                    ServerUtils.EventLog.MonitoredItemReady(m_id, "FALSE");
                     return false;
                 }
 
                 // check if it has been triggered.
                 if (m_monitoringMode != MonitoringMode.Disabled && m_triggered)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace((int)TraceMasks.OperationDetail, "IsReadyToPublish[{0}] TRIGGERED", m_id);
+                    ServerUtils.EventLog.MonitoredItemReady(m_id, "TRIGGERED");
                     return true;
                 }
 
                 // check if monitoring was turned off.
                 if (m_monitoringMode != MonitoringMode.Reporting)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace((int)TraceMasks.OperationDetail, "IsReadyToPublish[{0}] FALSE", m_id);
+                    ServerUtils.EventLog.MonitoredItemReady(m_id, "FALSE");
                     return false;
                 }
 
                 if (m_sourceSamplingInterval == 0)
                 {
-                    // re-queue if too little time has passed since the last publish.
+                    // re-queue if too little time has passed since the last publish, in case it doesn't ResendData
                     long now = HiResClock.TickCount64;
 
                     if (m_nextSamplingTime > now)
                     {
-                        if (Utils.IsTraceEnabled) Utils.Trace((int)TraceMasks.OperationDetail, "IsReadyToPublish[{0}] FALSE {1}", m_id, new TimeSpan(m_nextSamplingTime - now).TotalSeconds);
+                        ServerUtils.EventLog.MonitoredItemReady(m_id, Utils.Format("FALSE {0}ms", m_nextSamplingTime - now));
                         return false;
                     }
                 }
-
-                if (Utils.IsTraceEnabled) Utils.Trace((int)TraceMasks.OperationDetail, "IsReadyToPublish[{0}] NORMAL", m_id);
+                ServerUtils.EventLog.MonitoredItemReady(m_id, "NORMAL");
                 return true;
             }
         }
@@ -279,6 +305,31 @@ namespace Opc.Ua.Server
             }
         }
 
+        /// <inheritdoc/>
+        public bool IsResendData
+        {
+            get
+            {
+                lock (m_lock)
+                {
+                    return m_resendData;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetupResendDataTrigger()
+        {
+            lock (m_lock)
+            {
+                if (m_monitoringMode == MonitoringMode.Reporting &&
+                    (m_typeMask & MonitoredItemTypeMask.DataChange) != 0)
+                {
+                    m_resendData = true;
+                }
+            }
+        }
+
         /// <summary>
         /// Sets a flag indicating that the item has been triggered and should publish.
         /// </summary>
@@ -288,7 +339,7 @@ namespace Opc.Ua.Server
             {
                 if (m_readyToPublish)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace("SetTriggered[{0}]", m_id);
+                    Utils.LogTrace(Utils.TraceMasks.OperationDetail, "SetTriggered[{0}]", m_id);
                     m_triggered = true;
                     return true;
                 }
@@ -343,7 +394,7 @@ namespace Opc.Ua.Server
             {
                 lock (m_lock)
                 {
-                    return m_session;
+                    return m_subscription.Session;
                 }
             }
         }
@@ -441,12 +492,12 @@ namespace Opc.Ua.Server
         /// </summary>
         public bool AlwaysReportUpdates
         {
-            get { return m_alwaysReportUpdates; }
-            set { m_alwaysReportUpdates = value; }
+            get => m_alwaysReportUpdates;
+            set => m_alwaysReportUpdates = value;
         }
 
         /// <summary>
-        /// Returns a description of the item being monitored. 
+        /// Returns a description of the item being monitored.
         /// </summary>
         public ReadValueId GetReadValueId()
         {
@@ -627,7 +678,7 @@ namespace Opc.Ua.Server
 
                 m_samplingInterval = samplingInterval;
 
-                // calculate the next sampling interval.                
+                // calculate the next sampling interval.
                 long newSamplingInterval = (long)m_samplingInterval;
 
                 if (m_samplingInterval > 0)
@@ -671,7 +722,7 @@ namespace Opc.Ua.Server
                     return previousMode;
                 }
 
-                if (Utils.IsTraceEnabled) Utils.Trace("MONITORING MODE[{0}] {1} -> {2}", m_id, m_monitoringMode, monitoringMode);
+                Utils.LogTrace("MONITORING MODE[{0}] {1} -> {2}", m_id, m_monitoringMode, monitoringMode);
 
                 if (previousMode == MonitoringMode.Disabled)
                 {
@@ -716,11 +767,11 @@ namespace Opc.Ua.Server
         /// <summary>
         /// Updates the queue with a data value or an error.
         /// </summary>
-        public virtual void QueueValue(DataValue value, ServiceResult error, bool bypassFilter)
+        public virtual void QueueValue(DataValue value, ServiceResult error, bool ignoreFilters)
         {
             lock (m_lock)
             {
-                // this method should only be called for variables. 
+                // this method should only be called for variables.
                 if ((m_typeMask & MonitoredItemTypeMask.DataChange) == 0)
                 {
                     throw new ServiceResultException(StatusCodes.BadInternalError);
@@ -735,7 +786,7 @@ namespace Opc.Ua.Server
                 // make a shallow copy of the value.
                 if (value != null)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace("RECEIVED VALUE[{0}] Value={1}", this.m_id, value.WrappedValue);
+                    Utils.LogTrace(Utils.TraceMasks.OperationDetail, "RECEIVED VALUE[{0}] Value={1}", this.m_id, value.WrappedValue);
 
                     DataValue copy = new DataValue();
 
@@ -778,7 +829,8 @@ namespace Opc.Ua.Server
                 {
                     if (!m_calculator.QueueRawValue(value))
                     {
-                        if (Utils.IsTraceEnabled) Utils.Trace("Value received out of order: {1}, ServerHandle={0}", m_id, value.SourceTimestamp.ToLocalTime().ToString("HH:mm:ss.fff"));
+                        Utils.LogTrace("Value received out of order: {1}, ServerHandle={0}",
+                            m_id, value.SourceTimestamp.ToLocalTime().ToString("HH:mm:ss.fff"));
                     }
 
                     DataValue processedValue = m_calculator.GetProcessedValue(false);
@@ -793,7 +845,7 @@ namespace Opc.Ua.Server
                 }
 
                 // apply filter to incoming item.
-                if (!m_alwaysReportUpdates && !bypassFilter)
+                if (!m_alwaysReportUpdates && !ignoreFilters)
                 {
                     if (!ApplyFilter(value, error))
                     {
@@ -856,8 +908,7 @@ namespace Opc.Ua.Server
             m_lastValue = value;
             m_lastError = error;
             m_readyToPublish = true;
-
-            if (Utils.IsTraceEnabled) Utils.Trace("QUEUE VALUE[{0}]: Value={1} CODE={2}<{2:X8}> OVERFLOW={3}", m_id, m_lastValue.WrappedValue, m_lastValue.StatusCode.Code, m_lastValue.StatusCode.Overflow);
+            ServerUtils.EventLog.QueueValue(m_id, m_lastValue.WrappedValue, m_lastValue.StatusCode);
         }
 
         /// <summary>
@@ -894,7 +945,7 @@ namespace Opc.Ua.Server
 
                     if (text != null)
                     {
-                        value = m_server.ResourceManager.Translate(m_session.PreferredLocales, text);
+                        value = m_server.ResourceManager.Translate(Session?.PreferredLocales, text);
                     }
 
                     // add value.
@@ -928,7 +979,7 @@ namespace Opc.Ua.Server
 
             lock (m_lock)
             {
-                // this method should only be called for objects or views. 
+                // this method should only be called for objects or views.
                 if ((m_typeMask & MonitoredItemTypeMask.Events) == 0)
                 {
                     throw new ServiceResultException(StatusCodes.BadInternalError);
@@ -965,7 +1016,7 @@ namespace Opc.Ua.Server
                 }
 
                 // construct the context to use for the event filter.
-                FilterContext context = new FilterContext(m_server.NamespaceUris, m_server.TypeTree, m_session.PreferredLocales);
+                FilterContext context = new FilterContext(m_server.NamespaceUris, m_server.TypeTree, Session?.PreferredLocales);
 
                 // event filter must be specified.
                 EventFilter filter = m_filterToUse as EventFilter;
@@ -1101,7 +1152,7 @@ namespace Opc.Ua.Server
                 // publish events.
                 if (m_events != null)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace("MONITORED ITEM: Publish(QueueSize={0})", notifications.Count);
+                    Utils.LogTrace(Utils.TraceMasks.OperationDetail, "MONITORED ITEM: Publish(QueueSize={0})", notifications.Count);
 
                     EventFieldList overflowEvent = null;
 
@@ -1128,7 +1179,7 @@ namespace Opc.Ua.Server
 
                         // fetch the event fields.
                         overflowEvent = GetEventFields(
-                            new FilterContext(m_server.NamespaceUris, m_server.TypeTree, m_session.PreferredLocales),
+                            new FilterContext(m_server.NamespaceUris, m_server.TypeTree, Session.PreferredLocales),
                             m_filterToUse as EventFilter,
                             e);
                     }
@@ -1156,7 +1207,7 @@ namespace Opc.Ua.Server
                             }
                         }
 
-                        notifications.Enqueue((EventFieldList)m_events[ii]);
+                        notifications.Enqueue(m_events[ii]);
                     }
 
                     m_events.Clear();
@@ -1167,7 +1218,7 @@ namespace Opc.Ua.Server
                         notifications.Enqueue(overflowEvent);
                     }
 
-                    if (Utils.IsTraceEnabled) Utils.Trace("MONITORED ITEM: Publish(QueueSize={0})", notifications.Count);
+                    Utils.LogTrace(Utils.TraceMasks.OperationDetail, "MONITORED ITEM: Publish(QueueSize={0})", notifications.Count);
                 }
 
                 // reset state variables.
@@ -1200,34 +1251,39 @@ namespace Opc.Ua.Server
                     return false;
                 }
 
-                // only publish if reporting.
                 if (!IsReadyToPublish)
                 {
-                    return false;
-                }
-
-                // pull any unprocessed data.
-                if (m_calculator != null)
-                {
-                    if (m_calculator.HasEndTimePassed(DateTime.UtcNow))
+                    if (!m_resendData)
                     {
-                        DataValue processedValue = m_calculator.GetProcessedValue(false);
-
-                        while (processedValue != null)
-                        {
-                            AddValueToQueue(processedValue, null);
-                        }
-
-                        processedValue = m_calculator.GetProcessedValue(true);
-                        AddValueToQueue(processedValue, null);
+                        return false;
                     }
                 }
+                else
+                {
+                    // pull any unprocessed data.
+                    if (m_calculator != null)
+                    {
+                        if (m_calculator.HasEndTimePassed(DateTime.UtcNow))
+                        {
+                            DataValue processedValue = m_calculator.GetProcessedValue(false);
 
-                // go to the next sampling interval.
-                IncrementSampleTime();
+                            while (processedValue != null)
+                            {
+                                AddValueToQueue(processedValue, null);
+                            }
+
+                            processedValue = m_calculator.GetProcessedValue(true);
+                            AddValueToQueue(processedValue, null);
+                        }
+                    }
+
+                    IncrementSampleTime();
+                }
+
+                m_readyToPublish = false;
 
                 // check if queueing enabled.
-                if (m_queue != null)
+                if (m_queue != null && (!m_resendData || m_queue.ItemsInQueue != 0))
                 {
                     DataValue value = null;
                     ServiceResult error = null;
@@ -1235,20 +1291,25 @@ namespace Opc.Ua.Server
                     while (m_queue.Publish(out value, out error))
                     {
                         Publish(context, notifications, diagnostics, value, error);
+                        if (m_resendData)
+                        {
+                            m_readyToPublish = m_queue.ItemsInQueue > 0;
+                            break;
+                        }
                     }
                 }
 
-                // publish last value if no queuing.
+                // publish last value if no queuing or no items are queued
                 else
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace("DEQUEUE VALUE: Value={0} CODE={1}<{1:X8}> OVERFLOW={2}", m_lastValue.WrappedValue, m_lastValue.StatusCode.Code, m_lastValue.StatusCode.Overflow);
+                    ServerUtils.EventLog.DequeueValue(m_lastValue.WrappedValue, m_lastValue.StatusCode);
                     Publish(context, notifications, diagnostics, m_lastValue, m_lastError);
                 }
 
                 // reset state variables.
                 m_overflow = false;
-                m_readyToPublish = false;
                 m_readyToTrigger = false;
+                m_resendData = false;
                 m_triggered = false;
 
                 return false;
@@ -1755,6 +1816,7 @@ namespace Opc.Ua.Server
         {
             m_subscription?.QueueOverflowHandler();
         }
+
         #endregion
 
         #region Private Members
@@ -1765,7 +1827,6 @@ namespace Opc.Ua.Server
         private uint m_subscriptionId;
         private uint m_id;
         private int m_typeMask;
-        private Session m_session;
         private NodeId m_nodeId;
         private uint m_attributeId;
         private string m_indexRange;
@@ -1798,6 +1859,7 @@ namespace Opc.Ua.Server
         private ServiceResult m_samplingError;
         private IAggregateCalculator m_calculator;
         private bool m_triggered;
+        private bool m_resendData;
         #endregion
     }
 }

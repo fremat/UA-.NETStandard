@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -98,12 +98,21 @@ namespace Opc.Ua
                     return certificate;
                 }
 
+                if (ensurePrivateKeyAccessible)
+                {
+                    if (!X509Utils.VerifyRSAKeyPair(certificate, certificate))
+                    {
+                        Utils.LogWarning("Trying to add certificate to cache with invalid private key.");
+                        return null;
+                    }
+                }
+
                 // update the cache.
                 m_certificates[certificate.Thumbprint] = certificate;
 
                 if (m_certificates.Count > 100)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace("WARNING - Process certificate cache has {0} certificates in it.", m_certificates.Count);
+                    Utils.LogWarning("Certificate cache has {0} certificates in it.", m_certificates.Count);
                 }
 
             }
@@ -197,7 +206,7 @@ namespace Opc.Ua
         /// </summary>
         public static X509CRL RevokeCertificate(
             X509Certificate2 issuerCertificate,
-            List<X509CRL> issuerCrls,
+            X509CRLCollection issuerCrls,
             X509Certificate2Collection revokedCertificates
             )
         {
@@ -215,7 +224,7 @@ namespace Opc.Ua
         /// </remarks>
         public static X509CRL RevokeCertificate(
             X509Certificate2 issuerCertificate,
-            List<X509CRL> issuerCrls,
+            X509CRLCollection issuerCrls,
             X509Certificate2Collection revokedCertificates,
             DateTime thisUpdate,
             DateTime nextUpdate
@@ -231,7 +240,7 @@ namespace Opc.Ua
 
             // merge all existing revocation list
             if (issuerCrls != null)
-            {   
+            {
                 foreach (X509CRL issuerCrl in issuerCrls)
                 {
                     var extension = X509Extensions.FindExtension<X509CrlNumberExtension>(issuerCrl.CrlExtensions);
@@ -272,7 +281,7 @@ namespace Opc.Ua
             return new X509CRL(crlBuilder.CreateForRSA(issuerCertificate));
         }
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET472_OR_GREATER || NET5_0_OR_GREATER
         /// <summary>
         /// Creates a certificate signing request from an existing certificate.
         /// </summary>
@@ -389,18 +398,12 @@ namespace Opc.Ua
                 throw new NotSupportedException("The public and the private key pair doesn't match.");
             }
 
-            string passcode = Guid.NewGuid().ToString();
-            RSA rsaPrivateKey = null;
-            try
+            string passcode = X509Utils.GeneratePasscode();
+            using (RSA rsaPrivateKey = certificateWithPrivateKey.GetRSAPrivateKey())
             {
-                rsaPrivateKey = certificateWithPrivateKey.GetRSAPrivateKey();
                 byte[] pfxData = CertificateBuilder.CreatePfxWithRSAPrivateKey(
                     certificate, certificate.FriendlyName, rsaPrivateKey, passcode);
                 return X509Utils.CreateCertificateFromPKCS12(pfxData, passcode);
-            }
-            finally
-            {
-                RsaUtils.RSADispose(rsaPrivateKey);
             }
         }
 
@@ -419,7 +422,7 @@ namespace Opc.Ua
                 throw new ServiceResultException("PEM data blob does not contain a private key.");
             }
 
-            string passcode = Guid.NewGuid().ToString();
+            string passcode = X509Utils.GeneratePasscode();
             byte[] pfxData = CertificateBuilder.CreatePfxWithRSAPrivateKey(
                 certificate, certificate.FriendlyName, privateKey, passcode);
             return X509Utils.CreateCertificateFromPKCS12(pfxData, passcode);
@@ -529,7 +532,7 @@ namespace Opc.Ua
                 // use the common name as the application name.
                 for (int ii = 0; ii < subjectNameEntries.Count; ii++)
                 {
-                    if (subjectNameEntries[ii].StartsWith("CN="))
+                    if (subjectNameEntries[ii].StartsWith("CN=", StringComparison.Ordinal))
                     {
                         applicationName = subjectNameEntries[ii].Substring(3).Trim();
                         break;
@@ -573,7 +576,7 @@ namespace Opc.Ua
 
                 builder.Append("urn:");
                 builder.Append(domainNames[0]);
-                builder.Append(":");
+                builder.Append(':');
                 builder.Append(applicationName);
 
                 applicationUri = builder.ToString();
@@ -599,7 +602,7 @@ namespace Opc.Ua
 
             if (domainNames != null && domainNames.Count > 0)
             {
-                if (!subjectName.Contains("DC=") && !subjectName.Contains("="))
+                if (!subjectName.Contains("DC=") && !subjectName.Contains('='))
                 {
                     subjectName += Utils.Format(", DC={0}", domainNames[0]);
                 }

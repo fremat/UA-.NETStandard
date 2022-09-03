@@ -1,25 +1,10 @@
-/* ========================================================================
- * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
- *
- * OPC Reciprocal Community License ("RCL") Version 1.00
- * 
- * Unless explicitly acquired and licensed from Licensor under another 
- * license, the contents of this file are subject to the Reciprocal 
- * Community License ("RCL") Version 1.00, or subsequent versions 
- * as allowed by the RCL, and You may not copy or use this file in either 
- * source code or executable form, except in compliance with the terms and 
- * conditions of the RCL.
- * 
- * All software distributed under the RCL is provided strictly on an 
- * "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT 
- * LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
- * PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RCL for specific 
- * language governing rights and limitations under the RCL.
- *
- * The complete license agreement can be found here:
- * http://opcfoundation.org/License/RCL/1.00/
- * ======================================================================*/
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
+   The source code in this file is covered under a dual-license scenario:
+     - RCL: for OPC Foundation Corporate Members in good-standing
+     - GPL V2: everybody else
+   RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
+   GNU General Public License as published by the Free Software Foundation;
+*/
 
 using System;
 using System.IO;
@@ -31,6 +16,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.Hosting;
 using Opc.Ua.Core;
 
 namespace Opc.Ua.Bindings
@@ -78,11 +64,11 @@ namespace Opc.Ua.Bindings
                     context.Response.ContentLength = 0;
                     context.Response.ContentType = "text/plain";
                     context.Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
-                    await context.Response.WriteAsync(string.Empty);
+                    await context.Response.WriteAsync(string.Empty).ConfigureAwait(false);
                 }
                 else
                 {
-                    await Listener.SendAsync(context);
+                    await Listener.SendAsync(context).ConfigureAwait(false);
                 }
             });
         }
@@ -109,6 +95,7 @@ namespace Opc.Ua.Bindings
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -154,23 +141,24 @@ namespace Opc.Ua.Bindings
             var configuration = settings.Configuration;
 
             // initialize the quotas.
-            m_quotas = new ChannelQuotas();
-            m_quotas.MaxBufferSize = configuration.MaxBufferSize;
-            m_quotas.MaxMessageSize = configuration.MaxMessageSize;
-            m_quotas.ChannelLifetime = configuration.ChannelLifetime;
-            m_quotas.SecurityTokenLifetime = configuration.SecurityTokenLifetime;
+            m_quotas = new ChannelQuotas {
+                MaxBufferSize = configuration.MaxBufferSize,
+                MaxMessageSize = configuration.MaxMessageSize,
+                ChannelLifetime = configuration.ChannelLifetime,
+                SecurityTokenLifetime = configuration.SecurityTokenLifetime,
 
-            m_quotas.MessageContext = new ServiceMessageContext();
+                MessageContext = new ServiceMessageContext {
+                    MaxArrayLength = configuration.MaxArrayLength,
+                    MaxByteStringLength = configuration.MaxByteStringLength,
+                    MaxMessageSize = configuration.MaxMessageSize,
+                    MaxStringLength = configuration.MaxStringLength,
+                    NamespaceUris = settings.NamespaceUris,
+                    ServerUris = new StringTable(),
+                    Factory = settings.Factory
+                },
 
-            m_quotas.MessageContext.MaxArrayLength = configuration.MaxArrayLength;
-            m_quotas.MessageContext.MaxByteStringLength = configuration.MaxByteStringLength;
-            m_quotas.MessageContext.MaxMessageSize = configuration.MaxMessageSize;
-            m_quotas.MessageContext.MaxStringLength = configuration.MaxStringLength;
-            m_quotas.MessageContext.NamespaceUris = settings.NamespaceUris;
-            m_quotas.MessageContext.ServerUris = new StringTable();
-            m_quotas.MessageContext.Factory = settings.Factory;
-
-            m_quotas.CertificateValidator = settings.CertificateValidator;
+                CertificateValidator = settings.CertificateValidator
+            };
 
             // save the callback to the server.
             m_callback = callback;
@@ -229,18 +217,44 @@ namespace Opc.Ua.Bindings
         {
             Startup.Listener = this;
             m_hostBuilder = new WebHostBuilder();
-
             HttpsConnectionAdapterOptions httpsOptions = new HttpsConnectionAdapterOptions();
             httpsOptions.CheckCertificateRevocation = false;
             httpsOptions.ClientCertificateMode = ClientCertificateMode.NoCertificate;
             httpsOptions.ServerCertificate = m_serverCert;
-            httpsOptions.SslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
-            m_hostBuilder.UseKestrel(options => {
-                options.Listen(IPAddress.Any, m_uri.Port, listenOptions => {
-                    listenOptions.NoDelay = true;
-                    listenOptions.UseHttps(httpsOptions);
+
+#if NET462
+            // note: although security tools recommend 'None' here,
+            // it only works on .NET 4.6.2 if Tls12 is used
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
+            httpsOptions.SslProtocols = SslProtocols.Tls12;
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
+#else
+            httpsOptions.SslProtocols = SslProtocols.None;
+#endif
+            bool bindToSpecifiedAddress = true;
+            UriHostNameType hostType = Uri.CheckHostName(m_uri.Host);
+            if (hostType == UriHostNameType.Dns || hostType == UriHostNameType.Unknown || hostType == UriHostNameType.Basic)
+            {
+                bindToSpecifiedAddress = false;
+            }
+
+            if (bindToSpecifiedAddress)
+            {
+                IPAddress ipAddress = IPAddress.Parse(m_uri.Host);
+                m_hostBuilder.UseKestrel(options => {
+                    options.Listen(ipAddress, m_uri.Port, listenOptions => {
+                        listenOptions.UseHttps(httpsOptions);
+                    });
                 });
-            });
+            }
+            else
+            {
+                m_hostBuilder.UseKestrel(options => {
+                    options.ListenAnyIP(m_uri.Port, listenOptions => {
+                        listenOptions.UseHttps(httpsOptions);
+                    });
+                });
+            }
 
             m_hostBuilder.UseContentRoot(Directory.GetCurrentDirectory());
             m_hostBuilder.UseStartup<Startup>();
@@ -271,7 +285,7 @@ namespace Opc.Ua.Bindings
                     context.Response.ContentLength = 0;
                     context.Response.ContentType = "text/plain";
                     context.Response.StatusCode = (int)HttpStatusCode.NotImplemented;
-                    await context.Response.WriteAsync(string.Empty);
+                    await context.Response.WriteAsync(string.Empty).ConfigureAwait(false);
                     return;
                 }
 
@@ -280,19 +294,19 @@ namespace Opc.Ua.Bindings
                     context.Response.ContentLength = 0;
                     context.Response.ContentType = "text/plain";
                     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    await context.Response.WriteAsync("HTTPSLISTENER - Unsupported content type.");
+                    await context.Response.WriteAsync("HTTPSLISTENER - Unsupported content type.").ConfigureAwait(false);
                     return;
                 }
 
                 int length = (int)context.Request.ContentLength;
-                byte[] buffer = await ReadBodyAsync(context.Request);
+                byte[] buffer = await ReadBodyAsync(context.Request).ConfigureAwait(false);
 
                 if (buffer.Length != length)
                 {
                     context.Response.ContentLength = 0;
                     context.Response.ContentType = "text/plain";
                     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    await context.Response.WriteAsync("HTTPSLISTENER - Couldn't decode buffer.");
+                    await context.Response.WriteAsync("HTTPSLISTENER - Couldn't decode buffer.").ConfigureAwait(false);
                     return;
                 }
 
@@ -306,27 +320,52 @@ namespace Opc.Ua.Bindings
 
                 if (NodeId.IsNull(input.RequestHeader.AuthenticationToken) && input.TypeId != DataTypeIds.CreateSessionRequest)
                 {
-                    if (context.Request.Headers.Keys.Contains("Authorization"))
+                    if (context.Request.Headers.ContainsKey("Authorization"))
                     {
                         foreach (string value in context.Request.Headers["Authorization"])
                         {
-                            if (value.StartsWith("Bearer"))
+                            if (value.StartsWith("Bearer", StringComparison.OrdinalIgnoreCase))
                             {
-                                input.RequestHeader.AuthenticationToken = new NodeId(value.Substring("Bearer ".Length).Trim());
+                                // note: use NodeId(string, uint) to avoid the NodeId.Parse call.
+                                input.RequestHeader.AuthenticationToken = new NodeId(value.Substring("Bearer ".Length).Trim(), 0);
                             }
                         }
                     }
                 }
 
-                EndpointDescription endpoint = null;
+                if (!context.Request.Headers.TryGetValue(Profiles.HttpsSecurityPolicyHeader, out var header))
+                {
+                    header = SecurityPolicies.None;
+                }
 
+                EndpointDescription endpoint = null;
                 foreach (var ep in m_descriptions)
                 {
-                    if (ep.EndpointUrl.StartsWith(Utils.UriSchemeHttps))
+                    if (ep.EndpointUrl.StartsWith(Utils.UriSchemeHttps, StringComparison.Ordinal))
                     {
+                        if (!string.IsNullOrEmpty(header))
+                        {
+                            if (!string.Equals(ep.SecurityPolicyUri, header, StringComparison.Ordinal))
+                            {
+                                continue;
+                            }
+                        }
+
                         endpoint = ep;
                         break;
                     }
+                }
+
+                if (endpoint == null &&
+                    input.TypeId != DataTypeIds.GetEndpointsRequest &&
+                    input.TypeId != DataTypeIds.FindServersRequest)
+                {
+                    var message = "Connection refused, invalid security policy.";
+                    Utils.LogError(message);
+                    context.Response.ContentLength = message.Length;
+                    context.Response.ContentType = "text/plain";
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    await context.Response.WriteAsync(message).ConfigureAwait(false);
                 }
 
                 result = m_callback.BeginProcessRequest(
@@ -342,15 +381,19 @@ namespace Opc.Ua.Bindings
                 context.Response.ContentLength = response.Length;
                 context.Response.ContentType = context.Request.ContentType;
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
-                await context.Response.Body.WriteAsync(response, 0, response.Length);
+#if NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+                await context.Response.Body.WriteAsync(response.AsMemory(0, response.Length)).ConfigureAwait(false);
+#else
+                await context.Response.Body.WriteAsync(response, 0, response.Length).ConfigureAwait(false);
+#endif
             }
             catch (Exception e)
             {
-                if (Utils.IsTraceEnabled) Utils.Trace(e, "HTTPSLISTENER - Unexpected error processing request.");
+                Utils.LogError(e, "HTTPSLISTENER - Unexpected error processing request.");
                 context.Response.ContentLength = e.Message.Length;
                 context.Response.ContentType = "text/plain";
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                await context.Response.WriteAsync(e.Message);
+                await context.Response.WriteAsync(e.Message).ConfigureAwait(false);
             }
         }
 
@@ -377,12 +420,12 @@ namespace Opc.Ua.Bindings
             Start();
         }
 
-        private async Task<byte[]> ReadBodyAsync(HttpRequest req)
+        private static async Task<byte[]> ReadBodyAsync(HttpRequest req)
         {
             using (var memory = PooledMemoryStream.GetMemoryStream())
             using (var reader = new StreamReader(req.Body))
             {
-                await reader.BaseStream.CopyToAsync(memory);
+                await reader.BaseStream.CopyToAsync(memory).ConfigureAwait(false);
                 return memory.ToArray();
             }
         }

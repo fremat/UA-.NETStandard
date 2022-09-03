@@ -33,6 +33,7 @@ using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server.Controls;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace Quickstarts.ReferenceServer
 {
@@ -55,9 +56,14 @@ namespace Quickstarts.ReferenceServer
 
             try
             {
-
                 // load the application configuration.
-                application.LoadApplicationConfiguration(false).Wait();
+                ApplicationConfiguration config = application.LoadApplicationConfiguration(false).Result;
+
+                LoggerConfiguration loggerConfiguration = new LoggerConfiguration();
+#if DEBUG
+                loggerConfiguration.WriteTo.Debug(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning);
+#endif
+                SerilogTraceLogger.Create(loggerConfiguration, config);
 
                 // check the application certificate.
                 bool certOk = application.CheckApplicationInstanceCertificate(false, 0).Result;
@@ -66,8 +72,12 @@ namespace Quickstarts.ReferenceServer
                     throw new Exception("Application instance certificate invalid!");
                 }
 
+                // Create server, add additional node managers
+                var server = new ReferenceServer();
+                Quickstarts.Servers.Utils.AddDefaultNodeManagers(server);
+
                 // start the server.
-                application.Start(new ReferenceServer()).Wait();
+                application.Start(server).Wait();
 
                 // check whether the invalid certificates dialog should be displayed.
                 bool showCertificateValidationDialog = false;

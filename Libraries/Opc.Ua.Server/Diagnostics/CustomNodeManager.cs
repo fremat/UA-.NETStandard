@@ -1,8 +1,8 @@
 /* ========================================================================
- * Copyright (c) 2005-2020 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2022 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
- * 
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -11,7 +11,7 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -28,12 +28,11 @@
  * ======================================================================*/
 
 using System;
-using System.Text;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Reflection;
-using System.Threading;
-using Opc.Ua;
-using Opc.Ua.Server;
+
 
 namespace Opc.Ua.Server
 {
@@ -82,10 +81,10 @@ namespace Opc.Ua.Server
             // save a reference to the UA server instance that owns the node manager.
             m_server = server;
 
-            // all operations require information about the system 
+            // all operations require information about the system
             m_systemContext = m_server.DefaultSystemContext.Copy();
 
-            // the node id factory assigns new node ids to new nodes. 
+            // the node id factory assigns new node ids to new nodes.
             // the strategy used by a NodeManager depends on what kind of information it provides.
             m_systemContext.NodeIdFactory = this;
 
@@ -120,6 +119,7 @@ namespace Opc.Ua.Server
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -400,6 +400,22 @@ namespace Opc.Ua.Server
                 instance.Create(contextToUse, null, browseName, null, true);
                 AddPredefinedNode(contextToUse, instance);
 
+                // report audit event
+                if (Server?.EventManager?.ServerAuditing == true)
+                {
+                    // current server supports auditing, prepare the added nodes info
+                    AddNodesItem[] addNodesItems = GetFlattenedNodeTree(context, instance).Select(n => new AddNodesItem() {
+                        BrowseName = n.BrowseName,
+                        NodeClass = n.NodeClass,
+                        RequestedNewNodeId = n.NodeId,
+                        TypeDefinition = n.TypeDefinitionId,
+                        ReferenceTypeId = n.ReferenceTypeId,
+                        ParentNodeId = n.Parent?.NodeId
+                    }).ToArray();
+
+                    ReportAuditAddNodesEvent(context, addNodesItems, "CreateNode", StatusCodes.Good);
+                }
+
                 return instance.NodeId;
             }
         }
@@ -427,6 +443,18 @@ namespace Opc.Ua.Server
 
                 if (PredefinedNodes.TryGetValue(nodeId, out node))
                 {
+                    // report audit event
+                    if (Server?.EventManager?.ServerAuditing == true)
+                    {
+                        // current server supports auditing, prepare the deleted nodes info
+                        DeleteNodesItem[] nodesToDelete = GetFlattenedNodeTree(context, node as BaseInstanceState).Select(n => new DeleteNodesItem() {
+                            NodeId = n.NodeId,
+                            DeleteTargetReferences = true
+                        }).ToArray();
+
+                        ReportAuditDeleteNodesEvent(context, nodesToDelete, "DeleteNode", StatusCodes.Good);
+                    }
+
                     RemovePredefinedNode(contextToUse, node, referencesToRemove);
                     found = true;
                 }
@@ -444,7 +472,7 @@ namespace Opc.Ua.Server
         }
 
         /// <summary>
-        /// Searches the node id in all node managers 
+        /// Searches the node id in all node managers
         /// </summary>
         /// <param name="nodeId"></param>
         /// <returns></returns>
@@ -497,7 +525,7 @@ namespace Opc.Ua.Server
         /// <remarks>
         /// The externalReferences is an out parameter that allows the node manager to link to nodes
         /// in other node managers. For example, the 'Objects' node is managed by the CoreNodeManager and
-        /// should have a reference to the root folder node(s) exposed by this node manager.  
+        /// should have a reference to the root folder node(s) exposed by this node manager.
         /// </remarks>
         public virtual void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
         {
@@ -529,7 +557,7 @@ namespace Opc.Ua.Server
                 AddPredefinedNode(context, predefinedNodes[ii]);
             }
 
-            // ensure the reverse refernces exist.
+            // ensure the reverse references exist.
             AddReverseReferences(externalReferences);
         }
 
@@ -557,7 +585,7 @@ namespace Opc.Ua.Server
                 AddPredefinedNode(context, predefinedNodes[ii]);
             }
 
-            // ensure the reverse refernces exist.
+            // ensure the reverse references exist.
             AddReverseReferences(externalReferences);
         }
 
@@ -584,6 +612,17 @@ namespace Opc.Ua.Server
             if (m_predefinedNodes == null)
             {
                 m_predefinedNodes = new NodeIdDictionary<NodeState>();
+            }
+
+            // assign a default value to any variable in namespace 0
+            if (node is BaseVariableState nodeStateVar)
+            {
+                if (nodeStateVar.NodeId.NamespaceIndex == 0 && nodeStateVar.Value == null)
+                {
+                    nodeStateVar.Value = TypeInfo.GetDefaultValue(nodeStateVar.DataType,
+                        nodeStateVar.ValueRank,
+                        Server.TypeTree);
+                }
             }
 
             NodeState activeNode = AddBehaviourToPredefinedNode(context, node);
@@ -701,12 +740,42 @@ namespace Opc.Ua.Server
             }
         }
 
+
+        /// <summary>
+        /// Get the flattened tree of nodes starting from the specified node
+        /// </summary>
+        /// <param name="context">Current server context.</param>
+        /// <param name="rootNode">The root node from where the search begins.</param>
+        /// <returns></returns>
+        protected IList<BaseInstanceState> GetFlattenedNodeTree(ISystemContext context, BaseInstanceState rootNode)
+        {
+            if (rootNode == null) return new List<BaseInstanceState>();
+
+            List<BaseInstanceState> nodes = new List<BaseInstanceState>() { rootNode };
+            List<BaseInstanceState> results = new List<BaseInstanceState> { rootNode };
+            while (nodes.Count > 0)
+            {
+                List<BaseInstanceState> childNodes = new List<BaseInstanceState>();
+                foreach (BaseInstanceState node in nodes)
+                {
+                    IList<BaseInstanceState> children = new List<BaseInstanceState>();
+                    node.GetChildren(context, children);
+
+                    childNodes.AddRange(children);
+                    results.AddRange(children);
+                }
+                nodes = childNodes;
+            }
+
+            return results;
+        }
+
         /// <summary>
         /// Called after a node has been deleted.
         /// </summary>
         protected virtual void OnNodeRemoved(NodeState node)
         {
-            // overridden by the sub-class.            
+            // overridden by the sub-class.
         }
 
         /// <summary>
@@ -722,13 +791,6 @@ namespace Opc.Ua.Server
 
             foreach (NodeState source in m_predefinedNodes.Values)
             {
-                // assign a default value to any variable value.
-                BaseVariableState variable = source as BaseVariableState;
-
-                if (variable != null && variable.Value == null)
-                {
-                    variable.Value = TypeInfo.GetDefaultValue(variable.DataType, variable.ValueRank, Server.TypeTree);
-                }
 
                 IList<IReference> references = new List<IReference>();
                 source.GetReferences(SystemContext, references);
@@ -867,7 +929,7 @@ namespace Opc.Ua.Server
         }
 
         /// <summary>
-        /// Finds the specified and checks if it is of the expected type. 
+        /// Finds the specified and checks if it is of the expected type.
         /// </summary>
         /// <returns>Returns null if not found or not of the correct type.</returns>
         public NodeState FindPredefinedNode(NodeId nodeId, Type expectedType)
@@ -919,7 +981,7 @@ namespace Opc.Ua.Server
         /// Returns a unique handle for the node.
         /// </summary>
         /// <remarks>
-        /// This must efficiently determine whether the node belongs to the node manager. If it does belong to 
+        /// This must efficiently determine whether the node belongs to the node manager. If it does belong to
         /// NodeManager it should return a handle that does not require the NodeId to be validated again when
         /// the handle is passed into other methods such as 'Read' or 'Write'.
         /// </remarks>
@@ -997,11 +1059,11 @@ namespace Opc.Ua.Server
         /// This method is used to delete bi-directional references to nodes from other node managers.
         /// </summary>
         public virtual ServiceResult DeleteReference(
-            object         sourceHandle, 
-            NodeId         referenceTypeId, 
-            bool           isInverse, 
-            ExpandedNodeId targetId, 
-            bool           deleteBiDirectional)
+            object sourceHandle,
+            NodeId referenceTypeId,
+            bool isInverse,
+            ExpandedNodeId targetId,
+            bool deleteBidirectional)
         {
             lock (Lock)
             {
@@ -1022,7 +1084,7 @@ namespace Opc.Ua.Server
                 // only support references to Source Areas.
                 source.Node.RemoveReference(referenceTypeId, isInverse, targetId);
 
-                if (deleteBiDirectional)
+                if (deleteBidirectional)
                 {
                     // check if the target is also managed by this node manager.
                     if (!targetId.IsAbsolute)
@@ -1047,9 +1109,9 @@ namespace Opc.Ua.Server
         /// This method validates any placeholder handle.
         /// </remarks>
         public virtual NodeMetadata GetNodeMetadata(
-            OperationContext context, 
-            object           targetHandle, 
-            BrowseResultMask resultMask)
+                   OperationContext context,
+                   object targetHandle,
+                   BrowseResultMask resultMask)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
 
@@ -1139,47 +1201,7 @@ namespace Opc.Ua.Server
                     metadata.UserRolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(values[12]));
                 }
 
-                // check if NamespaceMetadata is defined for NamespaceUri
-                string namespaceUri = Server.NamespaceUris.GetString(target.NodeId.NamespaceIndex);
-                NamespaceMetadataState namespaceMetadataState = Server.NodeManager.ConfigurationNodeManager.GetNamespaceMetadataState(namespaceUri);
-
-                if (namespaceMetadataState != null)
-                {
-                    List<object> namespaceMetadataValues;
-
-                    if (namespaceMetadataState.DefaultAccessRestrictions != null)
-                    {
-                        // get DefaultAccessRestrictions for Namespace
-                        namespaceMetadataValues = namespaceMetadataState.DefaultAccessRestrictions.ReadAttributes(systemContext, Attributes.Value);
-
-                        if (namespaceMetadataValues[0] != null)
-                        {
-                            metadata.DefaultAccessRestrictions = (AccessRestrictionType)Enum.ToObject(typeof(AccessRestrictionType), namespaceMetadataValues[0]);
-                        }
-                    }
-
-                    if (namespaceMetadataState.DefaultRolePermissions != null)
-                    {
-                        // get DefaultRolePermissions for Namespace
-                        namespaceMetadataValues = namespaceMetadataState.DefaultRolePermissions.ReadAttributes(systemContext, Attributes.Value);
-
-                        if (namespaceMetadataValues[0] != null)
-                        {
-                            metadata.DefaultRolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(namespaceMetadataValues[0]));
-                        }
-                    }
-
-                    if (namespaceMetadataState.DefaultUserRolePermissions != null)
-                    {
-                        // get DefaultUserRolePermissions for Namespace
-                        namespaceMetadataValues = namespaceMetadataState.DefaultUserRolePermissions.ReadAttributes(systemContext, Attributes.Value);
-
-                        if (namespaceMetadataValues[0] != null)
-                        {
-                            metadata.DefaultUserRolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(namespaceMetadataValues[0]));
-                        }
-                    }
-                }
+                SetDefaultPermissions(systemContext, target, metadata);
 
                 // get instance references.
                 BaseInstanceState instance = target as BaseInstanceState;
@@ -1196,6 +1218,62 @@ namespace Opc.Ua.Server
         }
 
         /// <summary>
+        /// Sets the AccessRestrictions, RolePermissions and UserRolePermissions values in the metadata
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="metadata"></param>
+        private static void SetAccessAndRolePermissions(List<object> values, NodeMetadata metadata)
+        {
+            if (values[0] != null)
+            {
+                metadata.AccessRestrictions = (AccessRestrictionType)Enum.ToObject(typeof(AccessRestrictionType), values[0]);
+            }
+            if (values[1] != null)
+            {
+                metadata.RolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(values[1]));
+            }
+            if (values[2] != null)
+            {
+                metadata.UserRolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(values[2]));
+            }
+        }
+
+        /// <summary>
+        /// Reads and caches the Attributes used by the AccessRestrictions and RolePermission validation process
+        /// </summary>
+        /// <param name="uniqueNodesServiceAttributes">The cache used to save the attributes</param>
+        /// <param name="systemContext">The context</param>
+        /// <param name="target">The target for which the attributes are read and cached</param>
+        /// <param name="key">The key representing the NodeId for which the cache is kept</param>
+        /// <returns>The values of the attributes</returns>
+        private static List<object> ReadAndCacheValidationAttributes(Dictionary<NodeId, List<object>> uniqueNodesServiceAttributes, ServerSystemContext systemContext, NodeState target, NodeId key)
+        {
+            List<object> values = ReadValidationAttributes(systemContext, target);
+            uniqueNodesServiceAttributes[key] = values;
+
+            return values;
+        }
+
+        /// <summary>
+        /// Reads the Attributes used by the AccessRestrictions and RolePermission validation process
+        /// </summary>
+        /// <param name="systemContext">The context</param>
+        /// <param name="target">The target for which the attributes are read and cached</param>
+        /// <returns>The values of the attributes</returns>
+        private static List<object> ReadValidationAttributes(ServerSystemContext systemContext, NodeState target)
+        {
+            // This is the list of attributes to be populated by GetNodeMetadata from CustomNodeManagers.
+            // The are originating from services in the context of AccessRestrictions and RolePermission validation.
+            // For such calls the other attributes are ignored since reading them might trigger unnecessary callbacks
+            List<object> values = target.ReadAttributes(systemContext,
+                                           Attributes.AccessRestrictions,
+                                           Attributes.RolePermissions,
+                                           Attributes.UserRolePermissions);
+
+            return values;
+        }
+
+        /// <summary>
         /// Browses the references from a node managed by the node manager.
         /// </summary>
         /// <remarks>
@@ -1203,8 +1281,8 @@ namespace Opc.Ua.Server
         /// The node manager can store its state information in the Data and Index properties.
         /// </remarks>
         public virtual void Browse(
-            OperationContext            context, 
-            ref ContinuationPoint       continuationPoint, 
+            OperationContext context,
+            ref ContinuationPoint continuationPoint,
             IList<ReferenceDescription> references)
         {
             if (continuationPoint == null) throw new ArgumentNullException(nameof(continuationPoint));
@@ -1276,7 +1354,7 @@ namespace Opc.Ua.Server
                         // ignore reference
                         continue;
                     }
-                    // create the type definition reference.        
+                    // create the type definition reference.
                     ReferenceDescription description = GetReferenceDescription(systemContext, cache, reference, continuationPoint);
 
                     if (description == null)
@@ -1376,7 +1454,7 @@ namespace Opc.Ua.Server
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
 
-            // create the type definition reference.        
+            // create the type definition reference.
             ReferenceDescription description = new ReferenceDescription();
 
             description.NodeId = reference.TargetId;
@@ -1468,16 +1546,16 @@ namespace Opc.Ua.Server
         /// Returns the target of the specified browse path fragment(s).
         /// </summary>
         /// <remarks>
-        /// If reference exists but the node manager does not know the browse name it must 
+        /// If reference exists but the node manager does not know the browse name it must
         /// return the NodeId as an unresolvedTargetIds. The caller will try to check the
-        /// browse name. 
+        /// browse name.
         /// </remarks>
         public virtual void TranslateBrowsePath(
-            OperationContext      context, 
-            object                sourceHandle, 
-            RelativePathElement   relativePath, 
-            IList<ExpandedNodeId> targetIds, 
-            IList<NodeId>         unresolvedTargetIds)
+            OperationContext context,
+            object sourceHandle,
+            RelativePathElement relativePath,
+            IList<ExpandedNodeId> targetIds,
+            IList<NodeId> unresolvedTargetIds)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
@@ -1581,10 +1659,10 @@ namespace Opc.Ua.Server
         /// Reads the value for the specified attribute.
         /// </summary>
         public virtual void Read(
-            OperationContext     context, 
-            double               maxAge, 
-            IList<ReadValueId>   nodesToRead, 
-            IList<DataValue>     values, 
+            OperationContext context,
+            double maxAge,
+            IList<ReadValueId> nodesToRead,
+            IList<DataValue> values,
             IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
@@ -1641,6 +1719,12 @@ namespace Opc.Ua.Server
                         nodeToRead.ParsedIndexRange,
                         nodeToRead.DataEncoding,
                         value);
+#if DEBUG
+                    if (nodeToRead.AttributeId == Attributes.Value)
+                    {
+                        ServerUtils.EventLog.ReadValueRange(nodeToRead.NodeId, value.WrappedValue, nodeToRead.IndexRange);
+                    }
+#endif
                 }
 
                 // check for nothing to do.
@@ -1817,8 +1901,8 @@ namespace Opc.Ua.Server
         /// Writes the value for the specified attributes.
         /// </summary>
         public virtual void Write(
-            OperationContext     context, 
-            IList<WriteValue>    nodesToWrite, 
+            OperationContext context,
+            IList<WriteValue> nodesToWrite,
             IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
@@ -1892,8 +1976,9 @@ namespace Opc.Ua.Server
                         }
                     }
 
-                    Utils.TraceDebug("WRITE: Value={0} Range={1}", nodeToWrite.Value.WrappedValue, nodeToWrite.IndexRange);
-
+#if DEBUG
+                    ServerUtils.EventLog.WriteValueRange(nodeToWrite.NodeId, nodeToWrite.Value.WrappedValue, nodeToWrite.IndexRange);
+#endif
                     PropertyState propertyState = handle.Node as PropertyState;
                     object previousPropertyValue = null;
 
@@ -1910,12 +1995,25 @@ namespace Opc.Ua.Server
                         }
                     }
 
+                    DataValue oldValue = null;
+
+                    if (Server?.EventManager?.ServerAuditing == true)
+                    {
+                        //current server supports auditing 
+                        oldValue = new DataValue();
+                        // read the old value for the purpose of auditing
+                        handle.Node.ReadAttribute(systemContext, nodeToWrite.AttributeId, nodeToWrite.ParsedIndexRange, null, oldValue);
+                    }
+
                     // write the attribute value.
                     errors[ii] = handle.Node.WriteAttribute(
                         systemContext,
                         nodeToWrite.AttributeId,
                         nodeToWrite.ParsedIndexRange,
                         nodeToWrite.Value);
+
+                    // report the write value audit event 
+                    ReportAuditWriteUpdateEvent(systemContext, nodeToWrite, oldValue?.Value, errors[ii]?.StatusCode ?? StatusCodes.Good);
 
                     if (!ServiceResult.IsGood(errors[ii]))
                     {
@@ -2067,13 +2165,13 @@ namespace Opc.Ua.Server
         /// Reads the history for the specified nodes.
         /// </summary>
         public virtual void HistoryRead(
-            OperationContext          context, 
-            HistoryReadDetails        details, 
-            TimestampsToReturn        timestampsToReturn, 
-            bool                      releaseContinuationPoints, 
-            IList<HistoryReadValueId> nodesToRead, 
-            IList<HistoryReadResult>  results, 
-            IList<ServiceResult>      errors)
+            OperationContext context,
+            HistoryReadDetails details,
+            TimestampsToReturn timestampsToReturn,
+            bool releaseContinuationPoints,
+            IList<HistoryReadValueId> nodesToRead,
+            IList<HistoryReadResult> results,
+            IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
@@ -2105,9 +2203,9 @@ namespace Opc.Ua.Server
                     // create an initial result.
                     HistoryReadResult result = results[ii] = new HistoryReadResult();
 
-                    result.HistoryData       = null;
+                    result.HistoryData = null;
                     result.ContinuationPoint = null;
-                    result.StatusCode        = StatusCodes.Good;
+                    result.StatusCode = StatusCodes.Good;
 
                     // check if the node is a area in memory.
                     if (handle.Node == null)
@@ -2476,11 +2574,11 @@ namespace Opc.Ua.Server
         /// Updates the history for the specified nodes.
         /// </summary>
         public virtual void HistoryUpdate(
-            OperationContext            context, 
-            Type                        detailsType, 
-            IList<HistoryUpdateDetails> nodesToUpdate, 
-            IList<HistoryUpdateResult>  results,
-            IList<ServiceResult>        errors)
+            OperationContext context,
+            Type detailsType,
+            IList<HistoryUpdateDetails> nodesToUpdate,
+            IList<HistoryUpdateResult> results,
+            IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
@@ -2577,11 +2675,11 @@ namespace Opc.Ua.Server
         /// </summary>
         protected virtual void HistoryUpdate(
             ServerSystemContext context,
-            Type                           detailsType, 
-            IList<HistoryUpdateDetails>    nodesToUpdate, 
-            IList<HistoryUpdateResult>     results,
-            IList<ServiceResult>           errors,
-            List<NodeHandle>               nodesToProcess,
+            Type detailsType,
+            IList<HistoryUpdateDetails> nodesToUpdate,
+            IList<HistoryUpdateResult> results,
+            IList<ServiceResult> errors,
+            List<NodeHandle> nodesToProcess,
             IDictionary<NodeId, NodeState> cache)
         {
             // handle update data request.
@@ -2878,10 +2976,10 @@ namespace Opc.Ua.Server
         /// Calls a method on the specified nodes.
         /// </summary>
         public virtual void Call(
-            OperationContext         context,
+            OperationContext context,
             IList<CallMethodRequest> methodsToCall,
-            IList<CallMethodResult>  results,
-            IList<ServiceResult>     errors)
+            IList<CallMethodResult> results,
+            IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = SystemContext.Copy(context);
             IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
@@ -2937,6 +3035,17 @@ namespace Opc.Ua.Server
                             continue;
                         }
                     }
+
+                    // validate the role permissions for method to be executed,
+                    // it may be a diferent MethodState that does not have the MethodId specified in the method call
+                    errors[ii] = ValidateRolePermissions(context,
+                        method.NodeId,
+                        PermissionType.Call);
+
+                    if (ServiceResult.IsBad(errors[ii]))
+                    {
+                        continue;
+                    }
                 }
 
                 // call the method.
@@ -2954,10 +3063,10 @@ namespace Opc.Ua.Server
         /// Calls a method on an object.
         /// </summary>
         protected virtual ServiceResult Call(
-            ISystemContext    context,
+            ISystemContext context,
             CallMethodRequest methodToCall,
-            MethodState       method,
-            CallMethodResult  result)
+            MethodState method,
+            CallMethodResult result)
         {
             ServerSystemContext systemContext = context as ServerSystemContext;
             List<ServiceResult> argumentErrors = new List<ServiceResult>();
@@ -3035,16 +3144,16 @@ namespace Opc.Ua.Server
         /// Subscribes or unsubscribes to events produced by the specified source.
         /// </summary>
         /// <remarks>
-        /// This method is called when a event subscription is created or deletes. The node manager 
-        /// must  start/stop reporting events for the specified object and all objects below it in 
+        /// This method is called when a event subscription is created or deletes. The node manager
+        /// must  start/stop reporting events for the specified object and all objects below it in
         /// the notifier hierarchy.
         /// </remarks>
         public virtual ServiceResult SubscribeToEvents(
-            OperationContext    context, 
-            object              sourceId, 
-            uint                subscriptionId, 
-            IEventMonitoredItem monitoredItem, 
-            bool                unsubscribe)
+            OperationContext context,
+            object sourceId,
+            uint subscriptionId,
+            IEventMonitoredItem monitoredItem,
+            bool unsubscribe)
         {
             ServerSystemContext systemContext = SystemContext.Copy(context);
 
@@ -3075,14 +3184,14 @@ namespace Opc.Ua.Server
         /// Subscribes or unsubscribes to events produced by all event sources.
         /// </summary>
         /// <remarks>
-        /// This method is called when a event subscription is created or deleted. The node 
+        /// This method is called when a event subscription is created or deleted. The node
         /// manager must start/stop reporting events for all objects that it manages.
         /// </remarks>
         public virtual ServiceResult SubscribeToAllEvents(
-            OperationContext    context, 
-            uint                subscriptionId, 
-            IEventMonitoredItem monitoredItem, 
-            bool                unsubscribe)
+            OperationContext context,
+            uint subscriptionId,
+            IEventMonitoredItem monitoredItem,
+            bool unsubscribe)
         {
             ServerSystemContext systemContext = SystemContext.Copy(context);
 
@@ -3109,7 +3218,7 @@ namespace Opc.Ua.Server
         /// </summary>
         /// <param name="notifier">The notifier.</param>
         /// <remarks>
-        /// A root notifier is a notifier owned by the NodeManager that is not the target of a 
+        /// A root notifier is a notifier owned by the NodeManager that is not the target of a
         /// HasNotifier reference. These nodes need to be linked directly to the Server object.
         /// </remarks>
         protected virtual void AddRootNotifier(NodeState notifier)
@@ -3212,10 +3321,10 @@ namespace Opc.Ua.Server
         /// <param name="unsubscribe">if set to <c>true</c> [unsubscribe].</param>
         /// <returns>Any error code.</returns>
         protected virtual ServiceResult SubscribeToEvents(
-            ServerSystemContext context, 
-            NodeState           source,
-            IEventMonitoredItem monitoredItem, 
-            bool                unsubscribe)
+            ServerSystemContext context,
+            NodeState source,
+            IEventMonitoredItem monitoredItem,
+            bool unsubscribe)
         {
             MonitoredNode2 monitoredNode = null;
 
@@ -3270,7 +3379,7 @@ namespace Opc.Ua.Server
             monitoredNode.Add(monitoredItem);
 
             // This call recursively updates a reference count all nodes in the notifier
-            // hierarchy below the area. Sources with a reference count of 0 do not have 
+            // hierarchy below the area. Sources with a reference count of 0 do not have
             // any active subscriptions so they do not need to report events.
             source.SetAreEventsMonitored(context, !unsubscribe, true);
 
@@ -3289,8 +3398,8 @@ namespace Opc.Ua.Server
         /// <param name="unsubscribe">if set to <c>true</c> unsubscribing.</param>
         protected virtual void OnSubscribeToEvents(
             ServerSystemContext context,
-            MonitoredNode2       monitoredNode, 
-            bool                unsubscribe)
+            MonitoredNode2 monitoredNode,
+            bool unsubscribe)
         {
             // defined by the sub-class
         }
@@ -3304,7 +3413,7 @@ namespace Opc.Ua.Server
         /// The node manager must create a refresh event for each condition monitored by the subscription.
         /// </remarks>
         public virtual ServiceResult ConditionRefresh(
-            OperationContext           context,
+            OperationContext context,
             IList<IEventMonitoredItem> monitoredItems)
         {
             ServerSystemContext systemContext = SystemContext.Copy(context);
@@ -3371,15 +3480,15 @@ namespace Opc.Ua.Server
         /// This method only handles data change subscriptions. Event subscriptions are created by the SDK.
         /// </remarks>
         public virtual void CreateMonitoredItems(
-            OperationContext                  context, 
-            uint                              subscriptionId, 
-            double                            publishingInterval, 
-            TimestampsToReturn                timestampsToReturn, 
-            IList<MonitoredItemCreateRequest> itemsToCreate, 
-            IList<ServiceResult>              errors, 
-            IList<MonitoringFilterResult>     filterResults, 
-            IList<IMonitoredItem>             monitoredItems,
-            ref long                          globalIdCounter)
+            OperationContext context,
+            uint subscriptionId,
+            double publishingInterval,
+            TimestampsToReturn timestampsToReturn,
+            IList<MonitoredItemCreateRequest> itemsToCreate,
+            IList<ServiceResult> errors,
+            IList<MonitoringFilterResult> filterErrors,
+            IList<IMonitoredItem> monitoredItems,
+            ref long globalIdCounter)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
@@ -3460,7 +3569,7 @@ namespace Opc.Ua.Server
                 }
 
                 // save any filter error details.
-                filterResults[handle.Index] = filterResult;
+                filterErrors[handle.Index] = filterResult;
 
                 if (ServiceResult.IsBad(errors[handle.Index]))
                 {
@@ -3591,7 +3700,6 @@ namespace Opc.Ua.Server
                 handle,
                 subscriptionId,
                 monitoredItemId,
-                context.OperationContext.Session,
                 itemToCreate.ItemToMonitor,
                 diagnosticsMasks,
                 timestampsToReturn,
@@ -3606,7 +3714,17 @@ namespace Opc.Ua.Server
                 0);
 
             // report the initial value.
-            ReadInitialValue(context, handle, datachangeItem);
+            error = ReadInitialValue(context, handle, datachangeItem);
+            if (ServiceResult.IsBad(error))
+            {
+                if (error.StatusCode == StatusCodes.BadAttributeIdInvalid ||
+                    error.StatusCode == StatusCodes.BadDataEncodingInvalid ||
+                    error.StatusCode == StatusCodes.BadDataEncodingUnsupported)
+                {
+                    return error;
+                }
+                error = StatusCodes.Good;
+            }
 
             // update monitored item list.
             monitoredItem = datachangeItem;
@@ -3627,17 +3745,17 @@ namespace Opc.Ua.Server
         /// <param name="context">The context.</param>
         /// <param name="handle">The item handle.</param>
         /// <param name="monitoredItem">The monitored item.</param>
-        protected virtual void ReadInitialValue(
-            ServerSystemContext context,
+        protected virtual ServiceResult ReadInitialValue(
+            ISystemContext context,
             NodeHandle handle,
-            MonitoredItem monitoredItem)
+            IDataChangeMonitoredItem2 monitoredItem)
         {
-            DataValue initialValue = new DataValue();
-
-            initialValue.Value = null;
-            initialValue.ServerTimestamp = DateTime.UtcNow;
-            initialValue.SourceTimestamp = DateTime.MinValue;
-            initialValue.StatusCode = StatusCodes.BadWaitingForInitialData;
+            DataValue initialValue = new DataValue {
+                Value = null,
+                ServerTimestamp = DateTime.UtcNow,
+                SourceTimestamp = DateTime.MinValue,
+                StatusCode = StatusCodes.BadWaitingForInitialData
+            };
 
             ServiceResult error = handle.Node.ReadAttribute(
                 context,
@@ -3646,7 +3764,9 @@ namespace Opc.Ua.Server
                 monitoredItem.DataEncoding,
                 initialValue);
 
-            monitoredItem.QueueValue(initialValue, error);
+            monitoredItem.QueueValue(initialValue, error, true);
+
+            return error;
         }
 
         /// <summary>
@@ -3664,7 +3784,7 @@ namespace Opc.Ua.Server
         }
 
         /// <summary>
-        /// Validates Role permissions for the specified NodeId 
+        /// Validates Role permissions for the specified NodeId
         /// </summary>
         /// <param name="operationContext"></param>
         /// <param name="nodeId"></param>
@@ -3817,7 +3937,7 @@ namespace Opc.Ua.Server
         }
 
         /// <summary>
-        /// Revises an aggregate filter (may require knowledge of the variable being used). 
+        /// Revises an aggregate filter (may require knowledge of the variable being used).
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="handle">The handle.</param>
@@ -3862,12 +3982,12 @@ namespace Opc.Ua.Server
         /// Modifies the parameters for a set of monitored items.
         /// </summary>
         public virtual void ModifyMonitoredItems(
-            OperationContext                  context, 
-            TimestampsToReturn                timestampsToReturn, 
-            IList<IMonitoredItem>             monitoredItems, 
-            IList<MonitoredItemModifyRequest> itemsToModify, 
-            IList<ServiceResult>              errors, 
-            IList<MonitoringFilterResult>     filterResults)
+            OperationContext context,
+            TimestampsToReturn timestampsToReturn,
+            IList<IMonitoredItem> monitoredItems,
+            IList<MonitoredItemModifyRequest> itemsToModify,
+            IList<ServiceResult> errors,
+            IList<MonitoringFilterResult> filterErrors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             List<IMonitoredItem> modifiedItems = new List<IMonitoredItem>();
@@ -3908,7 +4028,7 @@ namespace Opc.Ua.Server
                         out filterResult);
 
                     // save any filter error details.
-                    filterResults[ii] = filterResult;
+                    filterErrors[ii] = filterResult;
 
                     // save the modified item.
                     if (ServiceResult.IsGood(errors[ii]))
@@ -4046,10 +4166,10 @@ namespace Opc.Ua.Server
         /// Deletes a set of monitored items.
         /// </summary>
         public virtual void DeleteMonitoredItems(
-            OperationContext      context, 
-            IList<IMonitoredItem> monitoredItems, 
-            IList<bool>           processedItems, 
-            IList<ServiceResult>  errors)
+            OperationContext context,
+            IList<IMonitoredItem> monitoredItems,
+            IList<bool> processedItems,
+            IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             List<IMonitoredItem> deletedItems = new List<IMonitoredItem>();
@@ -4152,6 +4272,70 @@ namespace Opc.Ua.Server
         #endregion
 
         /// <summary>
+        /// Transfers a set of monitored items.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="sendInitialValues">Whether the subscription should send initial values after transfer.</param>
+        /// <param name="monitoredItems">The set of monitoring items to update.</param>
+        /// <param name="processedItems">The list of bool with items that were already processed.</param>
+        /// <param name="errors">Any errors.</param>
+        public virtual void TransferMonitoredItems(
+            OperationContext context,
+            bool sendInitialValues,
+            IList<IMonitoredItem> monitoredItems,
+            IList<bool> processedItems,
+            IList<ServiceResult> errors)
+        {
+            ServerSystemContext systemContext = m_systemContext.Copy(context);
+            IList<IMonitoredItem> transferredItems = new List<IMonitoredItem>();
+            lock (Lock)
+            {
+                for (int ii = 0; ii < monitoredItems.Count; ii++)
+                {
+                    // skip items that have already been processed.
+                    if (processedItems[ii] || monitoredItems[ii] == null)
+                    {
+                        continue;
+                    }
+
+                    // check handle.
+                    NodeHandle handle = IsHandleInNamespace(monitoredItems[ii].ManagerHandle);
+                    if (handle == null)
+                    {
+                        continue;
+                    }
+
+                    // owned by this node manager.
+                    processedItems[ii] = true;
+                    transferredItems.Add(monitoredItems[ii]);
+
+                    if (sendInitialValues)
+                    {
+                        monitoredItems[ii].SetupResendDataTrigger();
+                    }
+
+                    errors[ii] = StatusCodes.Good;
+                }
+            }
+
+            // do any post processing.
+            OnMonitoredItemsTransferred(systemContext, transferredItems);
+        }
+
+        /// <summary>
+        /// Called after transfer of MonitoredItems.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="monitoredItems">The transferred monitored items.</param>
+        protected virtual void OnMonitoredItemsTransferred(
+            ServerSystemContext context,
+            IList<IMonitoredItem> monitoredItems
+            )
+        {
+            // defined by the sub-class
+        }
+
+        /// <summary>
         /// Changes the monitoring mode for a set of monitored items.
         /// </summary>
         /// <param name="context">The context.</param>
@@ -4160,11 +4344,11 @@ namespace Opc.Ua.Server
         /// <param name="processedItems">Flags indicating which items have been processed.</param>
         /// <param name="errors">Any errors.</param>
         public virtual void SetMonitoringMode(
-            OperationContext      context, 
-            MonitoringMode        monitoringMode, 
-            IList<IMonitoredItem> monitoredItems, 
-            IList<bool>           processedItems, 
-            IList<ServiceResult>  errors)
+            OperationContext context,
+            MonitoringMode monitoringMode,
+            IList<IMonitoredItem> monitoredItems,
+            IList<bool> processedItems,
+            IList<ServiceResult> errors)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
             List<IMonitoredItem> changedItems = new List<IMonitoredItem>();
@@ -4300,7 +4484,585 @@ namespace Opc.Ua.Server
 
             return false;
         }
+
+        /// <summary>
+        /// Returns the metadata containing the AccessRestrictions, RolePermissions and UserRolePermissions for the node.
+        /// Returns null if the node does not exist.
+        /// </summary>
+        /// <remarks>
+        /// This method validates any placeholder handle.
+        /// </remarks>
+        public virtual NodeMetadata GetPermissionMetadata(
+            OperationContext context,
+            object targetHandle,
+            BrowseResultMask resultMask,
+            Dictionary<NodeId, List<object>> uniqueNodesServiceAttributesCache,
+            bool permissionsOnly)
+        {
+            ServerSystemContext systemContext = m_systemContext.Copy(context);
+
+            lock (Lock)
+            {
+                // check for valid handle.
+                NodeHandle handle = IsHandleInNamespace(targetHandle);
+
+                if (handle == null)
+                {
+                    return null;
+                }
+
+                // validate node.
+                NodeState target = ValidateNode(systemContext, handle, null);
+
+                if (target == null)
+                {
+                    return null;
+                }
+
+                List<object> values = null;
+
+                // construct the meta-data object.
+                NodeMetadata metadata = new NodeMetadata(target, target.NodeId);
+
+                // Treat the case of calls originating from the optimized services that use the cache (Read, Browse and Call services)
+                if (uniqueNodesServiceAttributesCache != null)
+                {
+                    NodeId key = handle.NodeId;
+                    if (uniqueNodesServiceAttributesCache.ContainsKey(key))
+                    {
+                        if (uniqueNodesServiceAttributesCache[key].Count == 0)
+                        {
+                            values = ReadAndCacheValidationAttributes(uniqueNodesServiceAttributesCache, systemContext, target, key);
+                        }
+                        else
+                        {
+                            // Retrieve value from cache
+                            values = uniqueNodesServiceAttributesCache[key];
+                        }
+                    }
+                    else
+                    {
+                        values = ReadAndCacheValidationAttributes(uniqueNodesServiceAttributesCache, systemContext, target, key);
+                    }
+
+                    SetAccessAndRolePermissions(values, metadata);
+                }// All other calls that do not use the cache
+                else if (permissionsOnly == true)
+                {
+                    values = ReadValidationAttributes(systemContext, target);
+                    SetAccessAndRolePermissions(values, metadata);
+                }
+
+                SetDefaultPermissions(systemContext, target, metadata);
+
+                return metadata;
+            }
+        }
+
+
+        /// <summary>
+        /// Set the metadata default permission values for DefaultAccessRestrictions, DefaultRolePermissions and DefaultUserRolePermissions
+        /// </summary>
+        /// <param name="systemContext"></param>
+        /// <param name="target"></param>
+        /// <param name="metadata"></param>
+        private void SetDefaultPermissions(ServerSystemContext systemContext, NodeState target, NodeMetadata metadata)
+        {
+            // check if NamespaceMetadata is defined for NamespaceUri
+            string namespaceUri = Server.NamespaceUris.GetString(target.NodeId.NamespaceIndex);
+            NamespaceMetadataState namespaceMetadataState = Server.NodeManager.ConfigurationNodeManager.GetNamespaceMetadataState(namespaceUri);
+
+            if (namespaceMetadataState != null)
+            {
+                List<object> namespaceMetadataValues;
+
+                if (namespaceMetadataState.DefaultAccessRestrictions != null)
+                {
+                    // get DefaultAccessRestrictions for Namespace
+                    namespaceMetadataValues = namespaceMetadataState.DefaultAccessRestrictions.ReadAttributes(systemContext, Attributes.Value);
+
+                    if (namespaceMetadataValues[0] != null)
+                    {
+                        metadata.DefaultAccessRestrictions = (AccessRestrictionType)Enum.ToObject(typeof(AccessRestrictionType), namespaceMetadataValues[0]);
+                    }
+                }
+
+                if (namespaceMetadataState.DefaultRolePermissions != null)
+                {
+                    // get DefaultRolePermissions for Namespace
+                    namespaceMetadataValues = namespaceMetadataState.DefaultRolePermissions.ReadAttributes(systemContext, Attributes.Value);
+
+                    if (namespaceMetadataValues[0] != null)
+                    {
+                        metadata.DefaultRolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(namespaceMetadataValues[0]));
+                    }
+                }
+
+                if (namespaceMetadataState.DefaultUserRolePermissions != null)
+                {
+                    // get DefaultUserRolePermissions for Namespace
+                    namespaceMetadataValues = namespaceMetadataState.DefaultUserRolePermissions.ReadAttributes(systemContext, Attributes.Value);
+
+                    if (namespaceMetadataValues[0] != null)
+                    {
+                        metadata.DefaultUserRolePermissions = new RolePermissionTypeCollection(ExtensionObject.ToList<RolePermissionType>(namespaceMetadataValues[0]));
+                    }
+                }
+            }
+        }
         #endregion
+
+        #region Report Audit Events
+        /// <summary>
+        /// Reports an AuditWriteUpdate event.
+        /// </summary>
+        /// <param name="systemContext">Current  system context</param>
+        /// <param name="writeValue">The value to write.</param>
+        /// <param name="oldValue">The old value of the node.</param>
+        /// <param name="statusCode">The resulted status code.</param>
+        private void ReportAuditWriteUpdateEvent(SystemContext systemContext,
+            WriteValue writeValue,
+            object oldValue,
+            StatusCode statusCode)
+        {
+            if (systemContext?.OperationContext == null || systemContext?.UserIdentity == null)
+            {
+                return;
+            }
+
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+
+                AuditWriteUpdateEventState e = new AuditWriteUpdateEventState(null);
+
+                TranslationInfo message = new TranslationInfo(
+                   "AuditWriteUpdateEvent",
+                    "en-US",
+                    "AuditWriteUpdateEvent.");
+
+                e.Initialize(
+                   systemContext,
+                   null,
+                   EventSeverity.Min,
+                   new LocalizedText(message),
+                   StatusCode.IsGood(statusCode),
+                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, writeValue.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "Attribute/Write", false);
+                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+                e.SetChildValue(systemContext, BrowseNames.ClientUserId, systemContext?.UserIdentity?.DisplayName, false);
+                e.SetChildValue(systemContext, BrowseNames.ClientAuditEntryId, systemContext?.AuditEntryId, false);
+
+                e.SetChildValue(systemContext, BrowseNames.AttributeId, writeValue.AttributeId, false);
+                e.SetChildValue(systemContext, BrowseNames.IndexRange, writeValue.IndexRange, false);
+
+                object newValue = writeValue.Value?.Value;
+                if (writeValue.ParsedIndexRange != NumericRange.Empty)
+                {
+                    writeValue.ParsedIndexRange.UpdateRange(ref newValue, writeValue.Value?.Value);
+                }
+
+                e.SetChildValue(systemContext, BrowseNames.NewValue, newValue, false);
+                e.SetChildValue(systemContext, BrowseNames.OldValue, oldValue, false);
+
+                Server?.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditWriteUpdateEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Initialize the properties of an AuditUpdateEventState.
+        /// </summary>
+        /// <param name="e">AuditUpdate event reference</param>
+        /// <param name="systemContext">Server information</param>
+        /// <param name="auditEventName">Audit event name</param>
+        /// <param name="sourceName">Source name</param>
+        /// <param name="historyUpdateDetails">History update details</param>
+        /// <param name="statusCode">The resulting status code</param>
+        private void InitializeAuditHistoryUpdateEvent(AuditHistoryUpdateEventState e,
+             ISystemContext systemContext,
+             string auditEventName,
+             string sourceName,
+             HistoryUpdateDetails historyUpdateDetails,
+             StatusCode statusCode)
+        {
+            TranslationInfo message = new TranslationInfo(
+               auditEventName,
+               "en-US",
+               $"{auditEventName} has Result: {statusCode.ToString(null, CultureInfo.InvariantCulture)}.");
+
+            e.Initialize(
+               systemContext,
+               null,
+               EventSeverity.Min,
+               new LocalizedText(message),
+               StatusCode.IsGood(statusCode),
+               DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+            e.SetChildValue(systemContext, BrowseNames.SourceNode, historyUpdateDetails.NodeId, false);
+            e.SetChildValue(systemContext, BrowseNames.SourceName, sourceName, false);
+            e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+            e.SetChildValue(systemContext, BrowseNames.ClientUserId, systemContext?.UserIdentity?.DisplayName, false);
+            e.SetChildValue(systemContext, BrowseNames.ClientAuditEntryId, systemContext?.AuditEntryId, false);
+
+            e.SetChildValue(systemContext, BrowseNames.ParameterDataTypeId, historyUpdateDetails.TypeId, false);
+        }
+
+        /// <summary>
+        /// Reports an AuditHistoryValueUpdate event.
+        /// </summary>
+        /// <param name="systemContext">Server information</param>>
+        /// <param name="updateDataDetails">Update data details</param>
+        /// <param name="oldValues">The old values</param>
+        /// <param name="statusCode">The resulting status code</param>
+        protected void ReportAuditHistoryValueUpdateEvent(ISystemContext systemContext,
+            UpdateDataDetails updateDataDetails,
+            DataValue[] oldValues,
+            StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                AuditHistoryValueUpdateEventState e = new AuditHistoryValueUpdateEventState(null);
+
+                InitializeAuditHistoryUpdateEvent(e,
+                        systemContext,
+                        "AuditHistoryValueUpdateEvent",
+                        "Attribute/HistoryValueUpdate",
+                        updateDataDetails,
+                        statusCode);
+
+                e.SetChildValue(systemContext, BrowseNames.UpdatedNode, updateDataDetails.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.PerformInsertReplace, updateDataDetails.PerformInsertReplace, false);
+                e.SetChildValue(systemContext, BrowseNames.NewValues, updateDataDetails.UpdateValues.ToArray(), false);
+                e.SetChildValue(systemContext, BrowseNames.OldValues, oldValues, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditHistoryValueUpdateEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports an AuditHistoryValueUpdate event.
+        /// </summary>
+        /// <param name="systemContext">Server information</param>
+        /// <param name="updateStructureDataDetails">Update structure data details</param>
+        /// <param name="oldValues">The old values</param>
+        /// <param name="statusCode">The resulting status code</param>
+        protected void ReportAuditHistoryAnnotationUpdateEvent(ServerSystemContext systemContext,
+            UpdateStructureDataDetails updateStructureDataDetails,
+            DataValue[] oldValues,
+            StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                AuditHistoryAnnotationUpdateEventState e = new AuditHistoryAnnotationUpdateEventState(null);
+
+                InitializeAuditHistoryUpdateEvent(e,
+                    systemContext,
+                    "AuditHistoryAnnotationUpdateEvent",
+                    "Attribute/HistoryAnnotationUpdate",
+                    updateStructureDataDetails,
+                    statusCode);
+
+                e.SetChildValue(systemContext, BrowseNames.PerformInsertReplace, updateStructureDataDetails.PerformInsertReplace, false);
+                e.SetChildValue(systemContext, BrowseNames.NewValues, updateStructureDataDetails.UpdateValues?.ToArray(), false);
+                e.SetChildValue(systemContext, BrowseNames.OldValues, oldValues, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditHistoryValueUpdateEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports an AuditHistoryEventUpdate event.
+        /// </summary>
+        /// <param name="systemContext">Server information</param>
+        /// <param name="updateEventDetails">Update event details</param>
+        /// <param name="oldValues">The old values</param>
+        /// <param name="statusCode">The resulting status code</param>
+        protected void ReportAuditHistoryEventUpdateEvent(ISystemContext systemContext,
+            UpdateEventDetails updateEventDetails,
+            HistoryEventFieldList[] oldValues,
+            StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                AuditHistoryEventUpdateEventState e = new AuditHistoryEventUpdateEventState(null);
+
+                InitializeAuditHistoryUpdateEvent(e,
+                    systemContext,
+                    "AuditHistoryEventUpdateEvent",
+                    "Attribute/HistoryEventUpdate",
+                    updateEventDetails,
+                    statusCode);
+
+                e.SetChildValue(systemContext, BrowseNames.UpdatedNode, updateEventDetails.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.PerformInsertReplace, updateEventDetails.PerformInsertReplace, false);
+                e.SetChildValue(systemContext, BrowseNames.Filter, updateEventDetails.Filter, false);
+                e.SetChildValue(systemContext, BrowseNames.NewValues, updateEventDetails.EventData.ToArray(), false);
+                e.SetChildValue(systemContext, BrowseNames.OldValues, oldValues, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditHistoryEventUpdateEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports an AuditHistoryRawModifyDelete event.
+        /// </summary>
+        /// <param name="systemContext">Server information</param>
+        /// <param name="deleteRawModifiedDetails">History raw modified details</param>
+        /// <param name="oldValues">The old values</param>
+        /// <param name="statusCode">The resulting status code</param>
+        protected void ReportAuditHistoryRawModifyDeleteEvent(ISystemContext systemContext,
+            DeleteRawModifiedDetails deleteRawModifiedDetails,
+            DataValue[] oldValues,
+            StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                AuditHistoryRawModifyDeleteEventState e = new AuditHistoryRawModifyDeleteEventState(null);
+
+                InitializeAuditHistoryUpdateEvent(e,
+                    systemContext,
+                    "AuditHistoryRawModifyDeleteEvent",
+                    "Attribute/HistoryRawModifyDelete",
+                    deleteRawModifiedDetails,
+                    statusCode);
+
+                e.SetChildValue(systemContext, BrowseNames.UpdatedNode, deleteRawModifiedDetails.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.IsDeleteModified, deleteRawModifiedDetails.IsDeleteModified, false);
+                e.SetChildValue(systemContext, BrowseNames.StartTime, deleteRawModifiedDetails.StartTime, false);
+                e.SetChildValue(systemContext, BrowseNames.EndTime, deleteRawModifiedDetails.EndTime, false);
+                e.SetChildValue(systemContext, BrowseNames.OldValues, oldValues, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditHistoryRawModifyDeleteEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports an AuditHistoryAtTimeDelete event.
+        /// </summary>
+        /// <param name="systemContext">Server information</param>
+        /// <param name="deleteAtTimeDetails">History delete at time details</param>
+        /// <param name="oldValues">The old values</param>
+        /// <param name="statusCode">The resulting status code</param>
+        protected void ReportAuditHistoryAtTimeDeleteEvent(ISystemContext systemContext,
+            DeleteAtTimeDetails deleteAtTimeDetails,
+            DataValue[] oldValues,
+            StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                AuditHistoryAtTimeDeleteEventState e = new AuditHistoryAtTimeDeleteEventState(null);
+
+                InitializeAuditHistoryUpdateEvent(e,
+                    systemContext,
+                    "AuditHistoryAtTimeDeleteEvent",
+                    "Attribute/HistoryAtTimeDelete",
+                    deleteAtTimeDetails,
+                    statusCode);
+
+                e.SetChildValue(systemContext, BrowseNames.UpdatedNode, deleteAtTimeDetails.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.ReqTimes, deleteAtTimeDetails.ReqTimes.ToArray(), false);
+                e.SetChildValue(systemContext, BrowseNames.OldValues, oldValues, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditHistoryAtTimeDeleteEvent event.");
+            }
+
+        }
+
+        /// <summary>
+        /// Reports an AuditHistoryEventDelete event.
+        /// </summary>
+        /// <param name="systemContext">Server information</param>
+        /// <param name="deleteEventDetails">History delete event details</param>
+        /// <param name="oldValues">The old values</param>
+        /// <param name="statusCode">The resulting status code</param>
+        protected void ReportAuditHistoryEventDeleteEvent(ISystemContext systemContext,
+            DeleteEventDetails deleteEventDetails,
+            DataValue[] oldValues,
+            StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+
+            try
+            {
+                AuditHistoryEventDeleteEventState e = new AuditHistoryEventDeleteEventState(null);
+
+                InitializeAuditHistoryUpdateEvent(e,
+                    systemContext,
+                    "AuditHistoryEventDeleteEvent",
+                    "Attribute/HistoryEventDelete",
+                    deleteEventDetails,
+                    statusCode);
+
+                e.SetChildValue(systemContext, BrowseNames.UpdatedNode, deleteEventDetails.NodeId, false);
+                e.SetChildValue(systemContext, BrowseNames.EventIds, deleteEventDetails.EventIds.ToArray(), false);
+                e.SetChildValue(systemContext, BrowseNames.OldValues, oldValues, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditHistoryEventDeleteEvent event.");
+            }
+        }
+
+
+        /// <summary>
+        /// Report the AuditAddNodesEvent
+        /// </summary>
+        /// <param name="systemContext">Server information.</param>
+        /// <param name="addNodesItems">The added nodes information.</param>
+        /// <param name="customMessage">Custom message for add nodes audit event.</param>
+        /// <param name="statusCode">The resulting status code.</param>
+        protected void ReportAuditAddNodesEvent(ISystemContext systemContext, AddNodesItem[] addNodesItems, string customMessage, StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+            try
+            {
+                AuditAddNodesEventState e = new AuditAddNodesEventState(null);
+
+                TranslationInfo message = new TranslationInfo(
+                           "AuditAddNodesEventState",
+                           "en-US",
+                           $"'{customMessage}' returns StatusCode: {statusCode.ToString(null, CultureInfo.InvariantCulture)}.");
+
+                e.Initialize(
+                   systemContext,
+                   null,
+                   EventSeverity.Min,
+                   new LocalizedText(message),
+                   StatusCode.IsGood(statusCode),
+                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, ObjectIds.Server, false);
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "NodeManagement/AddNodes", false);
+                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+                e.SetChildValue(systemContext, BrowseNames.NodesToAdd, addNodesItems, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditAddNodesEvent event.");
+            }
+        }
+
+        /// <summary>
+        /// Reports the AuditDeleteNodesEven
+        /// </summary>
+        /// <param name="systemContext">Server information.</param>
+        /// <param name="nodesToDelete">The delete nodes information.</param>
+        /// <param name="customMessage">Custom message for delete nodes.</param>
+        /// <param name="statusCode">The resulting status code.</param>
+        protected void ReportAuditDeleteNodesEvent(ISystemContext systemContext, DeleteNodesItem[] nodesToDelete, string customMessage, StatusCode statusCode)
+        {
+            if (Server?.EventManager?.ServerAuditing != true)
+            {
+                // current server does not support auditing
+                return;
+            }
+            try
+            {
+                AuditDeleteNodesEventState e = new AuditDeleteNodesEventState(null);
+
+                TranslationInfo message = new TranslationInfo(
+                           "AuditDeleteNodesEventState",
+                           "en-US",
+                           $"'{customMessage}' returns StatusCode: {statusCode.ToString(null, CultureInfo.InvariantCulture)}.");
+
+                e.Initialize(
+                   systemContext,
+                   null,
+                   EventSeverity.Min,
+                   new LocalizedText(message),
+                   StatusCode.IsGood(statusCode),
+                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
+
+                e.SetChildValue(systemContext, BrowseNames.SourceNode, ObjectIds.Server, false);
+                e.SetChildValue(systemContext, BrowseNames.SourceName, "NodeManagement/DeleteNodes", false);
+                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
+
+                e.SetChildValue(systemContext, BrowseNames.NodesToDelete, nodesToDelete, false);
+
+                Server.ReportEvent(systemContext, e);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError(ex, "Error while reporting AuditDeleteNodesEvent event.");
+            }
+        }
+        #endregion Report Audit Events
 
         #region ComponentCache Functions
         /// <summary>

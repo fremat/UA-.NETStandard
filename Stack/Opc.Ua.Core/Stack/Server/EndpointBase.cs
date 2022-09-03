@@ -1,6 +1,6 @@
-/* Copyright (c) 1996-2020 The OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022 The OPC Foundation. All rights reserved.
    The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
+     - RCL: for OPC Foundation Corporate Members in good-standing
      - GPL V2: everybody else
    RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
    GNU General Public License as published by the Free Software Foundation;
@@ -12,10 +12,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.Threading;
+using System.Security.Cryptography.X509Certificates;
 using Opc.Ua.Bindings;
 
 namespace Opc.Ua
@@ -24,22 +21,22 @@ namespace Opc.Ua
 	/// A base class for UA endpoints.
 	/// </summary>
     public abstract class EndpointBase : IEndpointBase, ITransportListenerCallback
-    {    
+    {
         #region Constructors
         /// <summary>
         /// Initializes the object when it is created by the WCF framework.
         /// </summary>
         protected EndpointBase()
         {
-            SupportedServices  = new Dictionary<ExpandedNodeId,ServiceDefinition>();
-            
+            SupportedServices = new Dictionary<ExpandedNodeId, ServiceDefinition>();
+
             try
             {
                 m_host = GetHostForContext();
                 m_server = GetServerForContext();
 
                 MessageContext = m_server.MessageContext;
-               
+
                 EndpointDescription = GetEndpointDescription();
             }
             catch (Exception e)
@@ -62,8 +59,8 @@ namespace Opc.Ua
 
             m_host = host;
             m_server = host.Server;
-            
-            SupportedServices  = new Dictionary<ExpandedNodeId,ServiceDefinition>();
+
+            SupportedServices = new Dictionary<ExpandedNodeId, ServiceDefinition>();
         }
 
         /// <summary>
@@ -79,7 +76,7 @@ namespace Opc.Ua
             SupportedServices = new Dictionary<ExpandedNodeId, ServiceDefinition>();
         }
         #endregion
-             
+
         #region ITransportListenerCallback Members
         /// <summary>
         /// Begins processing a request received via a binary encoded channel.
@@ -128,6 +125,48 @@ namespace Opc.Ua
         {
             return ProcessRequestAsyncResult.WaitForComplete(result, false);
         }
+
+        #endregion
+
+        #region IAuditEventCallback Members
+        /// <summary>
+        /// Report the open secure channel audit event
+        /// </summary>
+        /// <param name="channel">The <see cref="TcpServerChannel"/> that processes the open secure channel request.</param>
+        /// <param name="request">The incoming <see cref="OpenSecureChannelRequest"/></param>
+        /// <param name="clientCertificate">The client certificate.</param>
+        /// <param name="exception">The exception resulted from the open secure channel request.</param>
+        public void ReportAuditOpenSecureChannelEvent(TcpServerChannel channel,
+            OpenSecureChannelRequest request,
+            X509Certificate2 clientCertificate,
+            Exception exception)
+        {
+            // trigger the reporting of AuditOpenSecureChannelEventType
+            ServerForContext?.ReportAuditOpenSecureChannelEvent(channel, request, clientCertificate, exception);
+        }
+
+        /// <summary>
+        /// Report the close secure channel audit event
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <param name="exception">The exception resulted from the open secure channel request.</param>
+        public void ReportAuditCloseSecureChannelEvent(TcpServerChannel channel, Exception exception)
+        {
+            // trigger the reporting of close AuditChannelEventType
+            ServerForContext?.ReportAuditCloseSecureChannelEvent(channel, exception);
+        }
+
+        /// <summary>
+        /// Reports all audit events for client certificate ServiceResultException. It goes recursively for all service results stored in the exception
+        /// </summary>
+        /// <param name="clientCertificate">The client certificate.</param>
+        /// <param name="exception">The Exception that triggers a certificate audit event.</param>
+        public void ReportAuditCertificateEvent(X509Certificate2 clientCertificate, Exception exception)
+        {
+            // trigger the reporting of OpenSecureChannelAuditEvent
+            ServerForContext?.ReportAuditCertificateEvent(clientCertificate, exception);
+        }
+
         #endregion
 
         #region Public Methods
@@ -159,9 +198,9 @@ namespace Opc.Ua
             }
         }
         #endregion
-        
+
         #region IEndpointBase Members
-        #if OPCUA_USE_SYNCHRONOUS_ENDPOINTS
+#if OPCUA_USE_SYNCHRONOUS_ENDPOINTS
         /// <summary>
         /// Dispatches an incoming binary encoded request.
         /// </summary>
@@ -210,7 +249,7 @@ namespace Opc.Ua
                 return outgoing;
             }
         }
-        #else
+#else
         /// <summary>
         /// Dispatches an incoming binary encoded request.
         /// </summary>
@@ -223,7 +262,7 @@ namespace Opc.Ua
                 {
                     throw new ServiceResultException(StatusCodes.BadInvalidArgument);
                 }
-                
+
                 // set the request context.
                 SetRequestContext(RequestEncoding.Binary);
 
@@ -240,8 +279,7 @@ namespace Opc.Ua
         /// <summary>
         /// Dispatches an incoming binary encoded request.
         /// </summary>
-        /// <param name="ar">The ar.</param>
-        /// <returns></returns>
+        /// <param name="ar">The async result.</param>
         public virtual InvokeServiceResponseMessage EndInvokeService(IAsyncResult ar)
         {
             try
@@ -249,7 +287,7 @@ namespace Opc.Ua
                 // wait for the response.
                 IServiceResponse response = ProcessRequestAsyncResult.WaitForComplete(ar, false);
 
-                // encode the repsonse.
+                // encode the response.
                 InvokeServiceResponseMessage outgoing = new InvokeServiceResponseMessage();
                 outgoing.InvokeServiceResponse = BinaryEncoder.EncodeMessage(response, MessageContext);
                 return outgoing;
@@ -265,22 +303,22 @@ namespace Opc.Ua
                 return outgoing;
             }
         }
-        #endif
-        
+#endif
+
         /// <summary>
         /// Returns the host associated with the current context.
         /// </summary>
         /// <value>The host associated with the current context.</value>
         protected IServiceHostBase HostForContext
         {
-            get 
-            { 
+            get
+            {
                 if (m_host == null)
                 {
                     m_host = GetHostForContext();
                 }
 
-                return m_host; 
+                return m_host;
             }
         }
 
@@ -291,14 +329,6 @@ namespace Opc.Ua
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         protected static IServiceHostBase GetHostForContext()
         {
-            // fetch the current operation context.
-            OperationContext context = OperationContext.Current;
-
-            if (context == null)
-            {
-                throw new ServiceResultException(StatusCodes.BadInternalError, "The current thread does not have a valid WCF operation context.");
-            }
-
             throw new ServiceResultException(StatusCodes.BadInternalError, "The endpoint is not associated with a host that supports IServerHostBase.");
         }
 
@@ -309,14 +339,14 @@ namespace Opc.Ua
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods")]
         protected IServerBase ServerForContext
         {
-            get 
-            { 
+            get
+            {
                 if (m_server == null)
                 {
                     m_server = GetServerForContext();
                 }
 
-                return m_server; 
+                return m_server;
             }
         }
 
@@ -353,7 +383,7 @@ namespace Opc.Ua
         {
             return null;
         }
-        
+
         /// <summary>
         /// Finds the service identified by the request type.
         /// </summary>
@@ -364,7 +394,7 @@ namespace Opc.Ua
             if (!SupportedServices.TryGetValue(requestTypeId, out service))
             {
                 throw ServiceResultException.Create(
-                    StatusCodes.BadServiceUnsupported, 
+                    StatusCodes.BadServiceUnsupported,
                     "'{0}' is an unrecognized service identifier.",
                     requestTypeId);
             }
@@ -386,7 +416,7 @@ namespace Opc.Ua
 
             if (request != null)
             {
-                fault.ResponseHeader.Timestamp     = DateTime.UtcNow;
+                fault.ResponseHeader.Timestamp = DateTime.UtcNow;
                 fault.ResponseHeader.RequestHandle = request.RequestHeader.RequestHandle;
 
                 if (request.RequestHeader != null)
@@ -402,30 +432,30 @@ namespace Opc.Ua
             if (sre != null)
             {
                 result = new ServiceResult(sre);
-
-                if (Utils.IsTraceEnabled) Utils.Trace(
-                    Utils.TraceMasks.Service, 
-                    "Service Fault Occured. Reason={0}", 
-                    result);
+                Utils.LogWarning("SERVER - Service Fault Occurred. Reason={0}", result.StatusCode);
+                if (sre.StatusCode == StatusCodes.BadUnexpectedError)
+                {
+                    Utils.LogWarning(Utils.TraceMasks.StackTrace, sre, sre.ToString());
+                }
             }
             else
             {
                 result = new ServiceResult(exception, StatusCodes.BadUnexpectedError);
-                if (Utils.IsTraceEnabled) Utils.Trace(exception, "SERVER - Unexpected Service Fault: {0}", exception.Message);
-            }                               
+                Utils.LogError(exception, "SERVER - Unexpected Service Fault: {0}", exception.Message);
+            }
 
             fault.ResponseHeader.ServiceResult = result.Code;
 
             StringTable stringTable = new StringTable();
 
             fault.ResponseHeader.ServiceDiagnostics = new DiagnosticInfo(
-                result, 
-                diagnosticsMask, 
-                true, 
+                result,
+                diagnosticsMask,
+                true,
                 stringTable);
 
             fault.ResponseHeader.StringTable = stringTable.ToArray();
- 
+
             return fault;
         }
 
@@ -446,43 +476,20 @@ namespace Opc.Ua
             {
                 error = ServiceResult.Create(StatusCodes.BadUnexpectedError, "An unknown error occurred.");
             }
-            
+
             // construct the fault code and fault reason.
             string codeName = StatusCodes.GetBrowseName(error.Code);
 
-            FaultCode code = null;
-            FaultReason reason = null;
-
-            if (!LocalizedText.IsNullOrEmpty(error.LocalizedText))
-            {
-                reason = new FaultReason(new FaultReasonText(Utils.Format("{0}", error.LocalizedText)));
-            }
-            else
-            {
-                reason = new FaultReason(new FaultReasonText(codeName));
-            }
-
-            if (!String.IsNullOrEmpty(error.SymbolicId))
-            {
-                FaultCode subcode = new FaultCode(error.SymbolicId, error.NamespaceUri);
-                code = new FaultCode(codeName, Namespaces.OpcUa, subcode);
-            }
-            else
-            {
-                code = new FaultCode(codeName, Namespaces.OpcUa);
-            }
-
-            // throw the fault.
-            return new FaultException<ServiceFault>(fault, reason, code, string.Empty);
+            return new ServiceResultException((uint)error.StatusCode, codeName, exception);
         }
 
         /// <summary>
         /// Returns the message context used by the server associated with the endpoint.
         /// </summary>
         /// <value>The message context.</value>
-        protected ServiceMessageContext MessageContext
+        protected IServiceMessageContext MessageContext
         {
-            get { return m_messageContext;  }
+            get { return m_messageContext; }
             set { m_messageContext = value; }
         }
 
@@ -492,37 +499,35 @@ namespace Opc.Ua
         /// <value>The endpoint description.</value>
         protected EndpointDescription EndpointDescription
         {
-            get { return m_endpointDescription;  }
+            get { return m_endpointDescription; }
             set { m_endpointDescription = value; }
         }
 
         /// <summary>
-        /// The types known to the server.
+        /// Returns the error of the server.
         /// </summary>
         /// <value>The server error.</value>
         protected ServiceResult ServerError
         {
-            get { return m_serverError;  }
+            get { return m_serverError; }
             set { m_serverError = value; }
         }
 
         /// <summary>
-        /// The types known to the server.
+        /// The types of services known to the server.
         /// </summary>
         protected Dictionary<ExpandedNodeId, ServiceDefinition> SupportedServices
         {
             get { return m_supportedServices; }
             set { m_supportedServices = value; }
         }
-             
+
         /// <summary>
         /// Sets the request context for the thread.
         /// </summary>
         /// <param name="encoding">The encoding.</param>
         protected void SetRequestContext(RequestEncoding encoding)
         {
-            // fetch the current operation context.
-            OperationContext context = OperationContext.Current;
         }
 
         /// <summary>
@@ -550,7 +555,7 @@ namespace Opc.Ua
         }
         #endregion
 
-        #region ServiceDefinition Classe
+        #region ServiceDefinition Class
         /// <summary>
         /// Stores the definition of a service supported by the server.
         /// </summary>
@@ -562,7 +567,7 @@ namespace Opc.Ua
             /// <param name="requestType">Type of the request.</param>
             /// <param name="invokeMethod">The invoke method.</param>
             public ServiceDefinition(
-                Type requestType, 
+                Type requestType,
                 InvokeServiceEventHandler invokeMethod)
             {
                 m_requestType = requestType;
@@ -585,8 +590,8 @@ namespace Opc.Ua
             public Type ResponseType
             {
                 get { return m_requestType; }
-            }            
-            
+            }
+
             /// <summary>
             /// Processes the request.
             /// </summary>
@@ -863,7 +868,6 @@ namespace Opc.Ua
 
                     // call the service.
                     m_response = m_service.Invoke(m_request);
-
                 }
                 catch (Exception e)
                 {
@@ -875,7 +879,7 @@ namespace Opc.Ua
                 // report completion.
                 OperationCompleted();
             }
-            #endregion
+            #endregion     
 
             #region Private Fields
             private EndpointBase m_endpoint;
@@ -891,12 +895,12 @@ namespace Opc.Ua
 
         #region Private Fields
         private ServiceResult m_serverError;
-        private ServiceMessageContext m_messageContext;
+        private IServiceMessageContext m_messageContext;
         private EndpointDescription m_endpointDescription;
-        private Dictionary<ExpandedNodeId,ServiceDefinition> m_supportedServices;
+        private Dictionary<ExpandedNodeId, ServiceDefinition> m_supportedServices;
         private IServiceHostBase m_host;
         private IServerBase m_server;
-        private string g_ImplementationString = "Opc.Ua.EndpointBase WCF Service " + Utils.GetAssemblySoftwareVersion();
+        private string g_ImplementationString = "Opc.Ua.EndpointBase UA Service " + Utils.GetAssemblySoftwareVersion();
         #endregion
     }
 }

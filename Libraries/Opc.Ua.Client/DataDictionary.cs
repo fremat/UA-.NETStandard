@@ -27,13 +27,13 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
-using Opc.Ua.Schema;
-using Opc.Ua.Schema.Binary;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Opc.Ua.Schema;
+using Opc.Ua.Schema.Binary;
 
 namespace Opc.Ua.Client
 {
@@ -132,13 +132,13 @@ namespace Opc.Ua.Client
             }
 
             // Interoperability: some server may return a null terminated dictionary string, adjust length
-            int zeroTerminator = Array.IndexOf<byte>(schema, (byte)0);
+            int zeroTerminator = Array.IndexOf<byte>(schema, 0);
             if (zeroTerminator >= 0)
             {
                 Array.Resize(ref schema, zeroTerminator);
             }
 
-            await Validate(schema);
+            await Validate(schema).ConfigureAwait(false);
 
             ReadDataTypes(dictionaryId);
 
@@ -235,7 +235,7 @@ namespace Opc.Ua.Client
         /// <summary>
         /// Reads the contents of a data dictionary.
         /// </summary>
-        private byte[] ReadDictionary(NodeId dictionaryId)
+        public byte[] ReadDictionary(NodeId dictionaryId)
         {
             // create item to read.
             ReadValueId itemToRead = new ReadValueId();
@@ -277,8 +277,9 @@ namespace Opc.Ua.Client
         /// <summary>
         /// Validates the type dictionary.
         /// </summary>
-        /// <param name="dictionary"></param>
-        private async Task Validate(byte[] dictionary)
+        /// <param name="dictionary">The encoded dictionary to validate.</param>
+        /// <param name="throwOnError">Throw if an error occurred.</param>
+        internal async Task Validate(byte[] dictionary, bool throwOnError = false)
         {
             MemoryStream istrm = new MemoryStream(dictionary);
 
@@ -292,7 +293,11 @@ namespace Opc.Ua.Client
                 }
                 catch (Exception e)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace(e, "Could not validate schema.");
+                    if (throwOnError)
+                    {
+                        throw;
+                    }
+                    Utils.LogWarning(e, "Could not validate XML schema, error is ignored.");
                 }
 
                 m_validator = validator;
@@ -304,11 +309,15 @@ namespace Opc.Ua.Client
 
                 try
                 {
-                    await validator.Validate(istrm);
+                    await validator.Validate(istrm).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
-                    if (Utils.IsTraceEnabled) Utils.Trace(e, $"Could not validate schema. {e.Message}");
+                    if (throwOnError)
+                    {
+                        throw;
+                    }
+                    Utils.LogWarning(e, "Could not validate binary schema, error is ignored.");
                 }
 
                 m_validator = validator;
