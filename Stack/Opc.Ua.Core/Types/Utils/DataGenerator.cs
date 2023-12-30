@@ -1216,7 +1216,7 @@ namespace Opc.Ua.Test
             new BoundaryValues(typeof(QualifiedName), null, QualifiedName.Null ),
             new BoundaryValues(typeof(LocalizedText), null, LocalizedText.Null ),
             new BoundaryValues(typeof(StatusCode), StatusCodes.Good, StatusCodes.Uncertain, StatusCodes.Bad ),
-            new BoundaryValues(typeof(ExtensionObject), ExtensionObject.Null))
+            new BoundaryValues(typeof(ExtensionObject), ExtensionObject.Null)
         };
         #endregion
 
