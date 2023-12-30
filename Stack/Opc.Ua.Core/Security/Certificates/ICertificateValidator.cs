@@ -11,6 +11,8 @@
 */
 
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Opc.Ua
 {
@@ -23,5 +25,20 @@ namespace Opc.Ua
         /// Validates a certificate.
         /// </summary>
         void Validate(X509Certificate2 certificate);
+
+        /// <summary>
+        /// Validates a certificate chain.
+        /// </summary>
+        void Validate(X509Certificate2Collection certificateChain);
+
+        /// <summary>
+        /// Validates a certificate.
+        /// </summary>
+        Task ValidateAsync(X509Certificate2 certificate, CancellationToken ct);
+
+        /// <summary>
+        /// Validates a certificate chain.
+        /// </summary>
+        Task ValidateAsync(X509Certificate2Collection certificateChain, CancellationToken ct);
     }
 }

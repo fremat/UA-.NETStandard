@@ -28,8 +28,6 @@
  * ======================================================================*/
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -48,7 +46,12 @@ namespace Opc.Ua.Server
         /// <summary>
         /// Initialize the trustlist with default values.
         /// </summary>
-        public TrustList(Opc.Ua.TrustListState node, string trustedListPath, string issuerListPath, SecureAccess readAccess, SecureAccess writeAccess)
+        public TrustList(
+            TrustListState node,
+            string trustedListPath,
+            string issuerListPath,
+            SecureAccess readAccess,
+            SecureAccess writeAccess)
         {
             m_node = node;
             m_trustedStorePath = trustedListPath;
@@ -347,7 +350,7 @@ namespace Opc.Ua.Server
                         trustedCertificates = new X509Certificate2Collection();
                         foreach (var cert in trustList.TrustedCertificates)
                         {
-                            trustedCertificates.Add(new X509Certificate2(cert));                            
+                            trustedCertificates.Add(new X509Certificate2(cert));
                         }
                     }
                     if ((masks & TrustListMasks.TrustedCrls) != 0)
@@ -413,7 +416,8 @@ namespace Opc.Ua.Server
 
             // report the TrustListUpdatedAuditEvent
             object[] inputParameters = new object[] { fileHandle };
-            ReportTrustListUpdatedAuditEvent(context, objectId, "Method/CloseAndUpdate", method.NodeId, inputParameters, result.StatusCode);
+            m_node.ReportTrustListUpdatedAuditEvent(context, objectId, "Method/CloseAndUpdate", method.NodeId, inputParameters, result.StatusCode);
+
             return result;
         }
 
@@ -467,7 +471,7 @@ namespace Opc.Ua.Server
 
             // report the TrustListUpdatedAuditEvent
             object[] inputParameters = new object[] { certificate, isTrustedCertificate };
-            ReportTrustListUpdatedAuditEvent(context, objectId, "Method/AddCertificate", method.NodeId, inputParameters, result.StatusCode);
+            m_node.ReportTrustListUpdatedAuditEvent(context, objectId, "Method/AddCertificate", method.NodeId, inputParameters, result.StatusCode);
 
             return result;
 
@@ -539,12 +543,13 @@ namespace Opc.Ua.Server
                     }
 
                     m_node.LastUpdateTime.Value = DateTime.UtcNow;
-                }                
+                }
             }
 
             // report the TrustListUpdatedAuditEvent
             object[] inputParameters = new object[] { thumbprint };
-            ReportTrustListUpdatedAuditEvent(context, objectId, "Method/RemoveCertificate", method.NodeId, inputParameters, result.StatusCode);
+            m_node.ReportTrustListUpdatedAuditEvent(context, objectId, "Method/RemoveCertificate", method.NodeId, inputParameters, result.StatusCode);
+
             return result;
         }
 
@@ -559,8 +564,10 @@ namespace Opc.Ua.Server
                 Factory = context.EncodeableFactory
             };
             MemoryStream strm = new MemoryStream();
-            BinaryEncoder encoder = new BinaryEncoder(strm, messageContext);
-            encoder.WriteEncodeable(null, trustList, null);
+            using (BinaryEncoder encoder = new BinaryEncoder(strm, messageContext, true))
+            {
+                encoder.WriteEncodeable(null, trustList, null);
+            }
             strm.Position = 0;
             return strm;
         }
@@ -576,9 +583,10 @@ namespace Opc.Ua.Server
                 Factory = context.EncodeableFactory
             };
             strm.Position = 0;
-            BinaryDecoder decoder = new BinaryDecoder(strm, messageContext);
-            trustList.Decode(decoder);
-            decoder.Close();
+            using (IDecoder decoder = new BinaryDecoder(strm, messageContext))
+            {
+                trustList.Decode(decoder);
+            }
             return trustList;
         }
 
@@ -679,58 +687,10 @@ namespace Opc.Ua.Server
                 throw new ServiceResultException(StatusCodes.BadUserAccessDenied);
             }
         }
-
-        /// <summary>
-        /// Reports an TrustListUpdatedAudit event.
-        /// </summary>
-        /// <param name="systemContext">The current system context</param>
-        /// <param name="objectId">The object id where the truest list update methods was called</param>
-        /// <param name="sourceName">The source name string</param>
-        /// <param name="methodId">The id of the method that was called</param>
-        /// <param name="inputParameters">The input parameters of the called method</param>
-        /// <param name="statusCode">The status code resulted when the TrustList was updated </param>
-        private void ReportTrustListUpdatedAuditEvent(ISystemContext systemContext,
-            NodeId objectId,
-            string sourceName,
-            NodeId methodId,
-            object[] inputParameters,
-            StatusCode statusCode)
-        {
-            try
-            {
-                TrustListUpdatedAuditEventState e = new TrustListUpdatedAuditEventState(null);
-
-                TranslationInfo message = new TranslationInfo(
-                   "TrustListUpdatedAuditEvent",
-                   "en-US",
-                   $"TrustListUpdatedAuditEvent result is: {statusCode.ToString(null, CultureInfo.InvariantCulture)}");
-
-                e.Initialize(
-                   systemContext,
-                   null,
-                   EventSeverity.Min,
-                   new LocalizedText(message),
-                   StatusCode.IsGood(statusCode),
-                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
-
-                e.SetChildValue(systemContext, BrowseNames.SourceNode, objectId, false);
-                e.SetChildValue(systemContext, BrowseNames.SourceName, sourceName, false);
-                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
-
-                e.SetChildValue(systemContext, BrowseNames.MethodId, methodId, false);
-                e.SetChildValue(systemContext, BrowseNames.InputArguments, inputParameters, false);
-
-                m_node?.ReportEvent(systemContext, e);
-            }
-            catch(Exception ex)
-            {
-                Utils.LogError(ex, "Error while reporting ReportTrustListUpdatedAuditEvent event.");
-            }
-        }
         #endregion
 
         #region Private Fields
-        private object m_lock = new object();
+        private readonly object m_lock = new object();
         private SecureAccess m_readAccess;
         private SecureAccess m_writeAccess;
         private NodeId m_sessionId;

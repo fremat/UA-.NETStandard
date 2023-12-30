@@ -23,7 +23,7 @@ namespace Opc.Ua
     /// <summary>
     /// Reads objects from a XML stream.
     /// </summary>
-    public class XmlDecoder : IDecoder, IDisposable
+    public class XmlDecoder : IDecoder
     {
         #region Constructors
         /// <summary>
@@ -579,6 +579,7 @@ namespace Opc.Ua
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -1170,68 +1171,12 @@ namespace Opc.Ua
             if (BeginField(fieldName, true))
             {
                 PushNamespace(Namespaces.OpcUaXsd);
-                value = ReadDiagnosticInfo();
+                value = ReadDiagnosticInfo(0);
                 PopNamespace();
 
                 EndField(fieldName);
                 return value;
             }
-
-            return value;
-        }
-
-        /// <summary>
-        /// Reads an DiagnosticInfo from the stream.
-        /// </summary>
-        public DiagnosticInfo ReadDiagnosticInfo()
-        {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            m_nestingLevel++;
-
-            DiagnosticInfo value = new DiagnosticInfo();
-
-            if (BeginField("SymbolicId", true))
-            {
-                value.SymbolicId = ReadInt32(null);
-                EndField("SymbolicId");
-            }
-
-            if (BeginField("NamespaceUri", true))
-            {
-                value.NamespaceUri = ReadInt32(null);
-                EndField("NamespaceUri");
-            }
-
-            if (BeginField("Locale", true))
-            {
-                value.Locale = ReadInt32(null);
-                EndField("Locale");
-            }
-
-            if (BeginField("LocalizedText", true))
-            {
-                value.LocalizedText = ReadInt32(null);
-                EndField("LocalizedText");
-            }
-
-            value.AdditionalInfo = ReadString("AdditionalInfo");
-            value.InnerStatusCode = ReadStatusCode("InnerStatusCode");
-
-            if (BeginField("InnerDiagnosticInfo", true))
-            {
-                value.InnerDiagnosticInfo = ReadDiagnosticInfo();
-                EndField("InnerDiagnosticInfo");
-            }
-
-            m_nestingLevel--;
 
             return value;
         }
@@ -1329,47 +1274,43 @@ namespace Opc.Ua
         /// </summary>
         public Variant ReadVariant(string fieldName)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            CheckAndIncrementNestingLevel();
+
+            try
             {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
+                Variant value = new Variant();
 
-            m_nestingLevel++;
-
-            Variant value = new Variant();
-
-            if (BeginField(fieldName, true))
-            {
-                PushNamespace(Namespaces.OpcUaXsd);
-
-                if (BeginField("Value", true))
+                if (BeginField(fieldName, true))
                 {
-                    try
+                    PushNamespace(Namespaces.OpcUaXsd);
+
+                    if (BeginField("Value", true))
                     {
-                        TypeInfo typeInfo = null;
-                        object contents = ReadVariantContents(out typeInfo);
-                        value = new Variant(contents, typeInfo);
+                        try
+                        {
+                            TypeInfo typeInfo = null;
+                            object contents = ReadVariantContents(out typeInfo);
+                            value = new Variant(contents, typeInfo);
+                        }
+                        catch (Exception ex)
+                        {
+                            Utils.LogError(ex, "XmlDecoder: Error reading variant.");
+                            value = new Variant(StatusCodes.BadDecodingError);
+                        }
+                        EndField("Value");
                     }
-                    catch (Exception ex)
-                    {
-                        Utils.LogError(ex, "XmlDecoder: Error reading variant.");
-                        value = new Variant(StatusCodes.BadEncodingError);
-                    }
-                    EndField("Value");
+
+                    PopNamespace();
+
+                    EndField(fieldName);
                 }
 
-                PopNamespace();
-
-                EndField(fieldName);
+                return value;
             }
-
-            m_nestingLevel--;
-
-            return value;
+            finally
+            {
+                m_nestingLevel--;
+            }
         }
 
         /// <summary>
@@ -1450,8 +1391,7 @@ namespace Opc.Ua
             // read end of extension object.
             EndField(fieldName);
 
-            IEncodeable encodeable = body as IEncodeable;
-            if (encodeable != null)
+            if (body is IEncodeable encodeable)
             {
                 // Set the known TypeId for encodeables.
                 absoluteId = encodeable.TypeId;
@@ -1464,7 +1404,7 @@ namespace Opc.Ua
         /// Reads an encodeable object from the stream.
         /// </summary>
         /// <param name="fieldName">The encodeable object field name</param>
-        /// <param name="systemType">The system type of the encopdeable object to be read</param>
+        /// <param name="systemType">The system type of the encodeable object to be read</param>
         /// <param name="encodeableTypeId">The TypeId for the <see cref="IEncodeable"/> instance that will be read.</param>
         /// <returns>An <see cref="IEncodeable"/> object that was read from the stream.</returns>
         public IEncodeable ReadEncodeable(string fieldName, System.Type systemType, ExpandedNodeId encodeableTypeId = null)
@@ -1483,53 +1423,48 @@ namespace Opc.Ua
             if (encodeableTypeId != null)
             {
                 // set type identifier for custom complex data types before decode.
-                IComplexTypeInstance complexTypeInstance = value as IComplexTypeInstance;
 
-                if (complexTypeInstance != null)
+                if (value is IComplexTypeInstance complexTypeInstance)
                 {
                     complexTypeInstance.TypeId = encodeableTypeId;
                 }
             }
 
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            CheckAndIncrementNestingLevel();
+
+            try
             {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            m_nestingLevel++;
-
-            if (BeginField(fieldName, true))
-            {
-                XmlQualifiedName xmlName = EncodeableFactory.GetXmlName(systemType);
-
-                PushNamespace(xmlName.Namespace);
-                value.Decode(this);
-                PopNamespace();
-
-                // skip to end of encodeable object.
-                m_reader.MoveToContent();
-
-                while (!(m_reader.NodeType == XmlNodeType.EndElement && m_reader.LocalName == fieldName && m_reader.NamespaceURI == m_namespaces.Peek()))
+                if (BeginField(fieldName, true))
                 {
-                    if (m_reader.NodeType == XmlNodeType.None)
+                    XmlQualifiedName xmlName = EncodeableFactory.GetXmlName(value, this.Context);
+
+                    PushNamespace(xmlName.Namespace);
+                    value.Decode(this);
+                    PopNamespace();
+
+                    // skip to end of encodeable object.
+                    m_reader.MoveToContent();
+
+                    while (!(m_reader.NodeType == XmlNodeType.EndElement && m_reader.LocalName == fieldName && m_reader.NamespaceURI == m_namespaces.Peek()))
                     {
-                        throw new ServiceResultException(
-                            StatusCodes.BadDecodingError,
-                            Utils.Format("Unexpected end of stream decoding field '{0}' for type '{1}'.", fieldName, systemType.FullName));
+                        if (m_reader.NodeType == XmlNodeType.None)
+                        {
+                            throw new ServiceResultException(
+                                StatusCodes.BadDecodingError,
+                                Utils.Format("Unexpected end of stream decoding field '{0}' for type '{1}'.", fieldName, systemType.FullName));
+                        }
+
+                        m_reader.Skip();
+                        m_reader.MoveToContent();
                     }
 
-                    m_reader.Skip();
-                    m_reader.MoveToContent();
+                    EndField(fieldName);
                 }
-
-                EndField(fieldName);
             }
-
-            m_nestingLevel--;
+            finally
+            {
+                m_nestingLevel--;
+            }
 
             return value;
         }
@@ -2650,21 +2585,17 @@ namespace Opc.Ua
             return Array.CreateInstance(enumType, 0);
         }
 
-        /// <summary>
-        /// Reads an array with the specified valueRank and the specified BuiltInType
-        /// </summary>
-        public object ReadArray(string fieldName, int valueRank, BuiltInType builtInType, ExpandedNodeId encodeableTypeId = null)
+        /// <inheritdoc/>
+        public Array ReadArray(string fieldName, int valueRank, BuiltInType builtInType, Type systemType, ExpandedNodeId encodeableTypeId = null)
         {
             if (valueRank == ValueRanks.OneDimension)
             {
                 /*One dimensional Array parameters are always encoded by wrapping the elements in a container element 
                  * and inserting the container into the structure. The name of the container element should be the name of the parameter. 
                  * The name of the element in the array shall be the type name.*/
-
-                return ReadArrayElements(fieldName, builtInType, encodeableTypeId);
+                return ReadArrayElements(fieldName, builtInType, systemType, encodeableTypeId);
             }
-
-            // write matrix.
+            // read matrix/array.
             else if (valueRank > ValueRanks.OneDimension)
             {
                 Array elements = null;
@@ -2676,7 +2607,130 @@ namespace Opc.Ua
                     // dimensions are written before elements when encoding multi dimensional array!! UA Specs
                     dimensions = ReadInt32Array("Dimensions");
 
-                    elements = ReadArrayElements("Elements", builtInType, encodeableTypeId);
+                    elements = ReadArrayElements("Elements", builtInType, systemType, encodeableTypeId);
+
+                    PopNamespace();
+
+                    EndField(fieldName);
+                }
+
+                if (elements == null)
+                {
+                    throw new ServiceResultException(StatusCodes.BadDecodingError, "The Matrix contains invalid elements");
+                }
+
+                Matrix matrix;
+                if (dimensions != null && dimensions.Count > 0)
+                {
+                    matrix = new Matrix(elements, builtInType, dimensions.ToArray());
+                }
+                else
+                {
+                    matrix = new Matrix(elements, builtInType);
+                }
+
+                return matrix.ToArray();
+            }
+
+            throw ServiceResultException.Create(StatusCodes.BadDecodingError,
+                "Invalid ValueRank {0} for Array", valueRank);
+        }
+        #endregion
+
+        #region Private Methods
+        /// <summary>
+        /// Reads an DiagnosticInfo from the stream.
+        /// Limits the InnerDiagnosticInfo nesting level.
+        /// </summary>
+        private DiagnosticInfo ReadDiagnosticInfo(int depth)
+        {
+            if (depth >= DiagnosticInfo.MaxInnerDepth)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of InnerDiagnosticInfo was exceeded");
+            }
+
+            CheckAndIncrementNestingLevel();
+
+            try
+            {
+                DiagnosticInfo value = new DiagnosticInfo();
+                bool hasDiagnosticInfo = false;
+
+                if (BeginField("SymbolicId", true))
+                {
+                    value.SymbolicId = ReadInt32(null);
+                    EndField("SymbolicId");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (BeginField("NamespaceUri", true))
+                {
+                    value.NamespaceUri = ReadInt32(null);
+                    EndField("NamespaceUri");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (BeginField("Locale", true))
+                {
+                    value.Locale = ReadInt32(null);
+                    EndField("Locale");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (BeginField("LocalizedText", true))
+                {
+                    value.LocalizedText = ReadInt32(null);
+                    EndField("LocalizedText");
+                    hasDiagnosticInfo = true;
+                }
+
+                value.AdditionalInfo = ReadString("AdditionalInfo");
+                value.InnerStatusCode = ReadStatusCode("InnerStatusCode");
+
+                hasDiagnosticInfo = hasDiagnosticInfo || value.AdditionalInfo != null || value.InnerStatusCode != StatusCodes.Good;
+
+                if (BeginField("InnerDiagnosticInfo", true))
+                {
+                    value.InnerDiagnosticInfo = ReadDiagnosticInfo(depth + 1);
+                    EndField("InnerDiagnosticInfo");
+                    hasDiagnosticInfo = true;
+                }
+
+                return hasDiagnosticInfo ? value : null;
+            }
+            finally
+            {
+                m_nestingLevel--;
+            }
+        }
+
+        /// <summary>
+        /// Reads an Matrix from the stream.
+        /// </summary>
+        private Matrix ReadMatrix(string fieldName)
+        {
+            CheckAndIncrementNestingLevel();
+
+            try
+            {
+                Array elements = null;
+                Int32Collection dimensions = null;
+                TypeInfo typeInfo = null;
+
+                if (BeginField(fieldName, true))
+                {
+                    PushNamespace(Namespaces.OpcUaXsd);
+
+                    if (BeginField("Elements", true))
+                    {
+                        object contents = ReadVariantContents(out typeInfo);
+                        elements = contents as Array;
+                        EndField("Elements");
+                    }
+
+                    dimensions = ReadInt32Array("Dimensions");
 
                     PopNamespace();
 
@@ -2690,69 +2744,15 @@ namespace Opc.Ua
 
                 if (dimensions != null && dimensions.Count > 0)
                 {
-                    return new Matrix(elements, builtInType, dimensions.ToArray());
+                    return new Matrix(elements, typeInfo.BuiltInType, dimensions.ToArray());
                 }
 
-                return new Matrix(elements, builtInType);
+                return new Matrix(elements, typeInfo.BuiltInType);
             }
-
-            throw new ServiceResultException(StatusCodes.BadDecodingError,
-                string.Format("Invalid ValueRank {0} for Array", valueRank));
-        }
-        #endregion
-
-        #region Private Methods
-        /// <summary>
-        /// Reads an Matrix from the stream.
-        /// </summary>
-        private Matrix ReadMatrix(string fieldName)
-        {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            finally
             {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
+                m_nestingLevel--;
             }
-
-            m_nestingLevel++;
-
-            Array elements = null;
-            Int32Collection dimensions = null;
-            TypeInfo typeInfo = null;
-
-            if (BeginField(fieldName, true))
-            {
-                PushNamespace(Namespaces.OpcUaXsd);
-
-                if (BeginField("Elements", true))
-                {
-                    object contents = ReadVariantContents(out typeInfo);
-                    elements = contents as Array;
-                    EndField("Elements");
-                }
-
-                dimensions = ReadInt32Array("Dimensions");
-
-                PopNamespace();
-
-                EndField(fieldName);
-            }
-
-            m_nestingLevel--;
-
-            if (elements == null)
-            {
-                throw new ServiceResultException(StatusCodes.BadDecodingError, "The Matrix contains invalid elements");
-            }
-
-            if (dimensions != null && dimensions.Count > 0)
-            {
-                return new Matrix(elements, typeInfo.BuiltInType, dimensions.ToArray());
-            }
-
-            return new Matrix(elements, typeInfo.BuiltInType);
         }
 
         /// <summary>
@@ -2760,31 +2760,19 @@ namespace Opc.Ua
         /// </summary>
         /// <param name="fieldName">provides the fieldName for the array</param>
         /// <param name="builtInType">provides the BuiltInType of the elements that are read</param>
+        /// <param name="systemType">The system type of the elements to read.</param>
         /// <param name="encodeableTypeId">provides the type id of the encodeable element</param>
-        /// <returns></returns>
-        private Array ReadArrayElements(string fieldName, BuiltInType builtInType, ExpandedNodeId encodeableTypeId = null)
+        private Array ReadArrayElements(string fieldName, BuiltInType builtInType, Type systemType, ExpandedNodeId encodeableTypeId)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            m_nestingLevel++;
-
-
-            // skip whitespace.
-            while (m_reader.NodeType != XmlNodeType.Element)
-            {
-                m_reader.Read();
-            }
+            CheckAndIncrementNestingLevel();
 
             try
             {
-                m_namespaces.Push(Namespaces.OpcUaXsd);
+                // skip whitespace.
+                while (m_reader.NodeType != XmlNodeType.Element)
+                {
+                    m_reader.Read();
+                }
 
                 // process array types.
 
@@ -2824,7 +2812,24 @@ namespace Opc.Ua
                     case BuiltInType.Int32:
                     {
                         Int32Collection collection = ReadInt32Array(fieldName);
-                        if (collection != null) return collection.ToArray();
+                        if (collection != null)
+                        {
+                            if (builtInType == BuiltInType.Enumeration)
+                            {
+                                DetermineIEncodeableSystemType(ref systemType, encodeableTypeId);
+                                if (systemType?.IsEnum == true)
+                                {
+                                    Array array = Array.CreateInstance(systemType, collection.Count);
+                                    int ii = 0;
+                                    foreach (var item in collection)
+                                    {
+                                        array.SetValue(Enum.ToObject(systemType, item), ii++);
+                                    }
+                                    return array;
+                                }
+                            }
+                            return collection.ToArray();
+                        }
                         return null;
                     }
                     case BuiltInType.UInt32:
@@ -2937,28 +2942,32 @@ namespace Opc.Ua
                     }
                     case BuiltInType.Variant:
                     {
-                        if (encodeableTypeId != null)
+                        if (DetermineIEncodeableSystemType(ref systemType, encodeableTypeId))
                         {
-                            Type systemType = Context.Factory.GetSystemType(encodeableTypeId);
-                            if (systemType != null)
-                            {
-                                return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
-                            }
+                            return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
                         }
 
                         VariantCollection collection = ReadVariantArray(fieldName);
                         if (collection != null) return collection.ToArray();
                         return null;
                     }
+                    default:
+                    {
+                        if (DetermineIEncodeableSystemType(ref systemType, encodeableTypeId))
+                        {
+                            return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
+                        }
+                        throw ServiceResultException.Create(
+                            StatusCodes.BadDecodingError,
+                            "Cannot decode unknown type in Array object with BuiltInType: {0}.",
+                            builtInType);
+                    }
                 }
             }
             finally
             {
-                m_namespaces.Pop();
                 m_nestingLevel--;
             }
-
-            return null;
         }
 
         /// <summary>
@@ -3099,6 +3108,36 @@ namespace Opc.Ua
             }
 
             return (m_reader.LocalName == elementName && m_reader.NamespaceURI == m_namespaces.Peek());
+        }
+
+        /// <summary>
+        /// Get the system type from the type factory if not specified by caller.
+        /// </summary>
+        /// <param name="systemType">The reference to the system type, or null</param>
+        /// <param name="encodeableTypeId">The encodeable type id of the system type.</param>
+        /// <returns>If the system type is assignable to <see cref="IEncodeable"/> </returns>
+        private bool DetermineIEncodeableSystemType(ref Type systemType, ExpandedNodeId encodeableTypeId)
+        {
+            if (encodeableTypeId != null && systemType == null)
+            {
+                systemType = Context.Factory.GetSystemType(encodeableTypeId);
+            }
+            return typeof(IEncodeable).IsAssignableFrom(systemType);
+        }
+
+        /// <summary>
+        /// Test and increment the nesting level.
+        /// </summary>
+        private void CheckAndIncrementNestingLevel()
+        {
+            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of {0} was exceeded",
+                    m_context.MaxEncodingNestingLevels);
+            }
+            m_nestingLevel++;
         }
         #endregion
 

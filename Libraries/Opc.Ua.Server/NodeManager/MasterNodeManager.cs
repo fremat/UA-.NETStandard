@@ -322,6 +322,7 @@ namespace Opc.Ua.Server
                     catch (Exception e)
                     {
                         Utils.LogError(e, "Unexpected error creating address space for NodeManager #{0}.", ii);
+                        throw;
                     }
                 }
 
@@ -337,6 +338,7 @@ namespace Opc.Ua.Server
                     catch (Exception e)
                     {
                         Utils.LogError(e, "Unexpected error adding references for NodeManager #{0}.", ii);
+                        throw;
                     }
                 }
             }
@@ -832,7 +834,8 @@ namespace Opc.Ua.Server
                 {
                     DiagnosticInfo diagnosticInfo = diagnosticInfos[ii];
 
-                    while (diagnosticInfo != null)
+                    int depth = 0;
+                    while (diagnosticInfo != null && depth++ < DiagnosticInfo.MaxInnerDepth)
                     {
                         if (!String.IsNullOrEmpty(diagnosticInfo.AdditionalInfo))
                         {
@@ -1198,7 +1201,7 @@ namespace Opc.Ua.Server
         private void PrepareValidationCache<T>(List<T> nodesCollection,
             out Dictionary<NodeId, List<object>> uniqueNodesServiceAttributes)
         {
-            List<NodeId> uniqueNodes = new List<NodeId>();
+            HashSet<NodeId> uniqueNodes = new HashSet<NodeId>();
             for (int i = 0; i < nodesCollection.Count; i++)
             {
                 Type listType = typeof(T);
@@ -3343,7 +3346,7 @@ namespace Opc.Ua.Server
         #endregion
 
         #region Private Fields
-        private object m_lock = new object();
+        private readonly object m_lock = new object();
         private IServerInternal m_server;
         private List<INodeManager> m_nodeManagers;
         private long m_lastMonitoredItemId;

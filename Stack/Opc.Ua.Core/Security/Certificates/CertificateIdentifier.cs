@@ -82,9 +82,8 @@ namespace Opc.Ua
                 return true;
             }
 
-            CertificateIdentifier id = obj as CertificateIdentifier;
 
-            if (id == null)
+            if (!(obj is CertificateIdentifier id))
             {
                 return false;
             }
@@ -123,7 +122,7 @@ namespace Opc.Ua
         /// <returns></returns>
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            return HashCode.Combine(Thumbprint, m_storeLocation, m_storeName, SubjectName);
         }
         #endregion
 
@@ -571,8 +570,16 @@ namespace Opc.Ua
     /// <summary>
     /// A collection of CertificateIdentifier objects.
     /// </summary>
-    public partial class CertificateIdentifierCollection : ICertificateStore
+    public partial class CertificateIdentifierCollection : ICertificateStore, ICloneable
     {
+
+        #region ICloneable
+        /// <inheritdoc/>
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         /// <summary>
         /// Creates a new object that is a copy of the current instance.
         /// </summary>
@@ -590,6 +597,7 @@ namespace Opc.Ua
 
             return collection;
         }
+        #endregion
 
         #region IDisposable Members
         /// <summary>

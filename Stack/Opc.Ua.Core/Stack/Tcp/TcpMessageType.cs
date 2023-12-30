@@ -48,7 +48,7 @@ namespace Opc.Ua.Bindings
         /// A chunk for a generic message.
         /// </summary>
         public const uint MessageIntermediate = Message | Intermediate;
-        
+
         /// <summary>
         /// A chunk for a generic message.
         /// </summary>
@@ -124,9 +124,9 @@ namespace Opc.Ua.Bindings
                 case ReverseHello:
                 case Acknowledge:
                 case Error:
-                    {
-                        return true;
-                    }
+                {
+                    return true;
+                }
             }
 
             if (((messageType & ChunkTypeMask) != Final) && ((messageType & ChunkTypeMask) != Intermediate))
@@ -139,14 +139,14 @@ namespace Opc.Ua.Bindings
                 case Message:
                 case Open:
                 case Close:
-                    {
-                        break;
-                    }
+                {
+                    break;
+                }
 
                 default:
-                    {
-                        return false;
-                    }
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -247,6 +247,11 @@ namespace Opc.Ua.Bindings
         /// The default maximum message size.
         /// </summary>
         public const int DefaultMaxMessageSize = DefaultMaxChunkCount * DefaultMaxBufferSize;
+
+        /// <summary>
+        /// The default maximum message size for the discovery channel.
+        /// </summary>
+        public const int DefaultDiscoveryMaxMessageSize = DefaultMaxBufferSize;
 
         /// <summary>
         /// How long a connection will remain in the server after it goes into a faulted state.

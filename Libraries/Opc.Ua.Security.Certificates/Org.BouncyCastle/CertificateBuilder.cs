@@ -29,10 +29,13 @@
 #if !NETSTANDARD2_1 && !NET472_OR_GREATER && !NET5_0_OR_GREATER
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Linq;
-using System.Collections.Generic;
+using Opc.Ua.Security.Certificates.BouncyCastle;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
@@ -40,12 +43,9 @@ using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Prng;
 using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
-using Opc.Ua.Security.Certificates.BouncyCastle;
-using System.Collections;
-using Org.BouncyCastle.Pkcs;
-using System.Diagnostics;
 
 namespace Opc.Ua.Security.Certificates
 {
@@ -125,15 +125,7 @@ namespace Opc.Ua.Security.Certificates
             if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
             try
             {
-                var asymmetricKeyParameter = PublicKeyFactory.CreateKey(publicKey);
-                var rsaKeyParameters = asymmetricKeyParameter as RsaKeyParameters;
-                var parameters = new RSAParameters {
-                    Exponent = rsaKeyParameters.Exponent.ToByteArrayUnsigned(),
-                    Modulus = rsaKeyParameters.Modulus.ToByteArrayUnsigned()
-                };
-                RSA rsaPublicKey = RSA.Create();
-                rsaPublicKey.ImportParameters(parameters);
-                m_rsaPublicKey = rsaPublicKey;
+                m_rsaPublicKey = X509Utils.SetRSAPublicKey(publicKey);
             }
             catch (Exception e)
             {
@@ -152,8 +144,8 @@ namespace Opc.Ua.Security.Certificates
             RSA privateKey,
             string passcode)
         {
-            var x509 = new X509CertificateParser().ReadCertificate(certificate.RawData);
-            using (var cfrg = new CertificateFactoryRandomGenerator())
+            Org.BouncyCastle.X509.X509Certificate x509 = new X509CertificateParser().ReadCertificate(certificate.RawData);
+            using (var cfrg = new CryptoApiRandomGenerator())
             {
                 return X509Utils.CreatePfxWithPrivateKey(
                     x509, friendlyName,
@@ -173,7 +165,7 @@ namespace Opc.Ua.Security.Certificates
             )
         {
             if (certificate == null) throw new ArgumentNullException(nameof(certificate));
-            using (var cfrg = new CertificateFactoryRandomGenerator())
+            using (var cfrg = new CryptoApiRandomGenerator())
             {
                 SecureRandom random = new SecureRandom(cfrg);
 
@@ -185,7 +177,7 @@ namespace Opc.Ua.Security.Certificates
                     new Asn1SignatureFactory(X509Utils.GetRSAHashAlgorithm(X509Defaults.HashAlgorithmName), signingKey, random);
 
                 Asn1Set attributes = null;
-                var san = X509Extensions.FindExtension<X509SubjectAltNameExtension>(certificate);
+                X509SubjectAltNameExtension san = X509Extensions.FindExtension<X509SubjectAltNameExtension>(certificate);
                 X509SubjectAltNameExtension alternateName = new X509SubjectAltNameExtension(san, san.Critical);
 
                 string applicationUri = null;
@@ -196,14 +188,14 @@ namespace Opc.Ua.Security.Certificates
                     {
                         applicationUri = alternateName.Uris[0];
                     }
-                    foreach (var name in alternateName.DomainNames)
+                    foreach (string name in alternateName.DomainNames)
                     {
                         if (!domainNames.Any(s => s.Equals(name, StringComparison.OrdinalIgnoreCase)))
                         {
                             domainNames.Add(name);
                         }
                     }
-                    foreach (var ipAddress in alternateName.IPAddresses)
+                    foreach (string ipAddress in alternateName.IPAddresses)
                     {
                         if (!domainNames.Any(s => s.Equals(ipAddress, StringComparison.OrdinalIgnoreCase)))
                         {
@@ -227,8 +219,9 @@ namespace Opc.Ua.Security.Certificates
 
                 if (generalNames.Count > 0)
                 {
-                    IList oids = new ArrayList();
-                    IList values = new ArrayList();
+                    IList<DerObjectIdentifier> oids = new List<DerObjectIdentifier>();
+                    IList<Org.BouncyCastle.Asn1.X509.X509Extension> values
+                        = new List<Org.BouncyCastle.Asn1.X509.X509Extension>();
                     oids.Add(Org.BouncyCastle.Asn1.X509.X509Extensions.SubjectAlternativeName);
                     values.Add(new Org.BouncyCastle.Asn1.X509.X509Extension(false,
                         new DerOctetString(new GeneralNames(generalNames.ToArray()).GetDerEncoded())));
@@ -239,7 +232,7 @@ namespace Opc.Ua.Security.Certificates
 
                 var pkcs10CertificationRequest = new Pkcs10CertificationRequest(
                     signatureFactory,
-                    new CertificateFactoryX509Name(true, certificate.Subject),
+                    new CertificateFactoryX509Name(certificate.SubjectName),
                     publicKey,
                     attributes);
 
@@ -270,14 +263,14 @@ namespace Opc.Ua.Security.Certificates
         /// <param name="cg">The cert generator</param>
         private void CreateMandatoryFields(X509V3CertificateGenerator cg)
         {
-            m_subjectDN = new CertificateFactoryX509Name(SubjectName.Name);
+            m_subjectDN = new CertificateFactoryX509Name(SubjectName);
             // subject and issuer DN, issuer of issuer for AKI
             m_issuerDN = null;
             m_issuerIssuerAKI = null;
             if (IssuerCAKeyCert != null)
             {
-                m_issuerDN = new CertificateFactoryX509Name(IssuerCAKeyCert.Subject);
-                m_issuerIssuerAKI = new CertificateFactoryX509Name(IssuerCAKeyCert.Issuer);
+                m_issuerDN = new CertificateFactoryX509Name(IssuerCAKeyCert.SubjectName);
+                m_issuerIssuerAKI = new CertificateFactoryX509Name(IssuerCAKeyCert.IssuerName);
             }
             else
             {
@@ -317,8 +310,10 @@ namespace Opc.Ua.Security.Certificates
                 basicConstraints = new BasicConstraints(m_pathLengthConstraint);
             }
             else if (!m_isCA && IssuerCAKeyCert == null)
-            {   // self-signed
-                basicConstraints = new BasicConstraints(0);
+            {
+                // see Mantis https://mantis.opcfoundation.org/view.php?id=8370
+                // self signed application certificates shall set the CA bit to false
+                basicConstraints = new BasicConstraints(false);
             }
 
             if (X509Extensions.FindExtension<X509BasicConstraintsExtension>(m_extensions) == null)
@@ -351,7 +346,7 @@ namespace Opc.Ua.Security.Certificates
             if (!m_isCA)
             {
                 // Key usage 
-                var keyUsage = KeyUsage.DataEncipherment | KeyUsage.DigitalSignature |
+                int keyUsage = KeyUsage.DataEncipherment | KeyUsage.DigitalSignature |
                         KeyUsage.NonRepudiation | KeyUsage.KeyEncipherment;
                 if (IssuerCAKeyCert == null)
                 {   // only self signed certs need KeyCertSign flag.
@@ -384,11 +379,10 @@ namespace Opc.Ua.Security.Certificates
                 }
             }
 
-            foreach (var extension in m_extensions)
+            foreach (System.Security.Cryptography.X509Certificates.X509Extension extension in m_extensions)
             {
                 cg.AddExtension(extension.Oid.Value, extension.Critical, Asn1Object.FromByteArray(extension.RawData));
             }
-
         }
 
         /// <summary>
@@ -450,7 +444,7 @@ namespace Opc.Ua.Security.Certificates
                 throw new NotSupportedException("Need an issuer certificate with a private key or a signature generator.");
             }
 
-            using (var cfrg = new CertificateFactoryRandomGenerator())
+            using (var cfrg = new CryptoApiRandomGenerator())
             {
                 // cert generators
                 SecureRandom random = new SecureRandom(cfrg);

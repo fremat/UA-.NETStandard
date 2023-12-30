@@ -48,9 +48,7 @@ namespace Opc.Ua
         /// <param name="source">A source node to be copied to this instance.</param>
         protected override void Initialize(ISystemContext context, NodeState source)
         {
-            BaseVariableState instance = source as BaseVariableState;
-
-            if (instance != null)
+            if (source is BaseVariableState instance)
             {
                 // The value will be set to default(T) if the originating value is null
                 m_value = ExtractValueFromVariant(context, instance.m_value, false);
@@ -141,7 +139,7 @@ namespace Opc.Ua
         {
             if (variable == null)
             {
-                return default(T);
+                return default;
             }
 
             return variable.Value;
@@ -159,7 +157,7 @@ namespace Opc.Ua
         {
             if (property == null)
             {
-                return default(T);
+                return default;
             }
 
             return property.Value;
@@ -200,9 +198,8 @@ namespace Opc.Ua
                 return value;
             }
 
-            ExtensionObject extension = value as ExtensionObject;
 
-            if (extension != null)
+            if (value is ExtensionObject extension)
             {
                 if (typeof(T).IsInstanceOfType(extension.Body))
                 {
@@ -227,9 +224,8 @@ namespace Opc.Ua
             if (elementType != null)
             {
                 // check for array of extensions.
-                IList<ExtensionObject> extensions = value as IList<ExtensionObject>;
 
-                if (extensions != null && typeof(IEncodeable).GetTypeInfo().IsAssignableFrom(elementType.GetTypeInfo()))
+                if (value is IList<ExtensionObject> extensions && typeof(IEncodeable).GetTypeInfo().IsAssignableFrom(elementType.GetTypeInfo()))
                 {
                     Array encodeables = Array.CreateInstance(elementType, extensions.Count);
 
@@ -265,9 +261,8 @@ namespace Opc.Ua
                 }
 
                 // check for array of variants.
-                IList<Variant> variants = value as IList<Variant>;
 
-                if (variants != null)
+                if (value is IList<Variant> variants)
                 {
                     // only support conversions to object[].
                     if (elementType != typeof(object))
@@ -292,9 +287,7 @@ namespace Opc.Ua
                 // check for array of uuids.
                 if (typeof(Guid).GetTypeInfo().IsAssignableFrom(elementType.GetTypeInfo()))
                 {
-                    IList<Uuid> uuids = value as IList<Uuid>;
-
-                    if (uuids != null)
+                    if (value is IList<Uuid> uuids)
                     {
                         Guid[] guids = new Guid[uuids.Count];
 
@@ -310,9 +303,7 @@ namespace Opc.Ua
                 // check for array of enumeration.
                 if (typeof(Enum).GetTypeInfo().IsAssignableFrom(elementType.GetTypeInfo()))
                 {
-                    IList<int> values = value as IList<int>;
-
-                    if (values != null)
+                    if (value is IList<int> values)
                     {
                         Array enums = Array.CreateInstance(elementType, values.Count);
 
@@ -334,8 +325,8 @@ namespace Opc.Ua
                 {
                     return (Guid)uuid.Value;
                 }
-            } 
-            
+            }
+
             if (typeof(Enum).GetTypeInfo().IsAssignableFrom(typeof(T).GetTypeInfo()))
             {
                 int? number = value as int?;
@@ -371,7 +362,7 @@ namespace Opc.Ua
 
             IEncodeable instance = Opc.Ua.Core.ObjectFactory.CreateInstance(targetType) as IEncodeable;
 
-            if (instance != null)
+            if (Activator.CreateInstance(targetType) is IEncodeable instance)
             {
                 IDecoder decoder = null;
 
@@ -436,10 +427,30 @@ namespace Opc.Ua
                     throw ServiceResultException.Create(StatusCodes.BadTypeMismatch, "Cannot convert '{0}' to a {1}.", value, typeof(T).Name);
                 }
 
-                return default(T);
+                return default;
             }
 
             return (T)value;
+        }
+        #endregion
+
+        #region ICloneable Members
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        /// <summary>
+        /// Makes a copy of the node and all children.
+        /// </summary>
+        /// <returns>
+        /// A new object that is a copy of this instance.
+        /// </returns>
+        public new object MemberwiseClone()
+        {
+            BaseInstanceState clone = (BaseInstanceState)Activator.CreateInstance(this.GetType(), this.Parent);
+            return CloneChildren(clone);
         }
         #endregion
 
@@ -865,14 +876,13 @@ namespace Opc.Ua
         {
             base.Export(context, node);
 
-            VariableNode variableNode = node as VariableNode;
 
-            if (variableNode != null)
+            if (node is VariableNode variableNode)
             {
                 try
                 {
                     variableNode.Value = new Variant(Utils.Clone(this.Value));
-                
+
                     variableNode.DataType = this.DataType;
                     variableNode.ValueRank = this.ValueRank;
                     variableNode.ArrayDimensions = null;
@@ -1097,7 +1107,7 @@ namespace Opc.Ua
             {
                 attributesToSave |= AttributesToSave.Historizing;
             }
-            
+
             return attributesToSave;
         }
 
@@ -1219,7 +1229,7 @@ namespace Opc.Ua
             if ((attibutesToLoad & AttributesToSave.Historizing) != 0)
             {
                 m_historizing = decoder.ReadBoolean(null);
-            }        
+            }
         }
 
         /// <summary>
@@ -1285,7 +1295,7 @@ namespace Opc.Ua
             return new ReadOnlyList<uint>(arrayDimensions);
         }
         #endregion
-        
+
         #region Overrridden Methods
         /// <summary>
         /// Recusively sets the status code and timestamp for the node and all child variables.
@@ -1360,7 +1370,7 @@ namespace Opc.Ua
 
                     return result;
                 }
-                
+
                 case Attributes.ArrayDimensions:
                 {
                     IList<uint> arrayDimensions = m_arrayDimensions;
@@ -1552,7 +1562,7 @@ namespace Opc.Ua
                     return result;
                 }
             }
-            
+
             // apply the index range and encoding.
             result = ApplyIndexRangeAndDataEncoding(context, indexRange, dataEncoding, ref value);
 
@@ -1624,7 +1634,7 @@ namespace Opc.Ua
         }
 
         #endregion
-        
+
         #region Write Support Functions
         /// <summary>
         /// Write the value for any non-value attribute.
@@ -1846,7 +1856,7 @@ namespace Opc.Ua
                     return result;
                 }
             }
-            
+
             return base.WriteNonValueAttribute(context, attributeId, value);
         }
 
@@ -1902,7 +1912,7 @@ namespace Opc.Ua
                 {
                     return result;
                 }
-                
+
                 m_value = value;
                 m_statusCode = statusCode;
                 m_timestamp = sourceTimestamp;
@@ -1923,7 +1933,7 @@ namespace Opc.Ua
             {
                 sourceTimestamp = DateTime.UtcNow;
             }
-            
+
             // verify data type.
             TypeInfo typeInfo = TypeInfo.IsInstanceOfDataType(
                 value,
@@ -1937,7 +1947,7 @@ namespace Opc.Ua
                 //if xml element data decoding error appeared : a value of type status code is received with the error code
                 if (DataTypeIds.XmlElement == m_dataType)
                 {
-                    TypeInfo statusCodeTypeInfo = TypeInfo.IsInstanceOfDataType(value,DataTypeIds.UInt32,-1,context.NamespaceUris,context.TypeTable);
+                    TypeInfo statusCodeTypeInfo = TypeInfo.IsInstanceOfDataType(value, DataTypeIds.UInt32, -1, context.NamespaceUris, context.TypeTable);
                     if (statusCodeTypeInfo != null)
                     {
                         //the error code
@@ -1994,7 +2004,7 @@ namespace Opc.Ua
                     value = target;
                 }
             }
-            
+
             // update cached values.
             m_value = value;
             m_statusCode = statusCode;
@@ -2022,7 +2032,7 @@ namespace Opc.Ua
         private VariableCopyPolicy m_copyPolicy;
         #endregion
     }
-    
+
     /// <summary> 
     /// A typed base class for all data variable nodes.
     /// </summary>
@@ -2097,7 +2107,7 @@ namespace Opc.Ua
         /// </summary>
         public PropertyState(NodeState parent) : base(parent)
         {
-            Value = default(T);
+            Value = default;
             IsValueType = !typeof(T).GetTypeInfo().IsValueType;
         }
         #endregion
@@ -2110,7 +2120,7 @@ namespace Opc.Ua
         {
             base.Initialize(context);
 
-            Value = default(T);
+            Value = default;
             DataType = TypeInfo.GetDataTypeId(typeof(T));
             ValueRank = TypeInfo.GetValueRank(typeof(T));
         }
@@ -2142,7 +2152,7 @@ namespace Opc.Ua
         }
         #endregion
     }
-    
+
     /// <summary> 
     /// A typed base class for all data variable nodes.
     /// </summary>
@@ -2207,7 +2217,7 @@ namespace Opc.Ua
             return VariableTypes.BaseDataVariableType;
         }
         #endregion
-        
+
         #region Public Properties
         /// <summary>
         /// The strings that describe the values for an enumeration.
@@ -2215,10 +2225,10 @@ namespace Opc.Ua
         public PropertyState<LocalizedText[]> EnumStrings
         {
             get
-            { 
-                return m_enumStrings;  
+            {
+                return m_enumStrings;
             }
-            
+
             set
             {
                 if (!Object.ReferenceEquals(m_enumStrings, value))
@@ -2238,7 +2248,7 @@ namespace Opc.Ua
         /// <param name="context">The context for the system being accessed.</param>
         /// <param name="children">The list of children to populate.</param>
         public override void GetChildren(
-            ISystemContext context, 
+            ISystemContext context,
             IList<BaseInstanceState> children)
         {
             if (m_enumStrings != null)
@@ -2315,7 +2325,7 @@ namespace Opc.Ua
         /// </summary>
         public BaseDataVariableState(NodeState parent) : base(parent)
         {
-            Value = default(T);
+            Value = default;
             IsValueType = !typeof(T).GetTypeInfo().IsValueType;
         }
         #endregion
@@ -2329,7 +2339,7 @@ namespace Opc.Ua
         {
             base.Initialize(context);
 
-            Value = default(T);
+            Value = default;
             DataType = TypeInfo.GetDataTypeId(typeof(T));
             ValueRank = TypeInfo.GetValueRank(typeof(T));
         }
@@ -2369,10 +2379,10 @@ namespace Opc.Ua
             {
                 return CheckTypeBeforeCast<T>(base.Value, true);
             }
-            
-            set 
-            { 
-                base.Value = value; 
+
+            set
+            {
+                base.Value = value;
             }
         }
         #endregion
@@ -2459,7 +2469,7 @@ namespace Opc.Ua
             }
         }
         #endregion
-        
+
         #region Event Callbacks
         /// <summary>
         /// Raised before the value is read.
@@ -2507,7 +2517,7 @@ namespace Opc.Ua
                 {
                     m_timestamp = DateTime.UtcNow;
                 }
-                   
+
                 timestamp = m_timestamp;
 
                 // check for errors.
@@ -2520,9 +2530,9 @@ namespace Opc.Ua
 
                 // apply the index range and encoding.
                 ServiceResult result = BaseVariableState.ApplyIndexRangeAndDataEncoding(
-                    context, 
-                    indexRange, 
-                    dataEncoding, 
+                    context,
+                    indexRange,
+                    dataEncoding,
                     ref value);
 
                 if (ServiceResult.IsBad(result))
@@ -2530,13 +2540,13 @@ namespace Opc.Ua
                     statusCode = result.StatusCode;
                     return result;
                 }
-                
+
                 // apply copy policy
                 if ((m_copyPolicy & VariableCopyPolicy.CopyOnRead) != 0)
                 {
                     value = Utils.Clone(value);
-                }                       
-                
+                }
+
                 statusCode = StatusCodes.Good;
 
                 return ServiceResult.Good;
@@ -2555,7 +2565,7 @@ namespace Opc.Ua
                     valueToRead = null;
                     return m_error;
                 }
-                
+
                 if ((m_copyPolicy & VariableCopyPolicy.CopyOnRead) != 0)
                 {
                     valueToRead = Utils.Clone(currentValue);
@@ -2603,9 +2613,8 @@ namespace Opc.Ua
                         m_updateList[ii] = updateList[ii];
 
                         // the copy copy is enforced by the value wrapper.
-                        BaseVariableState variable = m_updateList[ii] as BaseVariableState;
-                        
-                        if (variable != null)
+
+                        if (m_updateList[ii] is BaseVariableState variable)
                         {
                             variable.CopyPolicy = VariableCopyPolicy.Never;
                         }

@@ -61,9 +61,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context, NodeState source)
         {
-            ViewState instance = source as ViewState;
-
-            if (instance != null)
+            if (source is ViewState instance)
             {
                 m_eventNotifier = instance.m_eventNotifier;
                 m_containsNoLoops = instance.m_containsNoLoops;
@@ -73,33 +71,27 @@ namespace Opc.Ua
         }
         #endregion
 
-        #region Public Members
+        #region ICloneable Members
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         /// <summary>
         /// Makes a copy of the node and all children.
         /// </summary>
         /// <returns>
         /// A new object that is a copy of this instance.
         /// </returns>
-        public object MemberwiseClone(NodeState parent)
+        public new object MemberwiseClone()
         {
-            ViewState clone = new ViewState();
-
-            if (m_children != null)
-            {
-                clone.m_children = new List<BaseInstanceState>(m_children.Count);
-
-                for (int ii = 0; ii < m_children.Count; ii++)
-                {
-                    BaseInstanceState child = (BaseInstanceState)m_children[ii].MemberwiseClone();
-                    clone.m_children.Add(child);
-                }
-            }
-
-            clone.m_changeMasks = NodeStateChangeMasks.None;
-
-            return clone;
+            ViewState clone = (ViewState)Activator.CreateInstance(this.GetType());
+            return CloneChildren(clone);
         }
+        #endregion
 
+        #region Public Members
         /// <summary>
         /// The inverse name for the reference.
         /// </summary>
@@ -175,9 +167,8 @@ namespace Opc.Ua
         {
             base.Export(context, node);
 
-            ViewNode viewNode = node as ViewNode;
 
-            if (viewNode != null)
+            if (node is ViewNode viewNode)
             {
                 viewNode.EventNotifier = this.EventNotifier;
                 viewNode.ContainsNoLoops = this.ContainsNoLoops;
@@ -280,17 +271,17 @@ namespace Opc.Ua
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="decoder">The decoder.</param>
-        /// <param name="attibutesToLoad">The attributes to load.</param>
-        public override void Update(ISystemContext context, BinaryDecoder decoder, AttributesToSave attibutesToLoad)
+        /// <param name="attributesToLoad">The attributes to load.</param>
+        public override void Update(ISystemContext context, BinaryDecoder decoder, AttributesToSave attributesToLoad)
         {
-            base.Update(context, decoder, attibutesToLoad);
+            base.Update(context, decoder, attributesToLoad);
 
-            if ((attibutesToLoad & AttributesToSave.EventNotifier) != 0)
+            if ((attributesToLoad & AttributesToSave.EventNotifier) != 0)
             {
                 m_eventNotifier = decoder.ReadByte(null);
             }
 
-            if ((attibutesToLoad & AttributesToSave.ContainsNoLoops) != 0)
+            if ((attributesToLoad & AttributesToSave.ContainsNoLoops) != 0)
             {
                 m_containsNoLoops = decoder.ReadBoolean(null);
             }

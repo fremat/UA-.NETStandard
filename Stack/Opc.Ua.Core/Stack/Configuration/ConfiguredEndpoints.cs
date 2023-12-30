@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -23,8 +24,10 @@ namespace Opc.Ua
     /// <summary>
     /// Stores a list of cached enpoints.
     /// </summary>
-    public partial class ConfiguredEndpointCollection
+    public partial class ConfiguredEndpointCollection : ICloneable
     {
+        private const string kDiscoverySuffix = "/discovery";
+
         #region Constructors
         /// <summary>
         /// Initializes the object with its default endpoint configuration.
@@ -33,7 +36,7 @@ namespace Opc.Ua
         {
             Initialize();
 
-            m_defaultConfiguration = (EndpointConfiguration)configuration.MemberwiseClone();
+            m_defaultConfiguration = (EndpointConfiguration)configuration.Clone();
         }
 
         /// <summary>
@@ -129,9 +132,9 @@ namespace Opc.Ua
                 {
                     string discoveryUrl = endpoint.Description.EndpointUrl;
 
-                    if (!discoveryUrl.StartsWith(Utils.UriSchemeOpcTcp))
+                    if (discoveryUrl.StartsWith(Utils.UriSchemeHttp))
                     {
-                        discoveryUrl += "/discovery";
+                        discoveryUrl += kDiscoverySuffix;
                     }
 
                     endpoint.Description.Server.DiscoveryUrls.Add(discoveryUrl);
@@ -158,7 +161,7 @@ namespace Opc.Ua
                     continue;
                 }
 
-                endpoint.Description.Server = (ApplicationDescription)server.MemberwiseClone();
+                endpoint.Description.Server = (ApplicationDescription)server.Clone();
 
             }
 
@@ -229,6 +232,14 @@ namespace Opc.Ua
         {
             DataContractSerializer serializer = new DataContractSerializer(typeof(ConfiguredEndpointCollection));
             serializer.WriteObject(ostrm, this);
+        }
+        #endregion
+
+        #region ICloneable
+        /// <inheritdoc/>
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
         }
 
         /// <summary>
@@ -520,9 +531,11 @@ namespace Opc.Ua
                     }
                 }
 
-                if (endpointUrl != null && endpointUrl.EndsWith("/discovery", StringComparison.Ordinal))
+                if (endpointUrl != null &&
+                    endpointUrl.StartsWith(Utils.UriSchemeHttp, StringComparison.Ordinal) &&
+                    endpointUrl.EndsWith(kDiscoverySuffix, StringComparison.Ordinal))
                 {
-                    endpointUrl = endpointUrl.Substring(0, endpointUrl.Length - "/discovery".Length);
+                    endpointUrl = endpointUrl.Substring(0, endpointUrl.Length - kDiscoverySuffix.Length);
                 }
 
                 if (endpointUrl != null)
@@ -634,9 +647,14 @@ namespace Opc.Ua
                 description.TransportProfileUri = Profiles.UaTcpTransport;
                 description.Server.DiscoveryUrls.Add(description.EndpointUrl);
             }
-            else if (description.EndpointUrl.StartsWith(Utils.UriSchemeHttps, StringComparison.Ordinal))
+            else if (Utils.IsUriHttpsScheme(description.EndpointUrl))
             {
                 description.TransportProfileUri = Profiles.HttpsBinaryTransport;
+                description.Server.DiscoveryUrls.Add(description.EndpointUrl);
+            }
+            else if (description.EndpointUrl.StartsWith(Utils.UriSchemeOpcWss, StringComparison.Ordinal))
+            {
+                description.TransportProfileUri = Profiles.UaTcpTransport;
                 description.Server.DiscoveryUrls.Add(description.EndpointUrl);
             }
 
@@ -771,8 +789,10 @@ namespace Opc.Ua
     /// <summary>
     /// Stores the configuration information for an endpoint.
     /// </summary>
-    public partial class ConfiguredEndpoint : IFormattable
+    public partial class ConfiguredEndpoint : IFormattable, ICloneable
     {
+        private const string kDiscoverySuffix = "/discovery";
+
         #region Constructors
         /// <summary>
         /// Creates a configured endpoint from the server description.
@@ -794,9 +814,10 @@ namespace Opc.Ua
 
                 if (baseUrl != null)
                 {
-                    if (baseUrl.EndsWith("/discovery", StringComparison.Ordinal))
+                    if (baseUrl.StartsWith(Utils.UriSchemeHttp, StringComparison.Ordinal) &&
+                        baseUrl.EndsWith(kDiscoverySuffix, StringComparison.Ordinal))
                     {
-                        baseUrl = baseUrl.Substring(0, baseUrl.Length - "/discovery".Length);
+                        baseUrl = baseUrl.Substring(0, baseUrl.Length - kDiscoverySuffix.Length);
                     }
                 }
 
@@ -809,14 +830,17 @@ namespace Opc.Ua
                     m_description.SecurityPolicyUri = SecurityPolicies.Basic256Sha256;
                     m_description.UserIdentityTokens.Add(new UserTokenPolicy(UserTokenType.Anonymous));
 
-                    if (url.Scheme == Utils.UriSchemeHttps)
-                    {
-                        m_description.TransportProfileUri = Profiles.HttpsBinaryTransport;
-                    }
-
                     if (url.Scheme == Utils.UriSchemeOpcTcp)
                     {
                         m_description.TransportProfileUri = Profiles.UaTcpTransport;
+                    }
+                    else if (Utils.IsUriHttpsScheme(url.Scheme))
+                    {
+                        m_description.TransportProfileUri = Profiles.HttpsBinaryTransport;
+                    }
+                    else if (url.Scheme == Utils.UriSchemeOpcWss)
+                    {
+                        m_description.TransportProfileUri = Profiles.UaWssTransport;
                     }
 
                     break;
@@ -874,6 +898,13 @@ namespace Opc.Ua
         }
         #endregion
 
+        #region ICloneable
+        /// <inheritdoc/>
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         /// <summary>
         /// Returns a deep copy of the endpoint.
         /// </summary>
@@ -884,6 +915,7 @@ namespace Opc.Ua
             clone.Update(this);
             return clone;
         }
+        #endregion
 
         #region Overridden Methods
         /// <summary>
@@ -1078,12 +1110,13 @@ namespace Opc.Ua
             }
         }
 
+#if NET_STANDARD_ASYNC
         /// <summary>
         /// Updates an endpoint with information from the server's discovery endpoint.
         /// </summary>
-        public Task UpdateFromServerAsync()
+        public Task UpdateFromServerAsync(CancellationToken ct = default)
         {
-            return UpdateFromServerAsync(EndpointUrl, m_description.SecurityMode, m_description.SecurityPolicyUri);
+            return UpdateFromServerAsync(EndpointUrl, m_description.SecurityMode, m_description.SecurityPolicyUri, ct);
         }
 
         /// <summary>
@@ -1092,9 +1125,10 @@ namespace Opc.Ua
         public Task UpdateFromServerAsync(
             Uri endpointUrl,
             MessageSecurityMode securityMode,
-            string securityPolicyUri)
+            string securityPolicyUri,
+            CancellationToken ct = default)
         {
-            return UpdateFromServerAsync(endpointUrl, null, securityMode, securityPolicyUri);
+            return UpdateFromServerAsync(endpointUrl, null, securityMode, securityPolicyUri, ct);
         }
 
         /// <summary>
@@ -1104,7 +1138,8 @@ namespace Opc.Ua
             Uri endpointUrl,
             ITransportWaitingConnection connection,
             MessageSecurityMode securityMode,
-            string securityPolicyUri)
+            string securityPolicyUri,
+            CancellationToken ct = default)
         {
             // get the a discovery url.
             Uri discoveryUrl = GetDiscoveryUrl(endpointUrl);
@@ -1123,7 +1158,7 @@ namespace Opc.Ua
             try
             {
                 // get the endpoints.
-                EndpointDescriptionCollection collection = await client.GetEndpointsAsync(null).ConfigureAwait(false);
+                EndpointDescriptionCollection collection = await client.GetEndpointsAsync(null, ct).ConfigureAwait(false);
 
                 // find list of matching endpoints.
                 var matches = MatchEndpoints(
@@ -1141,9 +1176,10 @@ namespace Opc.Ua
             }
             finally
             {
-                client.Close();
+                await client.CloseAsync(ct).ConfigureAwait(false);
             }
         }
+#endif
 
         /// <summary>
         /// Returns a discovery url that can be used to update the endpoint description.
@@ -1171,9 +1207,9 @@ namespace Opc.Ua
             // attempt to construct a discovery url by appending 'discovery' to the endpoint.
             if (discoveryUrls == null || discoveryUrls.Count == 0)
             {
-                if (endpointUrl.Scheme != Utils.UriSchemeOpcTcp)
+                if (endpointUrl.Scheme.StartsWith(Utils.UriSchemeHttp, StringComparison.Ordinal))
                 {
-                    return new Uri(String.Format(CultureInfo.InvariantCulture, "{0}/discovery", endpointUrl));
+                    return new Uri(String.Format(CultureInfo.InvariantCulture, "{0}" + kDiscoverySuffix, endpointUrl));
                 }
                 else
                 {

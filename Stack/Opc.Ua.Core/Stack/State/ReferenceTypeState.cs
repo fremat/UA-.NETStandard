@@ -58,15 +58,33 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context, NodeState source)
         {
-            ReferenceTypeState type = source as ReferenceTypeState;
-
-            if (type != null)
+            if (source is ReferenceTypeState type)
             {
                 m_inverseName = type.m_inverseName;
                 m_symmetric = type.m_symmetric;
             }
 
             base.Initialize(context, source);
+        }
+        #endregion
+
+        #region ICloneable Members
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        /// <summary>
+        /// Makes a copy of the node and all children.
+        /// </summary>
+        /// <returns>
+        /// A new object that is a copy of this instance.
+        /// </returns>
+        public new object MemberwiseClone()
+        {
+            ReferenceTypeState clone = (ReferenceTypeState)Activator.CreateInstance(this.GetType());
+            return CloneChildren(clone);
         }
         #endregion
 
@@ -124,9 +142,8 @@ namespace Opc.Ua
         {
             base.Export(context, node);
 
-            ReferenceTypeNode referenceTypeNode = node as ReferenceTypeNode;
 
-            if (referenceTypeNode != null)
+            if (node is ReferenceTypeNode referenceTypeNode)
             {
                 referenceTypeNode.InverseName = this.InverseName;
                 referenceTypeNode.Symmetric = this.Symmetric;
@@ -245,7 +262,7 @@ namespace Opc.Ua
             }
         }
         #endregion
-        
+
         #region Event Callbacks
         /// <summary>
         /// Raised when the InverseName attribute is read.
@@ -292,7 +309,14 @@ namespace Opc.Ua
 
                     if (ServiceResult.IsGood(result))
                     {
-                        value = inverseName;
+                        if (inverseName == null)
+                        {
+                            result = StatusCodes.BadAttributeIdInvalid;
+                        }
+                        else
+                        {
+                            value = inverseName;
+                        }
                     }
 
                     return result;
@@ -393,7 +417,7 @@ namespace Opc.Ua
             return base.WriteNonValueAttribute(context, attributeId, value);
         }
         #endregion
-        
+
         #region Private Fields
         private LocalizedText m_inverseName;
         private bool m_symmetric;

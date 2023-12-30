@@ -136,7 +136,7 @@ namespace Opc.Ua.Bindings
             m_serverCertificate = settings.ServerCertificate;
             m_serverCertificateChain = settings.ServerCertificateChain;
 
-            m_bufferManager = new BufferManager("Server", (int)Int32.MaxValue, m_quotas.MaxBufferSize);
+            m_bufferManager = new BufferManager("Server", m_quotas.MaxBufferSize);
             m_channels = new Dictionary<uint, TcpListenerChannel>();
             m_reverseConnectListener = settings.ReverseConnectListener;
 
@@ -260,6 +260,9 @@ namespace Opc.Ua.Bindings
                 if (m_callback != null)
                 {
                     channel.SetRequestReceivedCallback(new TcpChannelRequestEventHandler(OnRequestReceived));
+                    channel.SetReportOpenSecureChannellAuditCalback(new ReportAuditOpenSecureChannelEventHandler(OnReportAuditOpenSecureChannelEvent));
+                    channel.SetReportCloseSecureChannellAuditCalback(new ReportAuditCloseSecureChannelEventHandler(OnReportAuditCloseSecureChannelEvent));
+                    channel.SetReportCertificateAuditCalback(new ReportAuditCertificateEventHandler(OnReportAuditCertificateEvent));
                 }
             }
             catch (Exception e)
@@ -297,7 +300,7 @@ namespace Opc.Ua.Bindings
                 {
                     ipAddress = IPAddress.Parse(m_uri.Host);
                 }
-             
+
                 // create IPv4 or IPv6 socket.
                 try
                 {
@@ -437,7 +440,20 @@ namespace Opc.Ua.Bindings
             m_serverCertificateChain = serverCertificateChain;
             foreach (var description in m_descriptions)
             {
-                if (description.ServerCertificate != null)
+                // check if complete chain should be sent.
+                if (m_serverCertificateChain != null &&
+                    m_serverCertificateChain.Count > 1)
+                {
+                    var byteServerCertificateChain = new List<byte>();
+
+                    for (int i = 0; i < m_serverCertificateChain.Count; i++)
+                    {
+                        byteServerCertificateChain.AddRange(m_serverCertificateChain[i].RawData);
+                    }
+
+                    description.ServerCertificate = byteServerCertificateChain.ToArray();
+                }
+                else if (description.ServerCertificate != null)
                 {
                     description.ServerCertificate = serverCertificate.RawData;
                 }
@@ -458,9 +474,7 @@ namespace Opc.Ua.Bindings
                 repeatAccept = false;
                 lock (m_lock)
                 {
-                    Socket listeningSocket = e.UserToken as Socket;
-
-                    if (listeningSocket == null)
+                    if (!(e.UserToken is Socket listeningSocket))
                     {
                         Utils.LogError("OnAccept: Listensocket was null.");
                         e.Dispose();
@@ -576,7 +590,7 @@ namespace Opc.Ua.Bindings
             {
                 if (m_callback != null)
                 {
-                    m_callback.ReportAuditOpenSecureChannelEvent(channel, request, clientCertificate, exception);
+                    m_callback.ReportAuditOpenSecureChannelEvent(channel.GlobalChannelId, channel.EndpointDescription, request, clientCertificate, exception);
                 }
             }
             catch (Exception e)
@@ -594,7 +608,7 @@ namespace Opc.Ua.Bindings
             {
                 if (m_callback != null)
                 {
-                    m_callback.ReportAuditCloseSecureChannelEvent(channel, exception);
+                    m_callback.ReportAuditCloseSecureChannelEvent(channel.GlobalChannelId, exception);
                 }
             }
             catch (Exception e)
@@ -602,8 +616,6 @@ namespace Opc.Ua.Bindings
                 Utils.LogError(e, "TCPLISTENER - Unexpected error sending CloseSecureChannel Audit event.");
             }
         }
-
-
 
         /// <summary>
         /// Callback for reporting the certificate audit events
@@ -622,6 +634,7 @@ namespace Opc.Ua.Bindings
                 Utils.LogError(e, "TCPLISTENER - Unexpected error sending Certificate Audit event.");
             }
         }
+
         private void OnProcessRequestComplete(IAsyncResult result)
         {
             try
@@ -695,7 +708,7 @@ namespace Opc.Ua.Bindings
         #endregion
 
         #region Private Fields
-        private object m_lock = new object();
+        private readonly object m_lock = new object();
         private string m_listenerId;
         private Uri m_uri;
         private EndpointDescriptionCollection m_descriptions;

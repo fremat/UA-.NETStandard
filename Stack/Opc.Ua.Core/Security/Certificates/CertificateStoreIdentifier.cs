@@ -19,8 +19,15 @@ namespace Opc.Ua
     /// <summary>
     /// Describes a certificate store.
     /// </summary>
-    public partial class CertificateStoreIdentifier : IFormattable
+    public partial class CertificateStoreIdentifier : IFormattable, ICloneable
     {
+        #region ICloneable
+        /// <inheritdoc/>
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         /// <summary>
         /// Creates a new object that is a copy of the current instance.
         /// </summary>
@@ -28,6 +35,7 @@ namespace Opc.Ua
         {
             return base.MemberwiseClone();
         }
+        #endregion
 
         #region IFormattable Members
         /// <summary>
@@ -226,14 +234,22 @@ namespace Opc.Ua
         #endregion
 
         #region Internal Methods
-        internal static ICertificateStoreType GetCertificateStoreTypeByName(string storeTypeName)
+        /// <summary>
+        /// Returns the registered type for a custom certificate store.
+        /// </summary>
+        /// <param name="storeTypeName"></param>
+        /// <returns></returns>
+        public static ICertificateStoreType GetCertificateStoreTypeByName(string storeTypeName)
         {
             ICertificateStoreType result;
             s_registeredStoreTypes.TryGetValue(storeTypeName, out result);
             return result;
         }
 
-        internal static IReadOnlyCollection<string> RegisteredStoreTypeNames => s_registeredStoreTypes.Keys;
+        /// <summary>
+        /// Returns the collection of registered certificate store keys.
+        /// </summary>
+        public static IReadOnlyCollection<string> RegisteredStoreTypeNames => s_registeredStoreTypes.Keys;
         #endregion 
 
         #region Data Members

@@ -444,11 +444,18 @@ namespace Opc.Ua.Server
         {
             culture = null;
             TranslationTable match = null;
+
+            if (preferredLocales == null || preferredLocales.Count == 0) { return null; }
             
             for (int jj = 0; jj < preferredLocales.Count; jj++)
             {
                 // parse the locale.
                 string language = preferredLocales[jj];
+
+                if (language == null)
+                {
+                    continue;
+                }
 
                 int index = language.IndexOf('-');
 
@@ -562,7 +569,7 @@ namespace Opc.Ua.Server
         #endregion
 
         #region Private Fields
-        private object m_lock = new object();
+        private readonly object m_lock = new object();
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         private IServerInternal m_server;
         private List<TranslationTable> m_translationTables;

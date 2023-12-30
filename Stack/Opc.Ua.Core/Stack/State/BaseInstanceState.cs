@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Opc.Ua
-{       
+{
     /// <summary> 
     /// The base class for all instance nodes.
     /// </summary>
@@ -37,9 +37,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context, NodeState source)
         {
-            BaseInstanceState instance = source as BaseInstanceState;
-
-            if (instance != null)
+            if (source is BaseInstanceState instance)
             {
                 m_referenceTypeId = instance.m_referenceTypeId;
                 m_typeDefinitionId = instance.m_typeDefinitionId;
@@ -61,14 +59,11 @@ namespace Opc.Ua
         }
         #endregion
 
-        #region Public Members
-        /// <summary>
-        /// The parent node.
-        /// </summary>
-        public NodeState Parent
+        #region ICloneable Members
+        /// <inheritdoc/>
+        public override object Clone()
         {
-            get { return m_parent; }
-            internal set { m_parent = value; }
+            return this.MemberwiseClone();
         }
 
         /// <summary>
@@ -80,21 +75,18 @@ namespace Opc.Ua
         public new object MemberwiseClone()
         {
             BaseInstanceState clone = new BaseInstanceState(this.NodeClass, this.Parent);
+            return CloneChildren(clone);
+        }
+        #endregion
 
-            if (m_children != null)
-            {
-                clone.m_children = new List<BaseInstanceState>(m_children.Count);
-
-                for (int ii = 0; ii < m_children.Count; ii++)
-                {
-                    BaseInstanceState child = (BaseInstanceState)m_children[ii].MemberwiseClone();
-                    clone.m_children.Add(child);
-                }
-            }
-
-            clone.m_changeMasks = NodeStateChangeMasks.None;
-
-            return clone;
+        #region Public Members
+        /// <summary>
+        /// The parent node.
+        /// </summary>
+        public NodeState Parent
+        {
+            get { return m_parent; }
+            internal set { m_parent = value; }
         }
 
         /// <summary>
@@ -128,46 +120,44 @@ namespace Opc.Ua
         public string GetDisplayPath(int maxLength, char seperator)
         {
             string name = GetNonNullText(this);
-            
+
             if (m_parent == null)
             {
                 return name;
             }
-            
+
             StringBuilder buffer = new StringBuilder();
-              
+
             if (maxLength > 2)
             {
                 NodeState parent = m_parent;
                 List<string> names = new List<string>();
-                
+
                 while (parent != null)
                 {
-                    BaseInstanceState instance = parent as BaseInstanceState;
-
-                    if (instance == null)
+                    if (!(parent is BaseInstanceState instance))
                     {
                         break;
                     }
-                   
+
                     parent = instance.Parent;
-                    
+
                     string parentName = GetNonNullText(parent);
                     names.Add(parentName);
 
-                    if (names.Count == maxLength-2)
+                    if (names.Count == maxLength - 2)
                     {
                         break;
                     }
                 }
-                 
-                for (int ii = names.Count-1; ii >= 0; ii--)
+
+                for (int ii = names.Count - 1; ii >= 0; ii--)
                 {
                     buffer.Append(names[ii]);
                     buffer.Append(seperator);
                 }
             }
-            
+
             buffer.Append(GetNonNullText(m_parent));
             buffer.Append(seperator);
             buffer.Append(name);
@@ -196,7 +186,7 @@ namespace Opc.Ua
                     return node.NodeClass.ToString();
                 }
             }
-                
+
             return node.DisplayName.Text;
         }
 
@@ -207,7 +197,7 @@ namespace Opc.Ua
         {
             get { return m_numericId; }
             set { m_numericId = value; }
-        }     
+        }
 
         /// <summary>
         /// The type of reference from the parent node to the instance.
@@ -215,10 +205,10 @@ namespace Opc.Ua
         public NodeId ReferenceTypeId
         {
             get
-            { 
-                return m_referenceTypeId;  
+            {
+                return m_referenceTypeId;
             }
-            
+
             set
             {
                 if (!Object.ReferenceEquals(m_referenceTypeId, value))
@@ -236,10 +226,10 @@ namespace Opc.Ua
         public NodeId TypeDefinitionId
         {
             get
-            { 
-                return m_typeDefinitionId;  
+            {
+                return m_typeDefinitionId;
             }
-            
+
             set
             {
                 if (!Object.ReferenceEquals(m_typeDefinitionId, value))
@@ -257,10 +247,10 @@ namespace Opc.Ua
         public NodeId ModellingRuleId
         {
             get
-            { 
-                return m_modellingRuleId;  
+            {
+                return m_modellingRuleId;
             }
-            
+
             set
             {
                 if (!Object.ReferenceEquals(m_modellingRuleId, value))
@@ -373,7 +363,7 @@ namespace Opc.Ua
                     }
 
                     // process next element in path.
-                    if (jj < field.BrowsePath.Count-1)
+                    if (jj < field.BrowsePath.Count - 1)
                     {
                         parent = child;
                         continue;
@@ -382,9 +372,7 @@ namespace Opc.Ua
                     // save the variable value.
                     if (field.AttributeId == Attributes.Value)
                     {
-                        BaseVariableState variable = child as BaseVariableState;
-
-                        if (variable != null && field.AttributeId == Attributes.Value)
+                        if (child is BaseVariableState variable && field.AttributeId == Attributes.Value)
                         {
                             try
                             {
@@ -412,9 +400,7 @@ namespace Opc.Ua
         /// <param name="minimumSamplingInterval">The minimum sampling interval.</param>
         public void SetMinimumSamplingInterval(ISystemContext context, double minimumSamplingInterval)
         {
-            BaseVariableState variable = this as BaseVariableState;
-
-            if (variable != null)
+            if (this is BaseVariableState variable)
             {
                 variable.MinimumSamplingInterval = minimumSamplingInterval;
             }
@@ -434,7 +420,7 @@ namespace Opc.Ua
                 children[ii].SetMinimumSamplingInterval(context, minimumSamplingInterval);
             }
         }
-        #endregion 
+        #endregion
 
         #region IFilterTarget Members
         /// <summary cref="IFilterTarget.IsTypeOf" />
@@ -453,10 +439,10 @@ namespace Opc.Ua
 
         /// <summary cref="IFilterTarget.GetAttributeValue" />
         public virtual object GetAttributeValue(
-            FilterContext context, 
-            NodeId typeDefinitionId, 
-            IList<QualifiedName> relativePath, 
-            uint attributeId, 
+            FilterContext context,
+            NodeId typeDefinitionId,
+            IList<QualifiedName> relativePath,
+            uint attributeId,
             NumericRange indexRange)
         {
             // check the type definition.
@@ -469,7 +455,7 @@ namespace Opc.Ua
             }
 
             // read the child attribute.
-            DataValue dataValue = new DataValue();   
+            DataValue dataValue = new DataValue();
 
             ServiceResult result = ReadChildAttribute(
                 null,
@@ -477,7 +463,7 @@ namespace Opc.Ua
                 0,
                 attributeId,
                 dataValue);
-            
+
             if (ServiceResult.IsBad(result))
             {
                 return null;
@@ -489,7 +475,7 @@ namespace Opc.Ua
             if (value != null)
             {
                 result = indexRange.ApplyRange(ref value);
-                
+
                 if (ServiceResult.IsBad(result))
                 {
                     return null;
@@ -514,7 +500,7 @@ namespace Opc.Ua
             if (this.Parent != null)
             {
                 NodeId referenceTypeId = this.ReferenceTypeId;
-                
+
                 if (NodeId.IsNull(referenceTypeId))
                 {
                     referenceTypeId = ReferenceTypeIds.HasComponent;
@@ -531,7 +517,7 @@ namespace Opc.Ua
             if (!NodeId.IsNull(this.ModellingRuleId))
             {
                 node.ReferenceTable.Add(ReferenceTypeIds.HasModellingRule, false, this.ModellingRuleId);
-            }            
+            }
         }
 
         /// <summary>
@@ -567,7 +553,7 @@ namespace Opc.Ua
 
             encoder.PopNamespace();
         }
-        
+
         /// <summary>
         /// Returns a mask which indicates which attributes have non-default value.
         /// </summary>
@@ -596,7 +582,7 @@ namespace Opc.Ua
             {
                 attributesToSave |= AttributesToSave.NumericId;
             }
-            
+
             return attributesToSave;
         }
 
@@ -636,27 +622,27 @@ namespace Opc.Ua
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="decoder">The decoder.</param>
-        /// <param name="attibutesToLoad">The attributes to load.</param>
-        public override void Update(ISystemContext context, BinaryDecoder decoder, AttributesToSave attibutesToLoad)
+        /// <param name="attributesToLoad">The attributes to load.</param>
+        public override void Update(ISystemContext context, BinaryDecoder decoder, AttributesToSave attributesToLoad)
         {
-            base.Update(context, decoder, attibutesToLoad);
+            base.Update(context, decoder, attributesToLoad);
 
-            if ((attibutesToLoad & AttributesToSave.ReferenceTypeId) != 0)
+            if ((attributesToLoad & AttributesToSave.ReferenceTypeId) != 0)
             {
                 m_referenceTypeId = decoder.ReadNodeId(null);
             }
 
-            if ((attibutesToLoad & AttributesToSave.TypeDefinitionId) != 0)
+            if ((attributesToLoad & AttributesToSave.TypeDefinitionId) != 0)
             {
                 m_typeDefinitionId = decoder.ReadNodeId(null);
             }
 
-            if ((attibutesToLoad & AttributesToSave.ModellingRuleId) != 0)
+            if ((attributesToLoad & AttributesToSave.ModellingRuleId) != 0)
             {
                 m_modellingRuleId = decoder.ReadNodeId(null);
             }
 
-            if ((attibutesToLoad & AttributesToSave.NumericId) != 0)
+            if ((attributesToLoad & AttributesToSave.NumericId) != 0)
             {
                 m_numericId = decoder.ReadUInt32(null);
             }
@@ -680,7 +666,7 @@ namespace Opc.Ua
 
             if (decoder.Peek("TypeDefinitionId"))
             {
-               TypeDefinitionId = decoder.ReadNodeId("TypeDefinitionId");
+                TypeDefinitionId = decoder.ReadNodeId("TypeDefinitionId");
             }
 
             if (decoder.Peek("ModellingRuleId"))

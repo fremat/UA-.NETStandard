@@ -39,6 +39,8 @@
     <RejectSHA1SignedCertificates>false</RejectSHA1SignedCertificates>
     <MinimumCertificateKeySize>1024</MinimumCertificateKeySize>
     <AddAppCertToTrustedStore>false</AddAppCertToTrustedStore>
+    <SendCertificateChain>true</SendCertificateChain>
+      
   </SecurityConfiguration>
 
   <TransportConfigurations></TransportConfigurations>
@@ -147,6 +149,7 @@
         </CertificateGroups>
         <KnownHostNames/>
         <DatabaseStorePath>%LocalApplicationData%/OPC/GDS/gdsdb.json</DatabaseStorePath>
+        <UsersDatabaseStorePath>%LocalApplicationData%/OPC/GDS/gdsusersdb.json</UsersDatabaseStorePath>
       </GlobalDiscoveryServerConfiguration>
     </ua:XmlElement>
   </Extensions>

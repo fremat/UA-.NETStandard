@@ -321,7 +321,7 @@ namespace Opc.Ua.Bindings
         /// <exception cref="System.ObjectDisposedException">The System.Net.Sockets.Socket has been closed.</exception>
         /// <returns>The System.Net.EndPoint that the System.Net.Sockets.Socket is using for communications.</returns>
         public EndPoint LocalEndpoint => m_socket.LocalEndPoint;
-        
+
         /// <summary>
         /// Gets the transport channel features implemented by this message socket.
         /// </summary>
@@ -551,6 +551,12 @@ namespace Opc.Ua.Bindings
                     e?.Dispose();
                 }
 
+                if (m_readState == ReadState.NotConnected &&
+                    ServiceResult.IsGood(error))
+                {
+                    error = ServiceResult.Create(StatusCodes.BadConnectionClosed, "Remote side closed connection.");
+                }
+
                 if (ServiceResult.IsBad(error))
                 {
                     if (m_receiveBuffer != null)
@@ -618,9 +624,9 @@ namespace Opc.Ua.Bindings
 
                     return ServiceResult.Create(
                         StatusCodes.BadTcpMessageTooLarge,
-                        "Messages size {1} bytes is too large for buffer of size {0}.",
-                        m_receiveBufferSize,
-                        m_incomingMessageSize);
+                        "Messages size {0} bytes is too large for buffer of size {1}.",
+                        m_incomingMessageSize,
+                        m_receiveBufferSize);
                 }
 
                 // set up buffer for reading the message body.
@@ -673,22 +679,11 @@ namespace Opc.Ua.Bindings
             // check if already closed.
             lock (m_socketLock)
             {
-                if (m_socket == null)
-                {
-                    if (m_receiveBuffer != null)
-                    {
-                        m_bufferManager.ReturnBuffer(m_receiveBuffer, "ReadNextBlock");
-                        m_receiveBuffer = null;
-                    }
-                    m_readState = ReadState.NotConnected;
-                    return;
-                }
-
                 socket = m_socket;
 
-                // avoid stale ServiceException when socket is disconnected
-                if (!socket.Connected)
+                if (socket == null || !socket.Connected)
                 {
+                    // buffer is returned in calling code
                     m_readState = ReadState.NotConnected;
                     return;
                 }
@@ -831,8 +826,7 @@ namespace Opc.Ua.Bindings
         /// </summary>
         public bool SendAsync(IMessageSocketAsyncEventArgs args)
         {
-            TcpMessageSocketAsyncEventArgs eventArgs = args as TcpMessageSocketAsyncEventArgs;
-            if (eventArgs == null)
+            if (!(args is TcpMessageSocketAsyncEventArgs eventArgs))
             {
                 throw new ArgumentNullException(nameof(args));
             }

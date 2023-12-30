@@ -44,6 +44,7 @@ namespace Opc.Ua.Configuration
         IApplicationConfigurationBuilderClientSelected,
         IApplicationConfigurationBuilderSecurity,
         IApplicationConfigurationBuilderSecurityOptions,
+        IApplicationConfigurationBuilderSecurityOptionStores,
         IApplicationConfigurationBuilderServerPolicies,
         IApplicationConfigurationBuilderCreate
     {
@@ -246,6 +247,9 @@ namespace Opc.Ua.Configuration
 
         /// <inheritdoc cref="ServerConfiguration.OperationLimits"/>
         IApplicationConfigurationBuilderServerOptions SetOperationLimits(OperationLimits operationLimits);
+
+        /// <inheritdoc cref="ServerConfiguration.AuditingEnabled"/>
+        IApplicationConfigurationBuilderServerOptions SetAuditingEnabled(bool auditingEnabled);
     }
 
     /// <summary>
@@ -378,6 +382,50 @@ namespace Opc.Ua.Configuration
             string appRoot = null,
             string rejectedRoot = null
             );
+
+        /// <summary>
+        /// Add the security configuration for mandatory application, issuer and trusted stores.
+        /// </summary>
+        /// <param name="subjectName">Application certificate subject name as distinguished name.
+        /// A DC=localhost entry is converted to the hostname. The common name CN= is mandatory.</param>
+        /// <param name="appRoot">The path to the app cert store.</param>
+        /// <param name="trustedRoot">The path to the trusted cert store.</param>
+        /// <param name="issuerRoot">The path to the issuer cert store.</param>
+        /// <param name="rejectedRoot">The path to the rejected certificate store.</param>
+        IApplicationConfigurationBuilderSecurityOptionStores AddSecurityConfigurationStores(
+            string subjectName,
+            string appRoot,
+            string trustedRoot,
+            string issuerRoot,
+            string rejectedRoot = null
+            );
+    }
+
+    /// <summary>
+    /// Add security options to the configuration.
+    /// </summary>
+    public interface IApplicationConfigurationBuilderSecurityOptionStores :
+        IApplicationConfigurationBuilderSecurityOptions
+    {
+        /// <summary>
+        /// Add the security configuration for the user certificate issuer and trusted stores.
+        /// </summary>
+        /// <param name="trustedRoot">The path to the trusted cert store.</param>
+        /// <param name="issuerRoot">The path to the issuer cert store.</param>
+        IApplicationConfigurationBuilderSecurityOptionStores AddSecurityConfigurationUserStore(
+            string trustedRoot,
+            string issuerRoot
+            );
+
+        /// <summary>
+        /// Add the security configuration for the https certificate issuer and trusted stores.
+        /// </summary>
+        /// <param name="trustedRoot">The path to the trusted cert store.</param>
+        /// <param name="issuerRoot">The path to the issuer cert store.</param>
+        IApplicationConfigurationBuilderSecurityOptionStores AddSecurityConfigurationHttpsStore(
+            string trustedRoot,
+            string issuerRoot
+            );
     }
 
     /// <summary>
@@ -414,6 +462,12 @@ namespace Opc.Ua.Configuration
         /// </summary>
         /// <param name="rejectUnknownRevocationStatus"><see langword="false"/> to accept CA certs with unknown revocation status.</param>
         IApplicationConfigurationBuilderSecurityOptions SetRejectUnknownRevocationStatus(bool rejectUnknownRevocationStatus);
+
+        /// <summary>
+        /// Use the validated certificates for fast Validation.
+        /// </summary>
+        /// <param name="useValidatedCertificates"><see langword="true"/> to use the validated certificates.</param>
+        IApplicationConfigurationBuilderSecurityOptions SetUseValidatedCertificates(bool useValidatedCertificates);
 
         /// <summary>
         /// Whether to suppress errors which are caused by clients and servers which provide
@@ -473,7 +527,7 @@ namespace Opc.Ua.Configuration
         IApplicationConfigurationBuilderTraceConfiguration SetDeleteOnLoad(bool deleteOnLoad);
 
         /// <inheritdoc cref="TraceConfiguration.TraceMasks"/>
-        IApplicationConfigurationBuilderTraceConfiguration SetTraceMasks(int TraceMasks);
+        IApplicationConfigurationBuilderTraceConfiguration SetTraceMasks(int traceMasks);
     }
 
     /// <summary>

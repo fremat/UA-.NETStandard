@@ -18,14 +18,13 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using Newtonsoft.Json;
-using Opc.Ua.Core;
 
 namespace Opc.Ua
 {
     /// <summary>
     /// Reads objects from a JSON stream.
     /// </summary>
-    public class JsonDecoder : IDecoder, IDisposable
+    public class JsonDecoder : IJsonDecoder
     {
         #region Public Fields
         /// <summary>
@@ -35,7 +34,6 @@ namespace Opc.Ua
         #endregion
 
         #region Private Fields
-        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
         private JsonTextReader m_reader;
         private Dictionary<string, object> m_root;
         private Stack<object> m_stack;
@@ -111,18 +109,12 @@ namespace Opc.Ua
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
             if (context == null) throw new ArgumentNullException(nameof(context));
 
-            JsonDecoder decoder = new JsonDecoder(UTF8Encoding.UTF8.GetString(buffer), context);
-
-            try
+            using (IJsonDecoder decoder = new JsonDecoder(UTF8Encoding.UTF8.GetString(buffer), context))
             {
                 // decode the actual message.
                 SessionLessServiceMessage message = new SessionLessServiceMessage();
                 message.Decode(decoder);
                 return message.Message;
-            }
-            finally
-            {
-                decoder.Close();
             }
         }
 
@@ -154,15 +146,9 @@ namespace Opc.Ua
                     buffer.Count);
             }
 
-            JsonDecoder decoder = new JsonDecoder(UTF8Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count), context);
-
-            try
+            using (JsonDecoder decoder = new JsonDecoder(UTF8Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count), context))
             {
                 return decoder.DecodeMessage(expectedType);
-            }
-            finally
-            {
-                decoder.Close();
             }
         }
 
@@ -193,7 +179,7 @@ namespace Opc.Ua
 
             if (actualType == null)
             {
-                throw new ServiceResultException(StatusCodes.BadEncodingError, Utils.Format("Cannot decode message with type id: {0}.", absoluteId));
+                throw new ServiceResultException(StatusCodes.BadDecodingError, Utils.Format("Cannot decode message with type id: {0}.", absoluteId));
             }
 
             // read the message.
@@ -265,6 +251,7 @@ namespace Opc.Ua
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -277,6 +264,7 @@ namespace Opc.Ua
                 if (m_reader != null)
                 {
                     m_reader.Close();
+                    m_reader = null;
                 }
             }
         }
@@ -322,9 +310,8 @@ namespace Opc.Ua
                 return true;
             }
 
-            var context = m_stack.Peek() as Dictionary<string, object>;
 
-            if (context == null || !context.TryGetValue(fieldName, out token))
+            if (!(m_stack.Peek() is Dictionary<string, object> context) || !context.TryGetValue(fieldName, out token))
             {
                 return false;
             }
@@ -505,10 +492,9 @@ namespace Opc.Ua
 
             if (value == null)
             {
-                var text = token as string;
                 uint number = 0;
 
-                if (text == null || !UInt32.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
+                if (!(token is string text) || !UInt32.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
                 {
                     return 0;
                 }
@@ -540,10 +526,9 @@ namespace Opc.Ua
 
             if (value == null)
             {
-                var text = token as string;
                 long number = 0;
 
-                if (text == null || !Int64.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
+                if (!(token is string text) || !Int64.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
                 {
                     return 0;
                 }
@@ -575,10 +560,9 @@ namespace Opc.Ua
 
             if (value == null)
             {
-                var text = token as string;
                 ulong number = 0;
 
-                if (text == null || !UInt64.TryParse(text,
+                if (!(token is string text) || !UInt64.TryParse(text,
                     NumberStyles.Integer,
                     CultureInfo.InvariantCulture, out number))
                 {
@@ -718,9 +702,8 @@ namespace Opc.Ua
                 return null;
             }
 
-            var value = token as string;
 
-            if (value == null)
+            if (!(token is string value))
             {
                 return null;
             }
@@ -751,8 +734,7 @@ namespace Opc.Ua
                 return value.Value >= m_dateTimeMaxJsonValue ? DateTime.MaxValue : value.Value;
             }
 
-            var text = token as string;
-            if (text != null)
+            if (token is string text)
             {
                 var result = XmlConvert.ToDateTime(text, XmlDateTimeSerializationMode.Utc);
                 return result >= m_dateTimeMaxJsonValue ? DateTime.MaxValue : result;
@@ -773,9 +755,8 @@ namespace Opc.Ua
                 return Uuid.Empty;
             }
 
-            var value = token as string;
 
-            if (value == null)
+            if (!(token is string value))
             {
                 return Uuid.Empty;
             }
@@ -800,8 +781,7 @@ namespace Opc.Ua
                 return null;
             }
 
-            var value = token as string;
-            if (value == null)
+            if (!(token is string value))
             {
                 return Array.Empty<byte>();
             }
@@ -828,9 +808,8 @@ namespace Opc.Ua
                 return null;
             }
 
-            var value = token as string;
 
-            if (value == null)
+            if (!(token is string value))
             {
                 return null;
             }
@@ -840,7 +819,7 @@ namespace Opc.Ua
             if (bytes != null && bytes.Length > 0)
             {
                 XmlDocument document = new XmlDocument();
-                string xmlString = s_utf8NoBom.GetString(bytes, 0, bytes.Length);
+                string xmlString = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 
                 using (XmlReader reader = XmlReader.Create(new StringReader(xmlString), Utils.DefaultXmlReaderSettings()))
                 {
@@ -865,9 +844,8 @@ namespace Opc.Ua
                 return NodeId.Null;
             }
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 return NodeId.Null;
             }
@@ -892,8 +870,7 @@ namespace Opc.Ua
 
                     if (index == null)
                     {
-                        string namespaceUri = namespaceToken as string;
-                        if (namespaceUri != null)
+                        if (namespaceToken is string namespaceUri)
                         {
                             namespaceIndex = m_context.NamespaceUris.GetIndexOrAppend(namespaceUri);
                         }
@@ -953,9 +930,8 @@ namespace Opc.Ua
                 return ExpandedNodeId.Null;
             }
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 return ExpandedNodeId.Null;
             }
@@ -1067,82 +1043,11 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        /// Reads an DiagnosticInfo from the stream.
+        /// Reads a DiagnosticInfo from the stream.
         /// </summary>
         public DiagnosticInfo ReadDiagnosticInfo(string fieldName)
         {
-            object token = null;
-
-            if (!ReadField(fieldName, out token))
-            {
-                return null;
-            }
-
-            var value = token as Dictionary<string, object>;
-
-            if (value == null)
-            {
-                return null;
-            }
-
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            try
-            {
-                m_nestingLevel++;
-                m_stack.Push(value);
-
-                DiagnosticInfo di = new DiagnosticInfo();
-
-                if (value.ContainsKey("SymbolicId"))
-                {
-                    di.SymbolicId = ReadInt32("SymbolicId");
-                }
-
-                if (value.ContainsKey("NamespaceUri"))
-                {
-                    di.NamespaceUri = ReadInt32("NamespaceUri");
-                }
-
-                if (value.ContainsKey("Locale"))
-                {
-                    di.Locale = ReadInt32("Locale");
-                }
-
-                if (value.ContainsKey("LocalizedText"))
-                {
-                    di.LocalizedText = ReadInt32("LocalizedText");
-                }
-
-                if (value.ContainsKey("AdditionalInfo"))
-                {
-                    di.AdditionalInfo = ReadString("AdditionalInfo");
-                }
-
-                if (value.ContainsKey("InnerStatusCode"))
-                {
-                    di.InnerStatusCode = ReadStatusCode("InnerStatusCode");
-                }
-
-                if (value.ContainsKey("InnerDiagnosticInfo"))
-                {
-                    di.InnerDiagnosticInfo = ReadDiagnosticInfo("InnerDiagnosticInfo");
-                }
-
-                return di;
-            }
-            finally
-            {
-                m_nestingLevel--;
-                m_stack.Pop();
-            }
+            return ReadDiagnosticInfo(fieldName, 0);
         }
 
         /// <summary>
@@ -1157,9 +1062,8 @@ namespace Opc.Ua
                 return QualifiedName.Null;
             }
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 return QualifiedName.Null;
             }
@@ -1184,8 +1088,7 @@ namespace Opc.Ua
                     if (index == null)
                     {
                         // handle non reversible encoding
-                        string namespaceUri = namespaceToken as string;
-                        if (namespaceUri != null)
+                        if (namespaceToken is string namespaceUri)
                         {
                             namespaceIndex = m_context.NamespaceUris.GetIndexOrAppend(namespaceUri);
                         }
@@ -1222,9 +1125,8 @@ namespace Opc.Ua
             string locale = null;
             string text = null;
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 // read non reversible encoding
                 text = token as string;
@@ -1271,24 +1173,16 @@ namespace Opc.Ua
                 return Variant.Null;
             }
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 return Variant.Null;
             }
 
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
+            CheckAndIncrementNestingLevel();
+
             try
             {
-                m_nestingLevel++;
                 m_stack.Push(value);
 
                 BuiltInType type = (BuiltInType)ReadByte("Type");
@@ -1339,9 +1233,8 @@ namespace Opc.Ua
                 return null;
             }
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 return null;
             }
@@ -1380,9 +1273,8 @@ namespace Opc.Ua
                 return extension;
             }
 
-            var value = token as Dictionary<string, object>;
 
-            if (value == null)
+            if (!(token is Dictionary<string, object> value))
             {
                 return extension;
             }
@@ -1447,14 +1339,16 @@ namespace Opc.Ua
                     return new ExtensionObject(typeId, encodeable);
                 }
 
-                using (var ostrm = PooledMemoryStream.GetMemoryStream())
-                using (var stream = new StreamWriter(ostrm))
-                using (JsonTextWriter writer = new JsonTextWriter(stream))
+                using (var ostrm = new MemoryStream())
                 {
-                    EncodeAsJson(writer, token);
+                    using (var stream = new StreamWriter(ostrm))
+                    using (JsonTextWriter writer = new JsonTextWriter(stream))
+                    {
+                        EncodeAsJson(writer, token);
+                    }
+                    // Close the writer before retrieving the data
                     return new ExtensionObject(typeId, ostrm.ToArray());
                 }
-            }
             }
             finally
             {
@@ -1466,7 +1360,7 @@ namespace Opc.Ua
         /// Reads an encodeable object from the stream.
         /// </summary>
         /// <param name="fieldName">The encodeable object field name</param>
-        /// <param name="systemType">The system type of the encopdeable object to be read</param>
+        /// <param name="systemType">The system type of the encodeable object to be read</param>
         /// <param name="encodeableTypeId">The TypeId for the <see cref="IEncodeable"/> instance that will be read.</param>
         /// <returns>An <see cref="IEncodeable"/> object that was read from the stream.</returns>
         public IEncodeable ReadEncodeable(string fieldName, System.Type systemType, ExpandedNodeId encodeableTypeId = null)
@@ -1483,9 +1377,8 @@ namespace Opc.Ua
                 return null;
             }
 
-            IEncodeable value = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
 
-            if (value == null)
+            if (!(Activator.CreateInstance(systemType) is IEncodeable value))
             {
                 throw new ServiceResultException(StatusCodes.BadDecodingError, Utils.Format("Type does not support IEncodeable interface: '{0}'", systemType.FullName));
             }
@@ -1493,24 +1386,14 @@ namespace Opc.Ua
             if (encodeableTypeId != null)
             {
                 // set type identifier for custom complex data types before decode.
-                IComplexTypeInstance complexTypeInstance = value as IComplexTypeInstance;
 
-                if (complexTypeInstance != null)
+                if (value is IComplexTypeInstance complexTypeInstance)
                 {
                     complexTypeInstance.TypeId = encodeableTypeId;
                 }
             }
 
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            m_nestingLevel++;
+            CheckAndIncrementNestingLevel();
 
             try
             {
@@ -1521,9 +1404,8 @@ namespace Opc.Ua
             finally
             {
                 m_stack.Pop();
+                m_nestingLevel--;
             }
-
-            m_nestingLevel--;
 
             return value;
         }
@@ -1541,20 +1423,10 @@ namespace Opc.Ua
             return (Enum)Enum.ToObject(enumType, ReadInt32(fieldName));
         }
 
-/// <summary>
-///  Reads an enumerated value from the stream.
-/// </summary>
-public T ReadEnumerated<T>(string fieldName) where T : struct, Enum
-{
-    int value = ReadInt32(fieldName);
-    return Unsafe.As<int, T>(ref value);
-}
-
-
-/// <summary>
-/// Reads a boolean array from the stream.
-/// </summary>
-public BooleanCollection ReadBooleanArray(string fieldName)
+        /// <summary>
+        /// Reads a boolean array from the stream.
+        /// </summary>
+        public BooleanCollection ReadBooleanArray(string fieldName)
         {
             var values = new BooleanCollection();
 
@@ -2396,10 +2268,13 @@ public BooleanCollection ReadBooleanArray(string fieldName)
             return values;
         }
 
-        /// <summary>
-        /// Reads an array with the specified valueRank and the specified BuiltInType
-        /// </summary>
-        public object ReadArray(string fieldName, int valueRank, BuiltInType builtInType, ExpandedNodeId encodeableTypeId = null)
+        /// <inheritdoc/>
+        public Array ReadArray(
+            string fieldName,
+            int valueRank,
+            BuiltInType builtInType,
+            Type systemType = null,
+            ExpandedNodeId encodeableTypeId = null)
         {
             if (valueRank == ValueRanks.OneDimension)
             {
@@ -2415,6 +2290,15 @@ public BooleanCollection ReadBooleanArray(string fieldName)
                         return ReadInt16Array(fieldName).ToArray();
                     case BuiltInType.UInt16:
                         return ReadUInt16Array(fieldName).ToArray();
+                    case BuiltInType.Enumeration:
+                    {
+                        DetermineIEncodeableSystemType(ref systemType, encodeableTypeId);
+                        if (systemType?.IsEnum == true)
+                        {
+                            return ReadEnumeratedArray(fieldName, systemType);
+                        }
+                        goto case BuiltInType.Int32;
+                    }
                     case BuiltInType.Int32:
                         return ReadInt32Array(fieldName).ToArray();
                     case BuiltInType.UInt32:
@@ -2449,17 +2333,11 @@ public BooleanCollection ReadBooleanArray(string fieldName)
                         return ReadLocalizedTextArray(fieldName).ToArray();
                     case BuiltInType.DataValue:
                         return ReadDataValueArray(fieldName).ToArray();
-                    case BuiltInType.Enumeration:
-                        return ReadInt32Array(fieldName).ToArray();
                     case BuiltInType.Variant:
                     {
-                        if (encodeableTypeId != null)
+                        if (DetermineIEncodeableSystemType(ref systemType, encodeableTypeId))
                         {
-                            Type systemType = Context.Factory.GetSystemType(encodeableTypeId);
-                            if (systemType != null)
-                            {
-                                return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
-                            }
+                            return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
                         }
                         return ReadVariantArray(fieldName).ToArray();
                     }
@@ -2469,13 +2347,18 @@ public BooleanCollection ReadBooleanArray(string fieldName)
                         return ReadDiagnosticInfoArray(fieldName).ToArray();
                     default:
                     {
+                        if (DetermineIEncodeableSystemType(ref systemType, encodeableTypeId))
+                        {
+                            return ReadEncodeableArray(fieldName, systemType, encodeableTypeId);
+                        }
+
                         throw new ServiceResultException(
                             StatusCodes.BadDecodingError,
                             Utils.Format("Cannot decode unknown type in Array object with BuiltInType: {0}.", builtInType));
                     }
                 }
             }
-            else if (valueRank > ValueRanks.OneDimension)
+            else if (valueRank >= ValueRanks.TwoDimensions)
             {
                 List<object> array;
                 if (!ReadArrayField(fieldName, out array))
@@ -2484,76 +2367,154 @@ public BooleanCollection ReadBooleanArray(string fieldName)
                 }
                 List<object> elements = new List<object>();
                 List<int> dimensions = new List<int>();
-                ReadMatrixPart(fieldName, array, builtInType, ref elements, ref dimensions, 0, encodeableTypeId);
+                if (builtInType == BuiltInType.Enumeration || builtInType == BuiltInType.Variant || builtInType == BuiltInType.Null)
+                {
+                    DetermineIEncodeableSystemType(ref systemType, encodeableTypeId);
+                }
+                ReadMatrixPart(fieldName, array, builtInType, ref elements, ref dimensions, 0, systemType, encodeableTypeId);
 
+                if (dimensions.Count == 0)
+                {
+                    // for an empty element create the empty dimension array 
+                    dimensions = new int[valueRank].ToList();
+                }
+                else if (dimensions.Count < ValueRanks.TwoDimensions)
+                {
+                    throw ServiceResultException.Create(
+                        StatusCodes.BadDecodingError,
+                        "The ValueRank {0} of the decoded array doesn't match the desired ValueRank {1}.",
+                        dimensions.Count, valueRank);
+                }
+
+                Matrix matrix = null;
                 switch (builtInType)
                 {
                     case BuiltInType.Boolean:
-                        return new Matrix(elements.Cast<bool>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<bool>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.SByte:
-                        return new Matrix(elements.Cast<sbyte>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<sbyte>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Byte:
-                        return new Matrix(elements.Cast<byte>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<byte>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Int16:
-                        return new Matrix(elements.Cast<Int16>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<Int16>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.UInt16:
-                        return new Matrix(elements.Cast<UInt16>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<UInt16>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Int32:
-                        return new Matrix(elements.Cast<Int32>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<Int32>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.UInt32:
-                        return new Matrix(elements.Cast<UInt32>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<UInt32>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Int64:
-                        return new Matrix(elements.Cast<Int64>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<Int64>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.UInt64:
-                        return new Matrix(elements.Cast<UInt64>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<UInt64>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Float:
-                        return new Matrix(elements.Cast<float>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<float>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Double:
-                        return new Matrix(elements.Cast<double>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<double>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.String:
-                        return new Matrix(elements.Cast<string>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<string>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.DateTime:
-                        return new Matrix(elements.Cast<DateTime>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<DateTime>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Guid:
-                        return new Matrix(elements.Cast<Uuid>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<Uuid>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.ByteString:
-                        return new Matrix(elements.Cast<byte[]>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<byte[]>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.XmlElement:
-                        return new Matrix(elements.Cast<XmlElement>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<XmlElement>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.NodeId:
-                        return new Matrix(elements.Cast<NodeId>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<NodeId>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.ExpandedNodeId:
-                        return new Matrix(elements.Cast<ExpandedNodeId>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<ExpandedNodeId>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.StatusCode:
-                        return new Matrix(elements.Cast<StatusCode>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<StatusCode>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.QualifiedName:
-                        return new Matrix(elements.Cast<QualifiedName>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<QualifiedName>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.LocalizedText:
-                        return new Matrix(elements.Cast<LocalizedText>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<LocalizedText>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.DataValue:
-                        return new Matrix(elements.Cast<DataValue>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<DataValue>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.Enumeration:
-                        return new Matrix(elements.Cast<Int32>().ToArray(), builtInType, dimensions.ToArray());
-                    case BuiltInType.Variant:
-                        if (encodeableTypeId != null)
+                    {
+                        if (systemType?.IsEnum == true)
                         {
-                            Type systemType = Context.Factory.GetSystemType(encodeableTypeId);
-                            if (systemType != null)
+                            var newElements = Array.CreateInstance(systemType, elements.Count);
+                            int ii = 0;
+                            foreach (var element in elements)
                             {
-                                Array newElements = Array.CreateInstance(systemType, elements.Count);
-                                for (int i = 0; i < elements.Count; i++)
-                                {
-                                    newElements.SetValue(Convert.ChangeType(elements[i], systemType), i);
-                                }
-                                return new Matrix(newElements, builtInType, dimensions.ToArray());
+                                newElements.SetValue(Convert.ChangeType(element, systemType), ii++);
                             }
+                            matrix = new Matrix(newElements, builtInType, dimensions.ToArray());
                         }
-                        return new Matrix(elements.Cast<Variant>().ToArray(), builtInType, dimensions.ToArray());
+                        else
+                        {
+                            matrix = new Matrix(elements.Cast<Int32>().ToArray(), builtInType, dimensions.ToArray());
+                        }
+                        break;
+                    }
+                    case BuiltInType.Variant:
+                    {
+                        if (DetermineIEncodeableSystemType(ref systemType, encodeableTypeId))
+                        {
+                            Array newElements = Array.CreateInstance(systemType, elements.Count);
+                            for (int i = 0; i < elements.Count; i++)
+                            {
+                                newElements.SetValue(Convert.ChangeType(elements[i], systemType), i);
+                            }
+                            matrix = new Matrix(newElements, builtInType, dimensions.ToArray());
+                            break;
+                        }
+                        matrix = new Matrix(elements.Cast<Variant>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
+                    }
                     case BuiltInType.ExtensionObject:
-                        return new Matrix(elements.Cast<ExtensionObject>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<ExtensionObject>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
                     case BuiltInType.DiagnosticInfo:
-                        return new Matrix(elements.Cast<DiagnosticInfo>().ToArray(), builtInType, dimensions.ToArray());
+                        matrix = new Matrix(elements.Cast<DiagnosticInfo>().ToArray(), builtInType, dimensions.ToArray());
+                        break;
+                    default:
+                    {
+                        if (DetermineIEncodeableSystemType(ref systemType, encodeableTypeId))
+                        {
+                            Array newElements = Array.CreateInstance(systemType, elements.Count);
+                            for (int i = 0; i < elements.Count; i++)
+                            {
+                                newElements.SetValue(Convert.ChangeType(elements[i], systemType), i);
+                            }
+                            matrix = new Matrix(newElements, builtInType, dimensions.ToArray());
+                            break;
+                        }
+
+                        throw ServiceResultException.Create(
+                            StatusCodes.BadDecodingError,
+                            "Cannot decode unknown type in Array object with BuiltInType: {0}.",
+                            builtInType);
+                    }
                 }
+
+                return matrix.ToArray();
             }
             return null;
         }
@@ -2615,6 +2576,107 @@ public BooleanCollection ReadBooleanArray(string fieldName)
         #endregion
 
         #region Private Methods
+        /// <summary>
+        /// Reads a DiagnosticInfo from the stream.
+        /// Limits the InnerDiagnosticInfos to the specified depth.
+        /// </summary>
+        private DiagnosticInfo ReadDiagnosticInfo(string fieldName, int depth)
+        {
+            object token = null;
+
+            if (!ReadField(fieldName, out token))
+            {
+                return null;
+            }
+
+
+            if (!(token is Dictionary<string, object> value))
+            {
+                return null;
+            }
+
+            if (depth >= DiagnosticInfo.MaxInnerDepth)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of InnerDiagnosticInfo was exceeded");
+            }
+
+            CheckAndIncrementNestingLevel();
+
+            try
+            {
+                m_stack.Push(value);
+
+                DiagnosticInfo di = new DiagnosticInfo();
+
+                bool hasDiagnosticInfo = false;
+                if (value.ContainsKey("SymbolicId"))
+                {
+                    di.SymbolicId = ReadInt32("SymbolicId");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (value.ContainsKey("NamespaceUri"))
+                {
+                    di.NamespaceUri = ReadInt32("NamespaceUri");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (value.ContainsKey("Locale"))
+                {
+                    di.Locale = ReadInt32("Locale");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (value.ContainsKey("LocalizedText"))
+                {
+                    di.LocalizedText = ReadInt32("LocalizedText");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (value.ContainsKey("AdditionalInfo"))
+                {
+                    di.AdditionalInfo = ReadString("AdditionalInfo");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (value.ContainsKey("InnerStatusCode"))
+                {
+                    di.InnerStatusCode = ReadStatusCode("InnerStatusCode");
+                    hasDiagnosticInfo = true;
+                }
+
+                if (value.ContainsKey("InnerDiagnosticInfo") && depth < DiagnosticInfo.MaxInnerDepth)
+                {
+                    di.InnerDiagnosticInfo = ReadDiagnosticInfo("InnerDiagnosticInfo", depth + 1);
+                    hasDiagnosticInfo = true;
+                }
+
+                return hasDiagnosticInfo ? di : null;
+            }
+            finally
+            {
+                m_nestingLevel--;
+                m_stack.Pop();
+            }
+        }
+
+        /// <summary>
+        /// Get the system type from the type factory if not specified by caller.
+        /// </summary>
+        /// <param name="systemType">The reference to the system type, or null</param>
+        /// <param name="encodeableTypeId">The encodeable type id of the system type.</param>
+        /// <returns>If the system type is assignable to <see cref="IEncodeable"/> </returns>
+        private bool DetermineIEncodeableSystemType(ref Type systemType, ExpandedNodeId encodeableTypeId)
+        {
+            if (encodeableTypeId != null && systemType == null)
+            {
+                systemType = Context.Factory.GetSystemType(encodeableTypeId);
+            }
+            return typeof(IEncodeable).IsAssignableFrom(systemType);
+        }
+
         /// <summary>
         /// Read the body of a Variant as a BuiltInType
         /// </summary>
@@ -2694,61 +2756,59 @@ public BooleanCollection ReadBooleanArray(string fieldName)
         /// </summary>
         private List<object> ReadArray()
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-            m_nestingLevel++;
+            CheckAndIncrementNestingLevel();
 
-            List<object> elements = new List<object>();
-
-            while (m_reader.Read() && m_reader.TokenType != JsonToken.EndArray)
+            try
             {
-                switch (m_reader.TokenType)
+                List<object> elements = new List<object>();
+
+                while (m_reader.Read() && m_reader.TokenType != JsonToken.EndArray)
                 {
-                    case JsonToken.Comment:
+                    switch (m_reader.TokenType)
                     {
-                        break;
-                    }
+                        case JsonToken.Comment:
+                        {
+                            break;
+                        }
 
-                    case JsonToken.Null:
-                    {
-                        elements.Add(JTokenNullObject.Array);
-                        break;
-                    }
-                    case JsonToken.Date:
-                    case JsonToken.Boolean:
-                    case JsonToken.Integer:
-                    case JsonToken.Float:
-                    case JsonToken.String:
-                    {
-                        elements.Add(m_reader.Value);
-                        break;
-                    }
+                        case JsonToken.Null:
+                        {
+                            elements.Add(JTokenNullObject.Array);
+                            break;
+                        }
+                        case JsonToken.Date:
+                        case JsonToken.Boolean:
+                        case JsonToken.Integer:
+                        case JsonToken.Float:
+                        case JsonToken.String:
+                        {
+                            elements.Add(m_reader.Value);
+                            break;
+                        }
 
-                    case JsonToken.StartArray:
-                    {
-                        elements.Add(ReadArray());
-                        break;
-                    }
+                        case JsonToken.StartArray:
+                        {
+                            elements.Add(ReadArray());
+                            break;
+                        }
 
-                    case JsonToken.StartObject:
-                    {
-                        elements.Add(ReadObject());
-                        break;
-                    }
+                        case JsonToken.StartObject:
+                        {
+                            elements.Add(ReadObject());
+                            break;
+                        }
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
                 }
-            }
 
-            m_nestingLevel--;
-            return elements;
+                return elements;
+            }
+            finally
+            {
+                m_nestingLevel--;
+            }
         }
 
         /// <summary>
@@ -2820,18 +2880,17 @@ public BooleanCollection ReadBooleanArray(string fieldName)
         /// <summary>
         /// Read the Matrix part (simple array or array of arrays)
         /// </summary>
-        private void ReadMatrixPart(string fieldName, List<object> currentArray, BuiltInType builtInType, ref List<object> elements, ref List<int> dimensions, int level, ExpandedNodeId encodeableTypeId = null)
+        private void ReadMatrixPart(
+            string fieldName,
+            List<object> currentArray,
+            BuiltInType builtInType,
+            ref List<object> elements,
+            ref List<int> dimensions,
+            int level,
+            Type systemType,
+            ExpandedNodeId encodeableTypeId)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            m_nestingLevel++;
+            CheckAndIncrementNestingLevel();
 
             try
             {
@@ -2851,7 +2910,7 @@ public BooleanCollection ReadBooleanArray(string fieldName)
 
                             PushArray(fieldName, ii);
 
-                            ReadMatrixPart(null, currentArray[ii] as List<object>, builtInType, ref elements, ref dimensions, level + 1, encodeableTypeId);
+                            ReadMatrixPart(null, currentArray[ii] as List<object>, builtInType, ref elements, ref dimensions, level + 1, systemType, encodeableTypeId);
 
                             Pop();
                         }
@@ -2863,8 +2922,8 @@ public BooleanCollection ReadBooleanArray(string fieldName)
                     if (!hasInnerArray)
                     {
                         // read array from one dimension
-                        var part = ReadArray(null, ValueRanks.OneDimension, builtInType, encodeableTypeId) as System.Collections.IList;
-                        if (part != null && part.Count > 0)
+                        Array part = ReadArray(null, ValueRanks.OneDimension, builtInType, systemType, encodeableTypeId);
+                        if (part != null && part.Length > 0)
                         {
                             // add part elements to final list 
                             foreach (var item in part)
@@ -2914,17 +2973,14 @@ public BooleanCollection ReadBooleanArray(string fieldName)
 
         private void EncodeAsJson(JsonTextWriter writer, object value)
         {
-            var map = value as Dictionary<string, object>;
-
-            if (map != null)
+            if (value is Dictionary<string, object> map)
             {
                 EncodeAsJson(writer, map);
                 return;
             }
 
-            var list = value as List<object>;
 
-            if (list != null)
+            if (value is List<object> list)
             {
                 writer.WriteStartArray();
 
@@ -2976,6 +3032,21 @@ public BooleanCollection ReadBooleanArray(string fieldName)
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Test and increment the nesting level.
+        /// </summary>
+        private void CheckAndIncrementNestingLevel()
+        {
+            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of {0} was exceeded",
+                    m_context.MaxEncodingNestingLevels);
+            }
+            m_nestingLevel++;
         }
         #endregion
     }

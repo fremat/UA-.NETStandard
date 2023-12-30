@@ -28,10 +28,8 @@
  * ======================================================================*/
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Opc.Ua.Configuration;
@@ -42,10 +40,10 @@ namespace Opc.Ua.Client.Tests
     /// <summary>
     /// Client fixture for tests.
     /// </summary>
-    public class ClientFixture
+    public class ClientFixture : IDisposable
     {
         private const uint kDefaultOperationLimits = 5000;
-        private NUnitTraceLogger m_traceLogger;
+        private NUnitTestLogger<ClientFixture> m_traceLogger;
         public ApplicationConfiguration Config { get; private set; }
         public ConfiguredEndpoint Endpoint { get; private set; }
         public string EndpointUrl { get; private set; }
@@ -54,8 +52,16 @@ namespace Opc.Ua.Client.Tests
         public uint SessionTimeout { get; set; } = 10000;
         public int OperationTimeout { get; set; } = 10000;
         public int TraceMasks { get; set; } = Utils.TraceMasks.Error | Utils.TraceMasks.StackTrace | Utils.TraceMasks.Security | Utils.TraceMasks.Information;
+        public bool UseTracing { get; set; } = false;
+        public ISessionFactory SessionFactory => UseTracing ? (DefaultSessionFactory)HeaderUpdatingSessionFactory.Instance : (DefaultSessionFactory)TestableSessionFactory.Instance;
+        public ActivityListener ActivityListener { get; private set; }
 
         #region Public Methods
+        public void Dispose()
+        {
+            StopActivityListener();
+        }
+
         /// <summary>
         /// Load the default client configuration.
         /// </summary>
@@ -72,6 +78,8 @@ namespace Opc.Ua.Client.Tests
                 .Build(
                     "urn:localhost:opcfoundation.org:" + clientName,
                     "http://opcfoundation.org/UA/" + clientName)
+                .SetMaxByteStringLength(4 * 1024 * 1024)
+                .SetMaxArrayLength(1024 * 1024)
                 .AsClient()
                 .SetClientOperationLimits(new OperationLimits {
                     MaxNodesPerBrowse = kDefaultOperationLimits,
@@ -136,7 +144,7 @@ namespace Opc.Ua.Client.Tests
         /// Connects the specified endpoint URL.
         /// </summary>
         /// <param name="endpointUrl">The endpoint URL.</param>
-        public async Task<Session> Connect(string endpointUrl)
+        public async Task<ISession> Connect(string endpointUrl)
         {
             if (String.IsNullOrEmpty(endpointUrl))
             {
@@ -180,7 +188,7 @@ namespace Opc.Ua.Client.Tests
         /// <summary>
         /// Connects the url endpoint with specified security profile.
         /// </summary>
-        public async Task<Session> ConnectAsync(Uri url, string securityProfile, EndpointDescriptionCollection endpoints = null, IUserIdentity userIdentity = null)
+        public async Task<ISession> ConnectAsync(Uri url, string securityProfile, EndpointDescriptionCollection endpoints = null, IUserIdentity userIdentity = null)
         {
             return await ConnectAsync(await GetEndpointAsync(url, securityProfile, endpoints).ConfigureAwait(false), userIdentity).ConfigureAwait(false);
         }
@@ -189,7 +197,7 @@ namespace Opc.Ua.Client.Tests
         /// Connects the specified endpoint.
         /// </summary>
         /// <param name="endpoint">The configured endpoint.</param>
-        public async Task<Session> ConnectAsync(ConfiguredEndpoint endpoint, IUserIdentity userIdentity = null)
+        public async Task<ISession> ConnectAsync(ConfiguredEndpoint endpoint, IUserIdentity userIdentity = null)
         {
             if (endpoint == null)
             {
@@ -200,7 +208,7 @@ namespace Opc.Ua.Client.Tests
                 }
             }
 
-            var session = await Session.Create(
+            var session = await SessionFactory.CreateAsync(
                 Config, endpoint, false, false,
                 Config.ApplicationName, SessionTimeout, userIdentity, null).ConfigureAwait(false);
 
@@ -219,9 +227,9 @@ namespace Opc.Ua.Client.Tests
         /// </summary>
         /// <param name="endpoint">The configured endpoint</param>
         /// <returns></returns>
-        public async Task<ITransportChannel> CreateChannelAsync(ConfiguredEndpoint endpoint)
+        public async Task<ITransportChannel> CreateChannelAsync(ConfiguredEndpoint endpoint, bool updateBeforeConnect = true)
         {
-            return await Session.CreateChannelAsync(Config, null, endpoint, true, false).ConfigureAwait(false);
+            return await SessionFactory.CreateChannelAsync(Config, null, endpoint, updateBeforeConnect, checkDomain: false).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -230,9 +238,9 @@ namespace Opc.Ua.Client.Tests
         /// <param name="channel">The channel to use</param>
         /// <param name="endpoint">The configured endpoint</param>
         /// <returns></returns>
-        public Session CreateSession(ITransportChannel channel, ConfiguredEndpoint endpoint)
+        public ISession CreateSession(ITransportChannel channel, ConfiguredEndpoint endpoint)
         {
-            return Session.Create(Config, channel, endpoint, null);
+            return SessionFactory.Create(Config, channel, endpoint, null);
         }
 
         /// <summary>
@@ -313,7 +321,9 @@ namespace Opc.Ua.Client.Tests
 
             using (var client = DiscoveryClient.Create(url, endpointConfiguration))
             {
-                return await client.GetEndpointsAsync(null).ConfigureAwait(false);
+                var result = await client.GetEndpointsAsync(null).ConfigureAwait(false);
+                await client.CloseAsync().ConfigureAwait(false);
+                return result;
             }
         }
 
@@ -324,17 +334,51 @@ namespace Opc.Ua.Client.Tests
         {
             if (m_traceLogger == null)
             {
-                m_traceLogger = NUnitTraceLogger.Create(writer, Config, TraceMasks);
+                m_traceLogger = NUnitTestLogger<ClientFixture>.Create(writer, Config, TraceMasks);
             }
             else
             {
                 m_traceLogger.SetWriter(writer);
             }
         }
+
+        /// <summary>
+        /// Configures Activity Listener and registers with Activity Source.
+        /// </summary>
+        public void StartActivityListener(bool shouldListenToAllSources = false, bool shouldWriteStartAndStop = true)
+        {
+            // Create an instance of ActivityListener and configure its properties
+            ActivityListener = new ActivityListener() {
+
+                // Set ShouldListenTo property to true for all activity sources
+                ShouldListenTo = (source) => shouldListenToAllSources || source.Name.Equals(TraceableSession.ActivitySourceName),
+
+                // Sample all data and recorded activities
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+
+            };
+
+            if (shouldWriteStartAndStop)
+            {
+                ActivityListener.ActivityStarted = activity => Utils.LogInfo("Started: {0,-15} {1,-60}", activity.OperationName, activity.Id);
+                ActivityListener.ActivityStopped = activity => Utils.LogInfo("Stopped: {0,-15} {1,-60} Duration: {2}", activity.OperationName, activity.Id, activity.Duration);
+            }
+
+            ActivitySource.AddActivityListener(ActivityListener);
+        }
+
+        /// <summary>
+        /// Disposes Activity Listener and unregisters from Activity Source.
+        /// </summary>
+        public void StopActivityListener()
+        {
+            ActivityListener?.Dispose();
+            ActivityListener = null;
+        }
         #endregion
 
         #region Private Methods
-        private void Session_KeepAlive(Session session, KeepAliveEventArgs e)
+        private void Session_KeepAlive(ISession session, KeepAliveEventArgs e)
         {
             if (ServiceResult.IsBad(e.Status))
             {

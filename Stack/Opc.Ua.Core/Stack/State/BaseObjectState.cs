@@ -75,9 +75,7 @@ namespace Opc.Ua
         /// </summary>
         protected override void Initialize(ISystemContext context, NodeState source)
         {
-            BaseObjectState instance = source as BaseObjectState;
-
-            if (instance != null)
+            if (source is BaseObjectState instance)
             {
                 m_eventNotifier = instance.m_eventNotifier;
             }
@@ -91,6 +89,26 @@ namespace Opc.Ua
         protected override NodeId GetDefaultTypeDefinitionId(NamespaceTable namespaceUris)
         {
             return ObjectTypes.BaseObjectType;
+        }
+        #endregion
+
+        #region ICloneable Members
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        /// <summary>
+        /// Makes a copy of the node and all children.
+        /// </summary>
+        /// <returns>
+        /// A new object that is a copy of this instance.
+        /// </returns>
+        public new object MemberwiseClone()
+        {
+            BaseObjectState clone = (BaseObjectState)Activator.CreateInstance(this.GetType(), this.Parent);
+            return CloneChildren(clone);
         }
         #endregion
 
@@ -139,9 +157,8 @@ namespace Opc.Ua
         {
             base.Export(context, node);
 
-            ObjectNode objectNode = node as ObjectNode;
 
-            if (objectNode != null)
+            if (node is ObjectNode objectNode)
             {
                 objectNode.EventNotifier = this.EventNotifier;
             }
@@ -184,7 +201,7 @@ namespace Opc.Ua
 
             decoder.PopNamespace();
         }
-        
+
         /// <summary>
         /// Returns a mask which indicates which attributes have non-default value.
         /// </summary>
@@ -316,12 +333,12 @@ namespace Opc.Ua
             return base.WriteNonValueAttribute(context, attributeId, value);
         }
         #endregion
-        
+
         #region Private Fields
         private byte m_eventNotifier;
         #endregion
     }
-    
+
     /// <summary> 
     /// The base class for all folder nodes.
     /// </summary>
@@ -331,7 +348,7 @@ namespace Opc.Ua
         /// <summary>
         /// Initializes the instance with its defalt attribute values.
         /// </summary>
-        public FolderState(NodeState parent) : base( parent)
+        public FolderState(NodeState parent) : base(parent)
         {
         }
         #endregion

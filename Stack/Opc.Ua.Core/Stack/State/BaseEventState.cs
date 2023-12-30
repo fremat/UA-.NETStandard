@@ -30,8 +30,8 @@ namespace Opc.Ua
         /// <param name="severity">The severity for the event.</param>
         /// <param name="message">The default message.</param>
         public virtual void Initialize(
-            ISystemContext context, 
-            NodeState source, 
+            ISystemContext context,
+            NodeState source,
             EventSeverity severity,
             LocalizedText message)
         {
@@ -74,6 +74,27 @@ namespace Opc.Ua
             m_message.Value = message;
         }
         #endregion
+
+        #region ICloneable Members
+        /// <inheritdoc/>
+        public override object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        /// <summary>
+        /// Makes a copy of the node and all children.
+        /// </summary>
+        /// <returns>
+        /// A new object that is a copy of this instance.
+        /// </returns>
+        public new object MemberwiseClone()
+        {
+            BaseEventState clone = (BaseEventState)Activator.CreateInstance(this.GetType());
+            return CloneChildren(clone);
+        }
+        #endregion
+
     }
 
     /// <summary>

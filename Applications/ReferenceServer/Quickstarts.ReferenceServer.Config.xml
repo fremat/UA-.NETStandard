@@ -74,7 +74,7 @@
   </TransportQuotas>
   <ServerConfiguration>
     <BaseAddresses>
-      <ua:String>https://localhost:62540/Quickstarts/ReferenceServer</ua:String>
+      <ua:String>opc.https://localhost:62540/Quickstarts/ReferenceServer</ua:String>
       <ua:String>opc.tcp://localhost:62541/Quickstarts/ReferenceServer</ua:String>
     </BaseAddresses>
     <!-- 
@@ -264,6 +264,7 @@
       <MaxNodesPerTranslateBrowsePathsToNodeIds>1000</MaxNodesPerTranslateBrowsePathsToNodeIds>
       <MaxMonitoredItemsPerCall>1000</MaxMonitoredItemsPerCall>
     </OperationLimits>
+    <AuditingEnabled>true</AuditingEnabled>
   </ServerConfiguration>
 
   <Extensions>

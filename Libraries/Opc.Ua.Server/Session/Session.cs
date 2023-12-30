@@ -407,15 +407,25 @@ namespace Opc.Ua.Server
                     }
                 }
 
-                // verify timestamp.
-                if (requestHeader.Timestamp.AddMilliseconds(m_maxRequestAge) < DateTime.UtcNow)
-                {
-                    UpdateDiagnosticCounters(requestType, true, false);
-                    throw new ServiceResultException(StatusCodes.BadInvalidTimestamp);
-                }
-
                 // request accepted.
                 UpdateDiagnosticCounters(requestType, false, false);
+            }
+        }
+
+        /// <summary>
+        /// Validate the diagnostic info.
+        /// </summary>
+        public virtual void ValidateDiagnosticInfo(RequestHeader requestHeader)
+        {
+            const uint additionalInfoDiagnosticsMask = (uint)(DiagnosticsMasks.ServiceAdditionalInfo | DiagnosticsMasks.OperationAdditionalInfo);
+            if ((requestHeader.ReturnDiagnostics & additionalInfoDiagnosticsMask) != 0)
+            {
+                var currentRoleIds = m_effectiveIdentity?.GrantedRoleIds;
+                if ((currentRoleIds?.Contains(ObjectIds.WellKnownRole_SecurityAdmin)) == true ||
+                    (currentRoleIds?.Contains(ObjectIds.WellKnownRole_ConfigureAdmin)) == true)
+                {
+                    requestHeader.ReturnDiagnostics |= (uint)DiagnosticsMasks.UserPermissionAdditionalInfo;
+                }
             }
         }
 
@@ -1126,7 +1136,7 @@ namespace Opc.Ua.Server
         #endregion
 
         #region Private Fields
-        private object m_lock = new object();
+        private readonly object m_lock = new object();
         private NodeId m_sessionId;
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         private NodeId m_authenticationToken;

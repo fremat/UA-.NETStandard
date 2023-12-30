@@ -137,7 +137,7 @@ namespace Opc.Ua
                 //ignore errors
             }
 
-            ITransportChannel channel = DiscoveryChannel.Create(discoveryUrl, endpointConfiguration, new ServiceMessageContext(), clientCertificate);
+            ITransportChannel channel = DiscoveryChannel.Create(applicationConfiguration, discoveryUrl, endpointConfiguration, new ServiceMessageContext(), clientCertificate);
             return new DiscoveryClient(channel);
         }
         #endregion
@@ -162,16 +162,18 @@ namespace Opc.Ua
             return PatchEndpointUrls(endpoints);
         }
 
+#if NET_STANDARD_ASYNC
         /// <summary>
         /// Invokes the GetEndpoints service async.
         /// </summary>
         /// <param name="profileUris">The collection of profile URIs.</param>
-        /// <returns></returns>
-        public async virtual Task<EndpointDescriptionCollection> GetEndpointsAsync(StringCollection profileUris)
+        /// <param name="ct">The cancellation token.</param>
+        public async virtual Task<EndpointDescriptionCollection> GetEndpointsAsync(StringCollection profileUris, CancellationToken ct = default)
         {
-            var endpoints = await GetEndpointsAsync(null, this.Endpoint.EndpointUrl, null, profileUris).ConfigureAwait(false);
-            return PatchEndpointUrls(endpoints);
+            var response = await GetEndpointsAsync(null, this.Endpoint.EndpointUrl, null, profileUris, ct).ConfigureAwait(false);
+            return PatchEndpointUrls(response.Endpoints);
         }
+#endif
 
         /// <summary>
         /// Invokes the FindServers service.
@@ -192,21 +194,24 @@ namespace Opc.Ua
             return servers;
         }
 
+#if NET_STANDARD_ASYNC
         /// <summary>
         /// Invokes the FindServers service async.
         /// </summary>
         /// <param name="serverUris">The collection of server URIs.</param>
+        /// <param name="ct">The cancellation token.</param>
         /// <returns></returns>
-        public virtual async Task<ApplicationDescriptionCollection> FindServersAsync(StringCollection serverUris)
+        public virtual async Task<ApplicationDescriptionCollection> FindServersAsync(StringCollection serverUris, CancellationToken ct = default)
         {
             var response = await FindServersAsync(
                 null,
                 this.Endpoint.EndpointUrl,
                 null,
                 serverUris,
-                CancellationToken.None).ConfigureAwait(false);
+                ct).ConfigureAwait(false);
             return response.Servers;
         }
+#endif
 
         /// <summary>
         /// Invokes the FindServersOnNetwork service.
@@ -238,26 +243,6 @@ namespace Opc.Ua
 
         #region Private Methods
         /// <summary>
-        /// Helper to get endpoints async.
-        /// </summary>
-        private Task<EndpointDescriptionCollection> GetEndpointsAsync(
-            RequestHeader requestHeader,
-            string endpointUrl,
-            StringCollection localeIds,
-            StringCollection profileUris)
-        {
-            return Task.Factory.FromAsync(
-                (callback, state) => BeginGetEndpoints(requestHeader,
-                    endpointUrl, localeIds, profileUris, callback, state),
-                result => {
-                    EndpointDescriptionCollection endpoints;
-                    var response = EndGetEndpoints(result, out endpoints);
-                    return endpoints;
-                },
-                TaskCreationOptions.DenyChildAttach);
-        }
-
-        /// <summary>
         /// Patch returned endpoints urls with url used to reached the endpoint.
         /// </summary>
         private EndpointDescriptionCollection PatchEndpointUrls(EndpointDescriptionCollection endpoints)
@@ -273,11 +258,18 @@ namespace Opc.Ua
                 foreach (EndpointDescription discoveryEndPoint in endpoints)
                 {
                     Uri discoveryEndPointUri = Utils.ParseUri(discoveryEndPoint.EndpointUrl);
-                    if  ( (endpointUrl.Scheme == discoveryEndPointUri.Scheme) && (endpointUrl.Port == discoveryEndPointUri.Port))
+                    if (discoveryEndPointUri == null)
+                    {
+                        Utils.LogWarning("Discovery endpoint contains invalid Url: {0}", discoveryEndPoint.EndpointUrl);
+                        continue;
+                    }
+
+                    if ((endpointUrl.Scheme == discoveryEndPointUri.Scheme) &&
+                        (endpointUrl.Port == discoveryEndPointUri.Port))
                     {
                         UriBuilder builder = new UriBuilder(discoveryEndPointUri);
                         builder.Host = endpointUrl.DnsSafeHost;
-                        discoveryEndPoint.EndpointUrl = builder.ToString();
+                        discoveryEndPoint.EndpointUrl = builder.Uri.OriginalString;
                     }
 
                     if (discoveryEndPoint.Server != null &&
@@ -313,12 +305,12 @@ namespace Opc.Ua
             IServiceMessageContext messageContext,
             X509Certificate2 clientCertificate = null)
         {
-            // create a dummy description.
-            EndpointDescription endpoint = new EndpointDescription();
-
-            endpoint.EndpointUrl = discoveryUrl.ToString();
-            endpoint.SecurityMode = MessageSecurityMode.None;
-            endpoint.SecurityPolicyUri = SecurityPolicies.None;
+            // create a default description.
+            EndpointDescription endpoint = new EndpointDescription {
+                EndpointUrl = discoveryUrl.OriginalString,
+                SecurityMode = MessageSecurityMode.None,
+                SecurityPolicyUri = SecurityPolicies.None
+            };
             endpoint.Server.ApplicationUri = endpoint.EndpointUrl;
             endpoint.Server.ApplicationType = ApplicationType.DiscoveryServer;
 
@@ -344,7 +336,7 @@ namespace Opc.Ua
         {
             // create a default description.
             var endpoint = new EndpointDescription {
-                EndpointUrl = connection.EndpointUrl.ToString(),
+                EndpointUrl = connection.EndpointUrl.OriginalString,
                 SecurityMode = MessageSecurityMode.None,
                 SecurityPolicyUri = SecurityPolicies.None
             };
@@ -375,7 +367,7 @@ namespace Opc.Ua
         {
             // create a default description.
             var endpoint = new EndpointDescription {
-                EndpointUrl = discoveryUrl.ToString(),
+                EndpointUrl = discoveryUrl.OriginalString,
                 SecurityMode = MessageSecurityMode.None,
                 SecurityPolicyUri = SecurityPolicies.None
             };

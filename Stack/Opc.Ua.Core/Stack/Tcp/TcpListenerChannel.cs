@@ -55,7 +55,6 @@ namespace Opc.Ua.Bindings
             base(contextId, bufferManager, quotas, serverCertificate, serverCertificateChain, endpoints, MessageSecurityMode.None, SecurityPolicies.None)
         {
             m_listener = listener;
-            m_queuedResponses = new SortedDictionary<uint, IServiceResponse>();
         }
         #endregion
 
@@ -118,7 +117,7 @@ namespace Opc.Ua.Bindings
             {
                 m_reportAuditCloseSecureChannelEvent = callback;
             }
-        }        
+        }
 
         /// <summary>
         /// Sets the callback used to raise channel audit events.
@@ -157,67 +156,6 @@ namespace Opc.Ua.Bindings
 
                 // automatically clean up the channel if no hello received.
                 StartCleanupTimer(StatusCodes.BadTimeout);
-            }
-        }
-
-        /// <summary>
-        /// Sends the response for the specified request.
-        /// </summary>
-        public void SendResponse(uint requestId, IServiceResponse response)
-        {
-            if (response == null) throw new ArgumentNullException(nameof(response));
-
-            lock (DataLock)
-            {
-                // must queue the response if the channel is in the faulted state.
-                if (State == TcpChannelState.Faulted)
-                {
-                    m_queuedResponses[requestId] = response;
-                    return;
-                }
-
-                Utils.EventLog.SendResponse((int)ChannelId, (int)requestId);
-
-                BufferCollection buffers = null;
-
-                try
-                {
-                    // note that the server does nothing if the message limits are exceeded.
-                    bool limitsExceeded = false;
-
-                    buffers = WriteSymmetricMessage(
-                        TcpMessageType.Message,
-                        requestId,
-                        CurrentToken,
-                        response,
-                        false,
-                        out limitsExceeded);
-                }
-                catch (Exception e)
-                {
-                    SendServiceFault(
-                        CurrentToken,
-                        requestId,
-                        ServiceResult.Create(e, StatusCodes.BadEncodingError, "Could not encode outgoing message."));
-
-                    return;
-                }
-
-                try
-                {
-                    BeginWriteMessage(buffers, null);
-                    buffers = null;
-                }
-                catch (Exception)
-                {
-                    if (buffers != null)
-                    {
-                        buffers.Release(BufferManager, "SendResponse");
-                    }
-
-                    m_queuedResponses[requestId] = response;
-                    return;
-                }
             }
         }
         #endregion
@@ -340,9 +278,8 @@ namespace Opc.Ua.Bindings
                 }
 
                 // get reason for cleanup.
-                ServiceResult reason = state as ServiceResult;
 
-                if (reason == null)
+                if (!(state is ServiceResult reason))
                 {
                     reason = new ServiceResult(StatusCodes.BadTimeout);
                 }
@@ -385,31 +322,6 @@ namespace Opc.Ua.Bindings
         }
 
         /// <summary>
-        /// Called to send queued responses after a reconnect.
-        /// </summary>
-        private void OnChannelReconnected(object state)
-        {
-            SortedDictionary<uint, IServiceResponse> responses = state as SortedDictionary<uint, IServiceResponse>;
-
-            if (responses == null)
-            {
-                return;
-            }
-
-            foreach (KeyValuePair<uint, IServiceResponse> response in responses)
-            {
-                try
-                {
-                    SendResponse(response.Key, response.Value);
-                }
-                catch (Exception e)
-                {
-                    Utils.LogError(e, "Unexpected error re-sending request (ID={0}).", response.Key);
-                }
-            }
-        }
-
-        /// <summary>
         /// Sends an error message over the socket.
         /// </summary>
         protected void SendErrorMessage(ServiceResult error)
@@ -420,18 +332,19 @@ namespace Opc.Ua.Bindings
 
             try
             {
-                BinaryEncoder encoder = new BinaryEncoder(buffer, 0, SendBufferSize, Quotas.MessageContext);
+                using (BinaryEncoder encoder = new BinaryEncoder(buffer, 0, SendBufferSize, Quotas.MessageContext))
+                {
+                    encoder.WriteUInt32(null, TcpMessageType.Error);
+                    encoder.WriteUInt32(null, 0);
 
-                encoder.WriteUInt32(null, TcpMessageType.Error);
-                encoder.WriteUInt32(null, 0);
+                    WriteErrorMessageBody(encoder, error);
 
-                WriteErrorMessageBody(encoder, error);
+                    int size = encoder.Close();
+                    UpdateMessageSize(buffer, 0, size);
 
-                int size = encoder.Close();
-                UpdateMessageSize(buffer, 0, size);
-
-                BeginWriteMessage(new ArraySegment<byte>(buffer, 0, size), null);
-                buffer = null;
+                    BeginWriteMessage(new ArraySegment<byte>(buffer, 0, size), null);
+                    buffer = null;
+                }
             }
             finally
             {
@@ -598,15 +511,6 @@ namespace Opc.Ua.Bindings
 
         #region Protected Functions
         /// <summary>
-        /// Reset the sorted dictionary of queued responses after reconnect.
-        /// </summary>
-        protected void ResetQueuedResponses(Action<object> action)
-        {
-            Task.Factory.StartNew(action, m_queuedResponses);
-            m_queuedResponses = new SortedDictionary<uint, IServiceResponse>();
-        }
-
-        /// <summary>
         /// The channel request event handler.
         /// </summary>
         protected TcpChannelRequestEventHandler RequestReceived => m_requestReceived;
@@ -630,7 +534,6 @@ namespace Opc.Ua.Bindings
         #region Private Fields
         private ITcpChannelListener m_listener;
         private bool m_responseRequired;
-        private SortedDictionary<uint, IServiceResponse> m_queuedResponses;
         private TcpChannelRequestEventHandler m_requestReceived;
         private ReportAuditOpenSecureChannelEventHandler m_reportAuditOpenSecureChannelEvent;
         private ReportAuditCloseSecureChannelEventHandler m_reportAuditCloseSecureChannelEvent;

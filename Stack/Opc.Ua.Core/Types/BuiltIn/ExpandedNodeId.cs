@@ -25,7 +25,7 @@ namespace Opc.Ua
     /// Extends a node id by adding a complete namespace URI.
     /// </remarks>
     [DataContract(Namespace = Namespaces.OpcUaXsd)]
-    public class ExpandedNodeId : IComparable, IFormattable
+    public class ExpandedNodeId : ICloneable, IComparable, IEquatable<ExpandedNodeId>, IFormattable
     {
         #region Constructors
         /// <summary>
@@ -94,7 +94,7 @@ namespace Opc.Ua
         /// Initializes an expanded node identifier with a node id and a namespace URI.
         /// </summary>
         /// <remarks>
-        /// Creates a new instance of the object while allowing you to specify both the 
+        /// Creates a new instance of the object while allowing you to specify both the
         /// <see cref="NodeId"/> and the Namespace URI that applies to the NodeID.
         /// </remarks>
         /// <param name="nodeId">The <see cref="NodeId"/> to wrap.</param>
@@ -118,7 +118,7 @@ namespace Opc.Ua
         /// Initializes an expanded node identifier with a node id and a namespace URI.
         /// </summary>
         /// <remarks>
-        /// Creates a new instance of the object while allowing you to specify both the 
+        /// Creates a new instance of the object while allowing you to specify both the
         /// <see cref="NodeId"/> and the Namespace URI that applies to the NodeID.
         /// </remarks>
         /// <param name="nodeId">The <see cref="NodeId"/> to wrap.</param>
@@ -315,7 +315,7 @@ namespace Opc.Ua
         public ExpandedNodeId(string text)
         {
             Initialize();
-            m_nodeId = new NodeId(text);
+            InternalParse(text);
         }
 
         /// <summary>
@@ -654,47 +654,7 @@ namespace Opc.Ua
                     return ExpandedNodeId.Null;
                 }
 
-                uint serverIndex = 0;
-
-                // parse the server index if present.
-                if (text.StartsWith("svr=", StringComparison.Ordinal))
-                {
-                    int index = text.IndexOf(';');
-
-                    if (index == -1)
-                    {
-                        throw new ServiceResultException(StatusCodes.BadNodeIdInvalid, "Invalid server index.");
-                    }
-
-                    serverIndex = Convert.ToUInt32(text.Substring(4, index - 4), CultureInfo.InvariantCulture);
-
-                    text = text.Substring(index + 1);
-                }
-
-                string namespaceUri = null;
-
-                // parse the namespace uri if present.
-                if (text.StartsWith("nsu=", StringComparison.Ordinal))
-                {
-                    int index = text.IndexOf(';');
-
-                    if (index == -1)
-                    {
-                        throw new ServiceResultException(StatusCodes.BadNodeIdInvalid, "Invalid namespace uri.");
-                    }
-
-                    StringBuilder buffer = new StringBuilder();
-
-                    UnescapeUri(text, 4, index, buffer);
-                    namespaceUri = buffer.ToString();
-                    text = text.Substring(index + 1);
-                }
-
-                // parse the node id.
-                NodeId nodeId = NodeId.Parse(text);
-
-                // craete the node id.
-                return new ExpandedNodeId(nodeId, namespaceUri, serverIndex);
+                return new ExpandedNodeId(text);
             }
             catch (Exception e)
             {
@@ -890,12 +850,32 @@ namespace Opc.Ua
         /// </remarks>
         public override int GetHashCode()
         {
-            if (m_nodeId == null)
+            if (m_nodeId == null || m_nodeId.IsNullNodeId)
             {
                 return 0;
             }
 
-            return m_nodeId.GetHashCode();
+            // just compare node ids.
+            if (!this.IsAbsolute)
+            {
+                return m_nodeId.GetHashCode();
+            }
+
+            var hash = new HashCode();
+
+            if (this.ServerIndex != 0)
+            {
+                hash.Add(this.ServerIndex);
+            }
+
+            if (this.NamespaceUri != null)
+            {
+                hash.Add(NamespaceUri);
+            }
+
+            hash.Add(this.m_nodeId);
+
+            return hash.ToHashCode();
         }
 
         /// <summary>
@@ -929,6 +909,15 @@ namespace Opc.Ua
 
             return (value1.CompareTo(value2) != 0);
         }
+
+        /// <summary>
+        /// Implements <see cref="IEquatable{T}"/>.Equals(T)"/>
+        /// </summary>
+        /// <param name="other">The other ExpandedNodeId.</param>
+        public bool Equals(ExpandedNodeId other)
+        {
+            return (CompareTo(other) == 0);
+        }
         #endregion
 
         #region IFormattable Members
@@ -954,6 +943,12 @@ namespace Opc.Ua
         #endregion
 
         #region ICloneable Members
+        /// <inheritdoc/>
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         /// <summary>
         /// Makes a deep copy of the object.
         /// </summary>
@@ -1163,6 +1158,67 @@ namespace Opc.Ua
         private static readonly ExpandedNodeId s_Null = new ExpandedNodeId();
         #endregion
 
+        #region Private Methods
+        /// <summary>
+        /// Parses a expanded node id string and sets the properties.
+        /// </summary>
+        /// <param name="text">The ExpandedNodeId value as a string.</param>
+        private void InternalParse(string text)
+        {
+            uint serverIndex = 0;
+            string namespaceUri = null;
+            try
+            {
+                // parse the server index if present.
+                if (text.StartsWith("svr=", StringComparison.Ordinal))
+                {
+                    int index = text.IndexOf(';');
+
+                    if (index == -1)
+                    {
+                        throw new ServiceResultException(StatusCodes.BadNodeIdInvalid, "Invalid server index.");
+                    }
+
+                    serverIndex = Convert.ToUInt32(text.Substring(4, index - 4), CultureInfo.InvariantCulture);
+
+                    text = text.Substring(index + 1);
+                }
+
+                // parse the namespace uri if present.
+                if (text.StartsWith("nsu=", StringComparison.Ordinal))
+                {
+                    int index = text.IndexOf(';');
+
+                    if (index == -1)
+                    {
+                        throw new ServiceResultException(StatusCodes.BadNodeIdInvalid, "Invalid namespace uri.");
+                    }
+
+                    StringBuilder buffer = new StringBuilder();
+
+                    UnescapeUri(text, 4, index, buffer);
+                    namespaceUri = buffer.ToString();
+                    text = text.Substring(index + 1);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new ServiceResultException(
+                    StatusCodes.BadNodeIdInvalid,
+                    Utils.Format("Cannot parse expanded node id text: '{0}'", text),
+                    e);
+            }
+
+            // parse the node id.
+            NodeId nodeId = NodeId.InternalParse(text, serverIndex != 0 || !string.IsNullOrEmpty(namespaceUri));
+
+            // set the properties.
+            m_nodeId = nodeId;
+            m_namespaceUri = namespaceUri;
+            m_serverIndex = serverIndex;
+        }
+        #endregion
+
         #region Private Fields
         private NodeId m_nodeId;
         private string m_namespaceUri;
@@ -1175,7 +1231,7 @@ namespace Opc.Ua
     /// A collection of ExpandedNodeId objects.
     /// </summary>
     [CollectionDataContract(Name = "ListOfExpandedNodeId", Namespace = Namespaces.OpcUaXsd, ItemName = "ExpandedNodeId")]
-    public partial class ExpandedNodeIdCollection : List<ExpandedNodeId>
+    public partial class ExpandedNodeIdCollection : List<ExpandedNodeId>, ICloneable
     {
         /// <summary>
         /// Initializes an empty collection.
@@ -1205,7 +1261,7 @@ namespace Opc.Ua
         /// Converts an array to a collection.
         /// </summary>
         /// <remarks>
-        /// This static method converts an array of <see cref="ExpandedNodeId"/> objects to 
+        /// This static method converts an array of <see cref="ExpandedNodeId"/> objects to
         /// an <see cref="ExpandedNodeIdCollection"/>.
         /// </remarks>
         /// <param name="values">An array of <see cref="ExpandedNodeId"/> values to return as a collection</param>
@@ -1231,6 +1287,13 @@ namespace Opc.Ua
             return ToExpandedNodeIdCollection(values);
         }
 
+        #region ICloneable
+        /// <inheritdoc/>
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         /// <summary>
         /// Creates a deep copy of the collection.
         /// </summary>
@@ -1248,6 +1311,7 @@ namespace Opc.Ua
 
             return clone;
         }
+        #endregion
 
     }//class
     #endregion

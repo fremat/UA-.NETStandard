@@ -17,7 +17,6 @@ using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Schema;
-using Opc.Ua.Core;
 
 namespace Opc.Ua.Schema.Xml
 {
@@ -26,8 +25,6 @@ namespace Opc.Ua.Schema.Xml
     /// </summary>
     public class XmlSchemaValidator : SchemaValidator
     {
-        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
-
         #region Constructors
         /// <summary>
         /// Intializes the object with default values.
@@ -40,7 +37,15 @@ namespace Opc.Ua.Schema.Xml
         /// <summary>
         /// Intializes the object with a file table.
         /// </summary>
-        public XmlSchemaValidator(Dictionary<string, string> fileTable) : base(fileTable)
+        public XmlSchemaValidator(IDictionary<string, string> fileTable) : base(fileTable)
+        {
+            SetResourcePaths(WellKnownDictionaries);
+        }
+
+        /// <summary>
+        /// Intializes the object with a import table.
+        /// </summary>
+        public XmlSchemaValidator(IDictionary<string, byte[]> importTable) : base(importTable)
         {
             SetResourcePaths(WellKnownDictionaries);
         }
@@ -119,46 +124,41 @@ namespace Opc.Ua.Schema.Xml
         {
             XmlWriterSettings settings = Utils.DefaultXmlWriterSettings();
 
-            using (var ostrm = PooledMemoryStream.GetMemoryStream())
+            MemoryStream ostrm = new MemoryStream();
+            XmlWriter writer = XmlWriter.Create(ostrm, settings);
+
+            try
             {
-                XmlWriter writer = XmlWriter.Create(ostrm, settings);
-
-                try
+                if (typeName == null || m_schema.Elements.Values.Count == 0)
                 {
-                    if (typeName == null || m_schema.Elements.Values.Count == 0)
+                    m_schema.Write(writer);
+                }
+                else
+                {
+                    foreach (XmlSchemaObject current in m_schema.Elements.Values)
                     {
-                        m_schema.Write(writer);
-                    }
-                    else
-                    {
-                        foreach (XmlSchemaObject current in m_schema.Elements.Values)
+                        if (current is XmlSchemaElement element)
                         {
-                            XmlSchemaElement element = current as XmlSchemaElement;
-
-                            if (element != null)
+                            if (element.Name == typeName)
                             {
-                                if (element.Name == typeName)
-                                {
-                                    XmlSchema schema = new XmlSchema();
-                                    schema.Items.Add(element.ElementSchemaType);
-                                    schema.Items.Add(element);
-                                    schema.Write(writer);
-                                    break;
-                                }
+                                XmlSchema schema = new XmlSchema();
+                                schema.Items.Add(element.ElementSchemaType);
+                                schema.Items.Add(element);
+                                schema.Write(writer);
+                                break;
                             }
                         }
                     }
                 }
-                finally
-                {
-                    writer.Flush();
-                    writer.Dispose();
-                }
-
-                return s_utf8NoBom.GetString(ostrm.ToArray());
             }
+            finally
+            {
+                writer.Flush();
+                writer.Dispose();
+            }
+
+            return Encoding.UTF8.GetString(ostrm.ToArray());
         }
-        } 
         #endregion
 
         #region Private Methods

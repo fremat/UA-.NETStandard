@@ -24,7 +24,7 @@ namespace Opc.Ua
     /// <summary>
     /// Encodes objects in a stream using the UA Binary encoding.
     /// </summary>
-    public class BinaryEncoder : IEncoder, IDisposable
+    public class BinaryEncoder : IEncoder
     {
         #region Constructor
         /// <summary>
@@ -56,7 +56,10 @@ namespace Opc.Ua
         /// <summary>
         /// Creates an encoder that writes to the stream.
         /// </summary>
-        public BinaryEncoder(Stream stream, IServiceMessageContext context, bool leaveOpen = false)
+        /// <param name="stream">The stream to which the encoder writes.</param>
+        /// <param name="context">The message context to use for the encoding.</param>
+        /// <param name="leaveOpen">If the stream should be left open on dispose.</param>
+        public BinaryEncoder(Stream stream, IServiceMessageContext context, bool leaveOpen)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
 
@@ -75,6 +78,7 @@ namespace Opc.Ua
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -88,9 +92,14 @@ namespace Opc.Ua
                 {
                     m_writer.Flush();
                     m_writer.Dispose();
+                    m_writer = null;
                 }
 
-                m_ostrm?.Dispose();
+                if (!m_leaveOpen)
+                {
+                    m_ostrm?.Dispose();
+                    m_ostrm = null;
+                }
             }
         }
         #endregion
@@ -123,12 +132,26 @@ namespace Opc.Ua
         /// </summary>
         public byte[] CloseAndReturnBuffer()
         {
-            m_writer.Flush();
-            m_writer.Dispose();
+            Close();
 
             if (m_ostrm is MemoryStream memoryStream)
             {
                 return memoryStream.ToArray();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Completes writing and returns the buffer as base64 encoded string.
+        /// </summary>
+        public string CloseAndReturnText()
+        {
+            Close();
+
+            if (m_ostrm is MemoryStream memoryStream)
+            {
+                return Convert.ToBase64String(memoryStream.ToArray());
             }
 
             return null;
@@ -178,27 +201,26 @@ namespace Opc.Ua
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             // create encoder.
-            BinaryEncoder encoder = new BinaryEncoder(context);
+            using (BinaryEncoder encoder = new BinaryEncoder(context))
+            {
+                // encode message
+                encoder.EncodeMessage(message);
 
-            // encode message
-            encoder.EncodeMessage(message);
-
-            // close encoder.
-            return encoder.CloseAndReturnBuffer();
+                // close encoder.
+                return encoder.CloseAndReturnBuffer();
+            }
         }
 
         /// <summary>
         /// Encodes a session-less message to a buffer.
         /// </summary>
-        public static void EncodeSessionLessMessage(IEncodeable message, Stream stream, IServiceMessageContext context, bool leaveOpen = false)
+        public static void EncodeSessionLessMessage(IEncodeable message, Stream stream, IServiceMessageContext context, bool leaveOpen)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             // create encoder.
-            BinaryEncoder encoder = new BinaryEncoder(stream, context);
-
-            try
+            using (BinaryEncoder encoder = new BinaryEncoder(stream, context, leaveOpen))
             {
                 long start = encoder.m_ostrm.Position;
 
@@ -223,35 +245,22 @@ namespace Opc.Ua
                         (int)(encoder.m_ostrm.Position - start));
                 }
             }
-            finally
-            {
-                // close encoder.
-                if (!leaveOpen)
-                {
-                    encoder.CloseAndReturnBuffer();
-                }
-            }
         }
 
         /// <summary>
         /// Encodes a message in a stream.
         /// </summary>
-        public static void EncodeMessage(IEncodeable message, Stream stream, IServiceMessageContext context, bool leaveOpen = false)
+        public static void EncodeMessage(IEncodeable message, Stream stream, IServiceMessageContext context, bool leaveOpen)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             // create encoder.
-            BinaryEncoder encoder = new BinaryEncoder(stream, context);
-
-            // encode message
-            encoder.EncodeMessage(message);
-
-            // close encoder.
-            if (!leaveOpen)
+            using (BinaryEncoder encoder = new BinaryEncoder(stream, context, leaveOpen))
             {
-                encoder.CloseAndReturnBuffer();
+                // encode message
+                encoder.EncodeMessage(message);
             }
         }
 
@@ -435,7 +444,7 @@ namespace Opc.Ua
                 return;
             }
 
-            int length = s_utf8NoBom.GetByteCount(value);
+            int length = Encoding.UTF8.GetByteCount(value);
 
             if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < length)
             {
@@ -561,7 +570,7 @@ namespace Opc.Ua
                 return;
             }
 
-            WriteByteString(null, s_utf8NoBom.GetBytes(value.OuterXml));
+            WriteByteString(null, Encoding.UTF8.GetBytes(value.OuterXml));
         }
 
         /// <summary>
@@ -662,106 +671,11 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        /// Writes an DiagnosticInfo to the stream.
+        /// Writes a DiagnosticInfo to the stream.
         /// </summary>
         public void WriteDiagnosticInfo(string fieldName, DiagnosticInfo value)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            // check for null.
-            if (value == null)
-            {
-                WriteByte(null, 0);
-                return;
-            }
-
-            m_nestingLevel++;
-
-            // calculate the encoding.
-            byte encoding = 0;
-
-            if (value.SymbolicId >= 0)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.SymbolicId;
-            }
-
-            if (value.NamespaceUri >= 0)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.NamespaceUri;
-            }
-
-            if (value.Locale >= 0)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.Locale;
-            }
-
-            if (value.LocalizedText >= 0)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.LocalizedText;
-            }
-
-            if (value.AdditionalInfo != null)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.AdditionalInfo;
-            }
-
-            if (value.InnerStatusCode != StatusCodes.Good)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.InnerStatusCode;
-            }
-
-            if (value.InnerDiagnosticInfo != null)
-            {
-                encoding |= (byte)DiagnosticInfoEncodingBits.InnerDiagnosticInfo;
-            }
-
-            // write the encoding.
-            WriteByte(null, encoding);
-
-            // write the fields of the diagnostic info structure.
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.SymbolicId) != 0)
-            {
-                WriteInt32(null, value.SymbolicId);
-            }
-
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.NamespaceUri) != 0)
-            {
-                WriteInt32(null, value.NamespaceUri);
-            }
-
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.Locale) != 0)
-            {
-                WriteInt32(null, value.Locale);
-            }
-
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.LocalizedText) != 0)
-            {
-                WriteInt32(null, value.LocalizedText);
-            }
-
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.AdditionalInfo) != 0)
-            {
-                WriteString(null, value.AdditionalInfo);
-            }
-
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.InnerStatusCode) != 0)
-            {
-                WriteStatusCode(null, value.InnerStatusCode);
-            }
-
-            if ((encoding & (byte)DiagnosticInfoEncodingBits.InnerDiagnosticInfo) != 0)
-            {
-                WriteDiagnosticInfo(null, value.InnerDiagnosticInfo);
-            }
-
-            m_nestingLevel--;
+            WriteDiagnosticInfo(fieldName, value, 0);
         }
 
         /// <summary>
@@ -831,20 +745,16 @@ namespace Opc.Ua
         /// </summary>
         public void WriteVariant(string fieldName, Variant value)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            CheckAndIncrementNestingLevel();
+
+            try
             {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
+                WriteVariantValue(fieldName, value);
             }
-
-            m_nestingLevel++;
-
-            WriteVariantValue(fieldName, value);
-
-            m_nestingLevel--;
+            finally
+            {
+                m_nestingLevel--;
+            }
         }
 
         /// <summary>
@@ -1000,18 +910,16 @@ namespace Opc.Ua
             }
 
             // write binary bodies.
-            byte[] bytes = body as byte[];
 
-            if (bytes != null)
+            if (body is byte[] bytes)
             {
                 WriteByteString(null, bytes);
                 return;
             }
 
             // write XML bodies.
-            XmlElement xml = body as XmlElement;
 
-            if (xml != null)
+            if (body is XmlElement xml)
             {
                 WriteXmlElement(null, xml);
                 return;
@@ -1045,10 +953,12 @@ namespace Opc.Ua
             // must pre-encode and then write the bytes.
             else
             {
-                BinaryEncoder encoder = new BinaryEncoder(this.m_context);
-                encoder.WriteEncodeable(null, encodeable, null);
-                bytes = encoder.CloseAndReturnBuffer();
-                WriteByteString(null, bytes);
+                using (BinaryEncoder encoder = new BinaryEncoder(this.m_context))
+                {
+                    encoder.WriteEncodeable(null, encodeable, null);
+                    bytes = encoder.CloseAndReturnBuffer();
+                    WriteByteString(null, bytes);
+                }
             }
         }
 
@@ -1057,31 +967,27 @@ namespace Opc.Ua
         /// </summary>
         public void WriteEncodeable(string fieldName, IEncodeable value, System.Type systemType)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            CheckAndIncrementNestingLevel();
+
+            try
             {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
+                // create a default object if a null object specified.
+                if (value == null)
+                {
+                    if (systemType == null) throw new ArgumentNullException(nameof(systemType));
+                    value = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
+                }
 
-            // create a default object if a null object specified.
-            if (value == null)
+                // encode the object.
+                if (value != null)
+                {
+                    value.Encode(this);
+                }
+            }
+            finally
             {
-                if (systemType == null) throw new ArgumentNullException(nameof(systemType));
-                value = Opc.Ua.Core.ObjectFactory.CreateInstance(systemType) as IEncodeable;
+                m_nestingLevel--;
             }
-
-            m_nestingLevel++;
-
-            // encode the object.
-            if (value != null)
-            {
-                value.Encode(this);
-            }
-
-            m_nestingLevel--;
         }
 
         /// <summary>
@@ -1612,7 +1518,8 @@ namespace Opc.Ua
         {
             if (valueRank == ValueRanks.OneDimension)
             {
-                /*One dimensional Arrays are encoded as a sequence of elements preceded by the number of elements encoded as an Int32 value. 
+                /* One dimensional Arrays are encoded as a sequence of elements preceeded 
+                 * by the number of elements encoded as an Int32 value. 
                  * If an Array is null, then its length is encoded as −1.*/
                 switch (builtInType)
                 {
@@ -1677,30 +1584,29 @@ namespace Opc.Ua
                         WriteStatusCodeArray(null, (StatusCode[])array);
                         break;
                     case BuiltInType.XmlElement:
-                        WriteXmlElementArray(null, (System.Xml.XmlElement[])array);
+                        WriteXmlElementArray(null, (XmlElement[])array);
                         break;
                     case BuiltInType.Variant:
+                    {
                         // try to write IEncodeable Array
-                        IEncodeable[] encodeableArray = array as IEncodeable[];
-                        if (encodeableArray != null)
+                        if (array is IEncodeable[] encodeableArray)
                         {
                             WriteEncodeableArray(fieldName, encodeableArray, array.GetType().GetElementType());
                             return;
                         }
-
                         WriteVariantArray(null, (Variant[])array);
                         break;
+                    }
                     case BuiltInType.Enumeration:
                         int[] ints = array as int[];
                         if (ints == null)
                         {
-                            Enum[] enums = array as Enum[];
-                            if (enums != null)
+                            if (array is Enum[] enums)
                             {
                                 ints = new int[enums.Length];
                                 for (int ii = 0; ii < enums.Length; ii++)
                                 {
-                                    ints[ii] = (int)(object)enums[ii];
+                                    ints[ii] = Convert.ToInt32(enums[ii], CultureInfo.InvariantCulture);
                                 }
                             }
                         }
@@ -1712,7 +1618,7 @@ namespace Opc.Ua
                         {
                             throw ServiceResultException.Create(
                                 StatusCodes.BadEncodingError,
-                                "Unexpected type encountered while encoding an Enumenration Array");
+                                "Unexpected type encountered while encoding an Enumeration Array.");
                         }
                         break;
                     case BuiltInType.ExtensionObject:
@@ -1721,8 +1627,23 @@ namespace Opc.Ua
                     case BuiltInType.DiagnosticInfo:
                         WriteDiagnosticInfoArray(null, (DiagnosticInfo[])array);
                         break;
+                    case BuiltInType.DataValue:
+                        WriteDataValueArray(null, (DataValue[])array);
+                        break;
                     default:
                     {
+                        // try to write IEncodeable Array
+                        if (array is IEncodeable[] encodeableArray)
+                        {
+                            WriteEncodeableArray(fieldName, encodeableArray, array.GetType().GetElementType());
+                            break;
+                        }
+                        if (array == null)
+                        {
+                            // write zero dimension
+                            WriteInt32(null, -1);
+                            return;
+                        }
                         throw ServiceResultException.Create(
                             StatusCodes.BadEncodingError,
                             "Unexpected type encountered while encoding an Array with BuiltInType: {0}",
@@ -1732,16 +1653,21 @@ namespace Opc.Ua
             }
             else if (valueRank > ValueRanks.OneDimension)
             {
-                /* Multi - dimensional Arrays are encoded as an Int32 Array containing the dimensions followed by 
-                 * a list of all the values in the Array. The total number of values is equal to the product of the dimensions.
+                /* Multi-dimensional Arrays are encoded as an Int32 Array containing the dimensions followed by 
+                 * a list of all the values in the Array. The total number of values is equal to the 
+                 * product of the dimensions.
                  * The number of values is 0 if one or more dimension is less than or equal to 0.*/
 
                 Matrix matrix = array as Matrix;
                 if (matrix == null)
                 {
-                    // there is no Dimensions to write
-                    WriteInt32(null, -1);
-                    return;
+                    if (!(array is Array multiArray) || multiArray.Rank != valueRank)
+                    {
+                        // there is no Dimensions to write
+                        WriteInt32(null, -1);
+                        return;
+                    }
+                    matrix = new Matrix(multiArray, builtInType);
                 }
 
                 // Write the Dimensions
@@ -1752,7 +1678,6 @@ namespace Opc.Ua
                     case BuiltInType.Boolean:
                     {
                         bool[] values = (bool[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteBoolean(null, values[ii]);
@@ -1762,7 +1687,6 @@ namespace Opc.Ua
                     case BuiltInType.SByte:
                     {
                         sbyte[] values = (sbyte[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteSByte(null, values[ii]);
@@ -1772,7 +1696,6 @@ namespace Opc.Ua
                     case BuiltInType.Byte:
                     {
                         byte[] values = (byte[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteByte(null, values[ii]);
@@ -1782,7 +1705,6 @@ namespace Opc.Ua
                     case BuiltInType.Int16:
                     {
                         Int16[] values = (Int16[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteInt16(null, values[ii]);
@@ -1792,7 +1714,6 @@ namespace Opc.Ua
                     case BuiltInType.UInt16:
                     {
                         UInt16[] values = (UInt16[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteUInt16(null, values[ii]);
@@ -1800,10 +1721,20 @@ namespace Opc.Ua
                         break;
                     }
                     case BuiltInType.Enumeration:
+                    {
+                        if (matrix.Elements is Enum[] values)
+                        {
+                            for (int ii = 0; ii < values.Length; ii++)
+                            {
+                                WriteEnumerated(null, values[ii]);
+                            }
+                            break;
+                        }
+                        goto case BuiltInType.Int32;
+                    }
                     case BuiltInType.Int32:
                     {
                         Int32[] values = (Int32[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteInt32(null, values[ii]);
@@ -1813,7 +1744,6 @@ namespace Opc.Ua
                     case BuiltInType.UInt32:
                     {
                         UInt32[] values = (UInt32[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteUInt32(null, values[ii]);
@@ -1823,7 +1753,6 @@ namespace Opc.Ua
                     case BuiltInType.Int64:
                     {
                         Int64[] values = (Int64[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteInt64(null, values[ii]);
@@ -1833,7 +1762,6 @@ namespace Opc.Ua
                     case BuiltInType.UInt64:
                     {
                         UInt64[] values = (UInt64[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteUInt64(null, values[ii]);
@@ -1843,7 +1771,6 @@ namespace Opc.Ua
                     case BuiltInType.Float:
                     {
                         float[] values = (float[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteFloat(null, values[ii]);
@@ -1853,7 +1780,6 @@ namespace Opc.Ua
                     case BuiltInType.Double:
                     {
                         double[] values = (double[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteDouble(null, values[ii]);
@@ -1863,7 +1789,6 @@ namespace Opc.Ua
                     case BuiltInType.String:
                     {
                         string[] values = (string[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteString(null, values[ii]);
@@ -1873,7 +1798,6 @@ namespace Opc.Ua
                     case BuiltInType.DateTime:
                     {
                         DateTime[] values = (DateTime[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteDateTime(null, values[ii]);
@@ -1883,7 +1807,6 @@ namespace Opc.Ua
                     case BuiltInType.Guid:
                     {
                         Uuid[] values = (Uuid[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteGuid(null, values[ii]);
@@ -1893,7 +1816,6 @@ namespace Opc.Ua
                     case BuiltInType.ByteString:
                     {
                         byte[][] values = (byte[][])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteByteString(null, values[ii]);
@@ -1903,7 +1825,6 @@ namespace Opc.Ua
                     case BuiltInType.XmlElement:
                     {
                         XmlElement[] values = (XmlElement[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteXmlElement(null, values[ii]);
@@ -1913,7 +1834,6 @@ namespace Opc.Ua
                     case BuiltInType.NodeId:
                     {
                         NodeId[] values = (NodeId[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteNodeId(null, values[ii]);
@@ -1923,7 +1843,6 @@ namespace Opc.Ua
                     case BuiltInType.ExpandedNodeId:
                     {
                         ExpandedNodeId[] values = (ExpandedNodeId[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteExpandedNodeId(null, values[ii]);
@@ -1933,7 +1852,6 @@ namespace Opc.Ua
                     case BuiltInType.StatusCode:
                     {
                         StatusCode[] values = (StatusCode[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteStatusCode(null, values[ii]);
@@ -1943,7 +1861,6 @@ namespace Opc.Ua
                     case BuiltInType.QualifiedName:
                     {
                         QualifiedName[] values = (QualifiedName[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteQualifiedName(null, values[ii]);
@@ -1953,7 +1870,6 @@ namespace Opc.Ua
                     case BuiltInType.LocalizedText:
                     {
                         LocalizedText[] values = (LocalizedText[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteLocalizedText(null, values[ii]);
@@ -1963,7 +1879,6 @@ namespace Opc.Ua
                     case BuiltInType.ExtensionObject:
                     {
                         ExtensionObject[] values = (ExtensionObject[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteExtensionObject(null, values[ii]);
@@ -1973,7 +1888,6 @@ namespace Opc.Ua
                     case BuiltInType.DataValue:
                     {
                         DataValue[] values = (DataValue[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteDataValue(null, values[ii]);
@@ -1982,9 +1896,7 @@ namespace Opc.Ua
                     }
                     case BuiltInType.Variant:
                     {
-                        Variant[] variants = matrix.Elements as Variant[];
-
-                        if (variants != null)
+                        if (matrix.Elements is Variant[] variants)
                         {
                             for (int ii = 0; ii < variants.Length; ii++)
                             {
@@ -1994,8 +1906,7 @@ namespace Opc.Ua
                         }
 
                         // try to write IEncodeable Array
-                        IEncodeable[] encodeableArray = matrix.Elements as IEncodeable[];
-                        if (encodeableArray != null)
+                        if (matrix.Elements is IEncodeable[] encodeableArray)
                         {
                             for (int ii = 0; ii < encodeableArray.Length; ii++)
                             {
@@ -2004,9 +1915,7 @@ namespace Opc.Ua
                             break;
                         }
 
-                        object[] objects = matrix.Elements as object[];
-
-                        if (objects != null)
+                        if (matrix.Elements is object[] objects)
                         {
                             for (int ii = 0; ii < objects.Length; ii++)
                             {
@@ -2021,7 +1930,6 @@ namespace Opc.Ua
                     case BuiltInType.DiagnosticInfo:
                     {
                         DiagnosticInfo[] values = (DiagnosticInfo[])matrix.Elements;
-                        // write contents.
                         for (int ii = 0; ii < values.Length; ii++)
                         {
                             WriteDiagnosticInfo(null, values[ii]);
@@ -2030,6 +1938,15 @@ namespace Opc.Ua
                     }
                     default:
                     {
+                        // try to write IEncodeable Array
+                        if (matrix.Elements is IEncodeable[] encodeableArray)
+                        {
+                            for (int ii = 0; ii < encodeableArray.Length; ii++)
+                            {
+                                WriteEncodeable(null, encodeableArray[ii], null);
+                            }
+                            break;
+                        }
                         throw ServiceResultException.Create(
                             StatusCodes.BadEncodingError,
                             "Unexpected type encountered while encoding a Matrix with BuiltInType: {0}",
@@ -2041,6 +1958,116 @@ namespace Opc.Ua
         #endregion
 
         #region Private Methods
+        /// <summary>
+        /// Writes a DiagnosticInfo to the stream.
+        /// Ignores InnerDiagnosticInfo field if the nesting level
+        /// <see cref="DiagnosticInfo.MaxInnerDepth"/> is exceeded.
+        /// </summary>
+        private void WriteDiagnosticInfo(string fieldName, DiagnosticInfo value, int depth)
+        {
+
+            // check for null.
+            if (value == null)
+            {
+                WriteByte(null, 0);
+                return;
+            }
+
+            CheckAndIncrementNestingLevel();
+
+            try
+            {
+                // calculate the encoding.
+                byte encoding = 0;
+
+                if (value.SymbolicId >= 0)
+                {
+                    encoding |= (byte)DiagnosticInfoEncodingBits.SymbolicId;
+                }
+
+                if (value.NamespaceUri >= 0)
+                {
+                    encoding |= (byte)DiagnosticInfoEncodingBits.NamespaceUri;
+                }
+
+                if (value.Locale >= 0)
+                {
+                    encoding |= (byte)DiagnosticInfoEncodingBits.Locale;
+                }
+
+                if (value.LocalizedText >= 0)
+                {
+                    encoding |= (byte)DiagnosticInfoEncodingBits.LocalizedText;
+                }
+
+                if (value.AdditionalInfo != null)
+                {
+                    encoding |= (byte)DiagnosticInfoEncodingBits.AdditionalInfo;
+                }
+
+                if (value.InnerStatusCode != StatusCodes.Good)
+                {
+                    encoding |= (byte)DiagnosticInfoEncodingBits.InnerStatusCode;
+                }
+
+                if (value.InnerDiagnosticInfo != null)
+                {
+                    if (depth < DiagnosticInfo.MaxInnerDepth)
+                    {
+                        encoding |= (byte)DiagnosticInfoEncodingBits.InnerDiagnosticInfo;
+                    }
+                    else
+                    {
+                        Utils.LogWarning("InnerDiagnosticInfo dropped because nesting exceeds maximum of {0}.",
+                            DiagnosticInfo.MaxInnerDepth);
+                    }
+                }
+
+                // write the encoding.
+                WriteByte(null, encoding);
+
+                // write the fields of the diagnostic info structure.
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.SymbolicId) != 0)
+                {
+                    WriteInt32(null, value.SymbolicId);
+                }
+
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.NamespaceUri) != 0)
+                {
+                    WriteInt32(null, value.NamespaceUri);
+                }
+
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.Locale) != 0)
+                {
+                    WriteInt32(null, value.Locale);
+                }
+
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.LocalizedText) != 0)
+                {
+                    WriteInt32(null, value.LocalizedText);
+                }
+
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.AdditionalInfo) != 0)
+                {
+                    WriteString(null, value.AdditionalInfo);
+                }
+
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.InnerStatusCode) != 0)
+                {
+                    WriteStatusCode(null, value.InnerStatusCode);
+                }
+
+                if ((encoding & (byte)DiagnosticInfoEncodingBits.InnerDiagnosticInfo) != 0)
+                {
+                    WriteDiagnosticInfo(null, value.InnerDiagnosticInfo, depth + 1);
+                }
+            }
+            finally
+            {
+                m_nestingLevel--;
+            }
+        }
+
         /// <summary>
         /// Writes an object array to the stream (converts to Variant first).
         /// </summary>
@@ -2325,11 +2352,9 @@ namespace Opc.Ua
                     case BuiltInType.Enumeration:
                     {
                         // Check whether the value to encode is int array.
-                        int[] ints = valueToEncode as int[];
-                        if (ints == null)
+                        if (!(valueToEncode is int[] ints))
                         {
-                            Enum[] enums = valueToEncode as Enum[];
-                            if (enums == null)
+                            if (!(valueToEncode is Enum[] enums))
                             {
                                 throw new ServiceResultException(
                                     StatusCodes.BadEncodingError,
@@ -2348,17 +2373,14 @@ namespace Opc.Ua
 
                     case BuiltInType.Variant:
                     {
-                        Variant[] variants = valueToEncode as Variant[];
-
-                        if (variants != null)
+                        if (valueToEncode is Variant[] variants)
                         {
                             WriteVariantArray(null, variants);
                             break;
                         }
 
-                        object[] objects = valueToEncode as object[];
 
-                        if (objects != null)
+                        if (valueToEncode is object[] objects)
                         {
                             WriteObjectArray(null, objects);
                             break;
@@ -2387,10 +2409,24 @@ namespace Opc.Ua
                 }
             }
         }
+
+        /// <summary>
+        /// Test and increment the nesting level.
+        /// </summary>
+        private void CheckAndIncrementNestingLevel()
+        {
+            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of {0} was exceeded",
+                    m_context.MaxEncodingNestingLevels);
+            }
+            m_nestingLevel++;
+        }
         #endregion
 
         #region Private Fields
-        private readonly static UTF8Encoding s_utf8NoBom = new UTF8Encoding();
         private Stream m_ostrm;
         private BinaryWriter m_writer;
         private bool m_leaveOpen;

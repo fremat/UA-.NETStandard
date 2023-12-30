@@ -120,6 +120,7 @@ namespace Opc.Ua.Server
             m_configuration = configuration;
             // TODO: configure cert groups in configuration
             ServerCertificateGroup defaultApplicationGroup = new ServerCertificateGroup {
+                NodeId = Opc.Ua.ObjectIds.ServerConfiguration_CertificateGroups_DefaultApplicationGroup,
                 BrowseName = Opc.Ua.BrowseNames.DefaultApplicationGroup,
                 CertificateTypes = new NodeId[] { ObjectTypeIds.RsaSha256ApplicationCertificateType },
                 ApplicationCertificate = configuration.SecurityConfiguration.ApplicationCertificate,
@@ -200,7 +201,8 @@ namespace Opc.Ua.Server
 
                         case ObjectTypes.CertificateGroupType:
                         {
-                            var result = m_certificateGroups.FirstOrDefault(group => group.BrowseName == passiveNode.BrowseName);
+                            var result = m_certificateGroups.FirstOrDefault(group => group.NodeId == passiveNode.NodeId);
+
                             if (result != null)
                             {
                                 CertificateGroupState activeNode = new CertificateGroupState(passiveNode.Parent);
@@ -418,8 +420,12 @@ namespace Opc.Ua.Server
                     throw new ServiceResultException(StatusCodes.BadCertificateInvalid, "Certificate data is invalid.");
                 }
 
-                // validate new subject matches the previous subject
-                if (!X509Utils.CompareDistinguishedName(certificateGroup.ApplicationCertificate.Certificate.SubjectName, newCert.SubjectName))
+                // validate new subject matches the previous subject,
+                // otherwise application may not be able to find it after restart
+                // TODO: An issuer may modify the subject of an issued certificate,
+                // but then the configuration must be updated too!
+                // NOTE: not a strict requirement here for ASN.1 byte compare 
+                if (!X509Utils.CompareDistinguishedName(certificateGroup.ApplicationCertificate.Certificate.Subject, newCert.Subject))
                 {
                     throw new ServiceResultException(StatusCodes.BadSecurityChecksFailed, "Subject Name of new certificate doesn't match the application.");
                 }
@@ -463,12 +469,13 @@ namespace Opc.Ua.Server
                         case "":
                         {
                             X509Certificate2 certWithPrivateKey = certificateGroup.ApplicationCertificate.LoadPrivateKeyEx(passwordProvider).Result;
-                            updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPrivateKey(newCert, certWithPrivateKey);
+                            var exportableKey = X509Utils.CreateCopyWithPrivateKey(certWithPrivateKey, false);
+                            updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPrivateKey(newCert, exportableKey);
                             break;
                         }
                         case "PFX":
                         {
-                            X509Certificate2 certWithPrivateKey = X509Utils.CreateCertificateFromPKCS12(privateKey, passwordProvider?.GetPassword(certificateGroup.ApplicationCertificate));
+                            X509Certificate2 certWithPrivateKey = X509Utils.CreateCertificateFromPKCS12(privateKey, passwordProvider?.GetPassword(certificateGroup.ApplicationCertificate), true);
                             updateCertificate.CertificateWithPrivateKey = CertificateFactory.CreateCertificateWithPrivateKey(newCert, certWithPrivateKey);
                             break;
                         }
@@ -521,7 +528,7 @@ namespace Opc.Ua.Server
                             }
                         }
 
-                        ReportCertificateUpdatedAuditEvent(context, objectId, method, inputArguments, certificateGroupId, certificateTypeId);
+                        Server.ReportCertificateUpdatedAuditEvent(context, objectId, method, inputArguments, certificateGroupId, certificateTypeId);
                     }
                     catch (Exception ex)
                     {
@@ -532,78 +539,14 @@ namespace Opc.Ua.Server
             }
             catch (Exception e)
             {
-                // repiort the failure of UpdateCertificate via an audit event
-                ReportCertificateUpdatedAuditEvent(context, objectId, method, inputArguments, certificateGroupId, certificateTypeId, e);
+                // report the failure of UpdateCertificate via an audit event
+                Server.ReportCertificateUpdatedAuditEvent(context, objectId, method, inputArguments, certificateGroupId, certificateTypeId, e);
                 // Raise audit certificate event 
                 Server.ReportAuditCertificateEvent(newCert, e);
                 throw;
             }
 
             return ServiceResult.Good;
-        }
-
-        /// <summary>
-        /// Raise CertificateUpdatedAudit event
-        /// </summary>
-        /// <param name="systemContext"></param>
-        /// <param name="objectId">The id of the object ued for update certificate method</param>
-        /// <param name="method">The method that triggered the audit event.</param>
-        /// <param name="inputArguments">The input arguments used to call the method that triggered the audit event.</param>
-        /// <param name="certificateGroupId">The id of the certificate group</param>
-        /// <param name="certificateTypeId">the certificate ype id</param>
-        /// <param name="exception">The exception resulted after executing the UpdateCertificate method. If null, the operation was successfull.</param>
-        private void ReportCertificateUpdatedAuditEvent(ISystemContext systemContext,
-           NodeId objectId,
-           MethodState method,
-           object[] inputArguments,
-           NodeId certificateGroupId,
-           NodeId certificateTypeId,
-           Exception exception = null)
-        {
-            try
-            {
-                CertificateUpdatedAuditEventState e = new CertificateUpdatedAuditEventState(null);
-
-                TranslationInfo message = null;
-                if (exception == null)
-                {
-                    message = new TranslationInfo(
-                       "CertificateUpdatedAuditEvent",
-                       "en-US",
-                       "CertificateUpdatedAuditEvent.");
-                }
-                else
-                {
-                    message = new TranslationInfo(
-                      "CertificateUpdatedAuditEvent",
-                      "en-US",
-                      $"CertificateUpdatedAuditEvent - Exception: {exception.Message}.");
-                }
-
-                e.Initialize(
-                   systemContext,
-                   null,
-                   EventSeverity.Min,
-                   new LocalizedText(message),
-                   exception == null,
-                   DateTime.UtcNow);  // initializes Status, ActionTimeStamp, ServerId, ClientAuditEntryId, ClientUserId
-
-                e.SetChildValue(systemContext, BrowseNames.SourceNode, objectId, false);
-                e.SetChildValue(systemContext, BrowseNames.SourceName, "Method/UpdateCertificate", false);
-                e.SetChildValue(systemContext, BrowseNames.LocalTime, Utils.GetTimeZoneInfo(), false);
-
-                e.SetChildValue(systemContext, BrowseNames.MethodId, method.NodeId, false);
-                e.SetChildValue(systemContext, BrowseNames.InputArguments, inputArguments, false);
-
-                e.SetChildValue(systemContext, BrowseNames.CertificateGroup, certificateGroupId, false);
-                e.SetChildValue(systemContext, BrowseNames.CertificateType, certificateTypeId, false);
-
-                Server.ReportEvent(systemContext, e);
-            }
-            catch (Exception ex)
-            {
-                Utils.LogError(ex, "Error while reporting ReportCertificateUpdatedAuditEvent event.");
-            }
         }
 
         private ServiceResult CreateSigningRequest(
@@ -738,7 +681,6 @@ namespace Opc.Ua.Server
         /// Finds the <see cref="NamespaceMetadataState"/> node for the specified NamespaceUri.
         /// </summary>
         /// <param name="namespaceUri"></param>
-        /// <returns></returns>
         private NamespaceMetadataState FindNamespaceMetadataState(string namespaceUri)
         {
             try

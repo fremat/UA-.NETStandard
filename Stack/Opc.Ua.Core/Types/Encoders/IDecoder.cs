@@ -18,7 +18,7 @@ namespace Opc.Ua
     /// <summary>
     /// Defines functions used to dencode objects from a stream.
     /// </summary>
-    public interface IDecoder
+    public interface IDecoder : IDisposable
     {
         /// <summary>
         /// The type of encoding being used.
@@ -29,6 +29,11 @@ namespace Opc.Ua
         /// The message context associated with the decoder.
         /// </summary>
         IServiceMessageContext Context { get; }
+
+        /// <summary>
+        /// Closes the stream used for reading.
+        /// </summary>
+        void Close();
 
         /// <summary>
         /// Initializes the tables used to map namespace and server uris during decoding.
@@ -179,12 +184,12 @@ namespace Opc.Ua
         /// <param name="systemType">The system type of the encopdeable object to be read</param>
         /// <param name="encodeableTypeId">The TypeId for the <see cref="IEncodeable"/> instance that will be read.</param>
         /// <returns>An <see cref="IEncodeable"/> object that was read from the stream.</returns>
-        IEncodeable ReadEncodeable(string fieldName, System.Type systemType, ExpandedNodeId encodeableTypeId = null);
+        IEncodeable ReadEncodeable(string fieldName, Type systemType, ExpandedNodeId encodeableTypeId = null);
 
         /// <summary>
         ///  Reads an enumerated value from the stream.
         /// </summary>
-        Enum ReadEnumerated(string fieldName, System.Type enumType);
+        Enum ReadEnumerated(string fieldName, Type enumType);
 
         /// <summary>
         ///  Reads an enumerated value from the stream.
@@ -323,16 +328,23 @@ namespace Opc.Ua
         /// <param name="systemType">The system type of the encopdeable objects to be read object</param>
         /// <param name="encodeableTypeId">The TypeId for the <see cref="IEncodeable"/> instances that will be read.</param>
         /// <returns>An <see cref="IEncodeable"/> array that was read from the stream.</returns>
-        Array ReadEncodeableArray(string fieldName, System.Type systemType, ExpandedNodeId encodeableTypeId = null);
+        Array ReadEncodeableArray(string fieldName, Type systemType, ExpandedNodeId encodeableTypeId = null);
 
         /// <summary>
         /// Reads an enumerated value array from the stream.
         /// </summary>
-        Array ReadEnumeratedArray(string fieldName, System.Type enumType);
+        Array ReadEnumeratedArray(string fieldName, Type enumType);
 
         /// <summary>
-        /// Reads an array with the specified valueRank and the specified BuiltInType
+        /// Reads an array with the specified valueRank and the specified BuiltInType.
         /// </summary>
-        object ReadArray(string fieldName, int valueRank, BuiltInType builtInType, ExpandedNodeId encodeableTypeId = null);
+        /// <param name="fieldName">The array field name.</param>
+        /// <param name="valueRank">The value rank of the array.</param>
+        /// <param name="builtInType">The builtInType of the array elements.</param>
+        /// <param name="systemType">The system type of an encodeable or enum element of the array.</param>
+        /// <param name="encodeableTypeId">The type id of an encodeable or enum element of the array.</param>
+        /// <returns>An array of the specified builtInType, systemType or encodeableTypeId.</returns>
+        Array ReadArray(string fieldName, int valueRank, BuiltInType builtInType,
+            Type systemType = null, ExpandedNodeId encodeableTypeId = null);
     }
 }

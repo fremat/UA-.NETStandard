@@ -113,7 +113,7 @@ namespace Opc.Ua.Gds.Server
             }
         }
 
-        public virtual CertificateGroup Create(
+        public virtual ICertificateGroup Create(
             string storePath,
             CertificateGroupConfiguration certificateGroupConfiguration)
         {
@@ -165,13 +165,18 @@ namespace Opc.Ua.Gds.Server
             }
         }
 
-        public virtual Task<X509CRL> RevokeCertificateAsync(
+        public async virtual Task<X509CRL> RevokeCertificateAsync(
             X509Certificate2 certificate)
         {
-            return RevokeCertificateAsync(
+            Task<X509CRL> crl = RevokeCertificateAsync(
                 AuthoritiesStorePath,
                 certificate,
                 null);
+
+            //Also update TrustedList CRL so registerd Applications can get the new CRL
+            await crl.ContinueWith((_) => UpdateAuthorityCertInTrustedList(), TaskContinuationOptions.OnlyOnRanToCompletion).ConfigureAwait(false);
+
+            return await crl.ConfigureAwait(false);
         }
 
         public virtual Task VerifySigningRequestAsync(
@@ -206,7 +211,7 @@ namespace Opc.Ua.Gds.Server
             {
                 if (ex is ServiceResultException)
                 {
-                    throw ex as ServiceResultException;
+                    throw;
                 }
                 throw new ServiceResultException(StatusCodes.BadInvalidArgument, ex.Message);
             }
@@ -256,15 +261,13 @@ namespace Opc.Ua.Gds.Server
                         domainNames = domainNameList.ToArray();
                     }
                 }
-                
+
                 DateTime yesterday = DateTime.Today.AddDays(-1);
                 using (var signingKey = await LoadSigningKeyAsync(Certificate, string.Empty).ConfigureAwait(false))
                 {
-                    return CertificateFactory.CreateCertificate(
-                            application.ApplicationUri,
-                            null,
-                            info.Subject.ToString(true, (IDictionary)Org.BouncyCastle.Asn1.X509.X509Name.DefaultSymbols),
-                            domainNames)
+                    X500DistinguishedName subjectName = new X500DistinguishedName(info.Subject.GetEncoded());
+                    return CertificateBuilder.Create(subjectName)
+                        .AddExtension(new X509SubjectAltNameExtension(application.ApplicationUri, domainNames))
                         .SetNotBefore(yesterday)
                         .SetLifeTime(Configuration.DefaultCertificateLifetime)
                         .SetHashAlgorithm(X509Utils.GetRSAHashAlgorithmName(Configuration.DefaultCertificateHashSize))
@@ -277,7 +280,7 @@ namespace Opc.Ua.Gds.Server
             {
                 if (ex is ServiceResultException)
                 {
-                    throw ex as ServiceResultException;
+                    throw;
                 }
                 throw new ServiceResultException(StatusCodes.BadInvalidArgument, ex.Message);
             }
@@ -288,8 +291,18 @@ namespace Opc.Ua.Gds.Server
             string subjectName
             )
         {
+            // validate new subjectName matches the previous subject
+            // TODO: An issuer may modify the subject of the CA certificate,
+            // but then the configuration must be updated too!
+            // NOTE: not a strict requirement here for ASN.1 byte compare
+            if (!X509Utils.CompareDistinguishedName(subjectName, SubjectName))
+            {
+                throw new ArgumentException("SubjectName provided does not match the SubjectName property of the CertificateGroup \n" +
+                    "CA Certificate is not created until the subjectName " + SubjectName + " is provided", subjectName);
+            }
+        
             DateTime yesterday = DateTime.Today.AddDays(-1);
-            X509Certificate2 newCertificate = CertificateFactory.CreateCertificate(subjectName)
+            using (X509Certificate2 newCertificate = CertificateFactory.CreateCertificate(subjectName)
                 .SetNotBefore(yesterday)
                 .SetLifeTime(Configuration.CACertificateLifetime)
                 .SetHashAlgorithm(X509Utils.GetRSAHashAlgorithmName(Configuration.CACertificateHashSize))
@@ -298,17 +311,19 @@ namespace Opc.Ua.Gds.Server
                 .CreateForRSA()
                 .AddToStore(
                     AuthoritiesStoreType,
-                    AuthoritiesStorePath);
+                    AuthoritiesStorePath))
+            {
 
-            // save only public key
-            Certificate = new X509Certificate2(newCertificate.RawData);
+                // save only public key
+                Certificate = new X509Certificate2(newCertificate.RawData);
 
-            // initialize revocation list
-            await RevokeCertificateAsync(AuthoritiesStorePath, newCertificate, null).ConfigureAwait(false);
+                // initialize revocation list
+                await RevokeCertificateAsync(AuthoritiesStorePath, newCertificate, null).ConfigureAwait(false);
 
-            await UpdateAuthorityCertInTrustedList().ConfigureAwait(false);
+                await UpdateAuthorityCertInTrustedList().ConfigureAwait(false);
 
-            return Certificate;
+                return Certificate;
+            }
         }
 
         #endregion
@@ -346,8 +361,7 @@ namespace Opc.Ua.Gds.Server
             bool isCACert = X509Utils.IsCertificateAuthority(certificate);
 
             // find the authority key identifier.
-            X509AuthorityKeyIdentifierExtension authority = X509Extensions.FindExtension<X509AuthorityKeyIdentifierExtension>(certificate);
-
+            var authority = X509Extensions.FindExtension<Ua.Security.Certificates.X509AuthorityKeyIdentifierExtension>(certificate);
             if (authority != null)
             {
                 keyId = authority.KeyIdentifier;

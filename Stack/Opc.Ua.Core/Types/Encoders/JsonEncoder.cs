@@ -23,7 +23,7 @@ namespace Opc.Ua
     /// <summary>
     /// Writes objects to a JSON stream.
     /// </summary>
-    public class JsonEncoder : IEncoder, IDisposable
+    public class JsonEncoder : IJsonEncoder
     {
         #region Private Fields
         private const int kStreamWriterBufferSize = 1024;
@@ -158,7 +158,7 @@ namespace Opc.Ua
         /// <summary>
         /// Encodes a session-less message to a buffer.
         /// </summary>
-        public static void EncodeSessionLessMessage(IEncodeable message, Stream stream, IServiceMessageContext context, bool leaveOpen = false)
+        public static void EncodeSessionLessMessage(IEncodeable message, Stream stream, IServiceMessageContext context, bool leaveOpen)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (context == null) throw new ArgumentNullException(nameof(context));
@@ -297,10 +297,6 @@ namespace Opc.Ua
             int length = (int)m_writer.BaseStream.Position;
             m_writer.Dispose();
             m_writer = null;
-            if (m_leaveOpen)
-            {
-                m_stream.Position = 0;
-            }
             return length;
         }
         #endregion
@@ -312,6 +308,7 @@ namespace Opc.Ua
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -324,63 +321,22 @@ namespace Opc.Ua
                 if (m_writer != null)
                 {
                     Close();
+                    m_writer = null;
+                }
+
+                if (!m_leaveOpen)
+                {
+                    Utils.SilentDispose(m_memoryStream);
+                    Utils.SilentDispose(m_stream);
+                    m_memoryStream = null;
+                    m_stream = null;
                 }
             }
         }
         #endregion
 
-        #region IEncoder Members
-        /// <summary>
-        /// The type of encoding being used.
-        /// </summary>
-        public EncodingType EncodingType => EncodingType.Json;
-
-        /// <summary>
-        /// The message context associated with the encoder.
-        /// </summary>
-        public IServiceMessageContext Context => m_context;
-
-        /// <summary>
-        /// The Json encoder reversible encoding option
-        /// </summary>
-        public bool UseReversibleEncoding { get; private set; }
-
-        /// <summary>
-        /// The Json encoder to encoder namespace URI instead of
-        /// namespace Index in NodeIds.
-        /// </summary>
-        public bool ForceNamespaceUri { get; set; }
-
-        /// <summary>
-        /// The Json encoder default value option.
-        /// </summary>
-        public bool IncludeDefaultValues { get; set; }
-
-        /// <summary>
-        /// The Json encoder default value option.
-        /// </summary>
-        public bool IncludeDefaultNumberValues { get; set; }
-
-        /// <summary>
-        /// Pushes a namespace onto the namespace stack.
-        /// </summary>
-        public void PushNamespace(string namespaceUri)
-        {
-            m_namespaces.Push(namespaceUri);
-        }
-
-        /// <summary>
-        /// Pops a namespace from the namespace stack.
-        /// </summary>
-        public void PopNamespace()
-        {
-            m_namespaces.Pop();
-        }
-
-        /// <summary>
-        /// Push the begin of a structure on the decoder stack.
-        /// </summary>
-        /// <param name="fieldName">The name of the structure field.</param>
+        #region IJsonEncodeable Members
+        /// <inheritdoc/>
         public void PushStructure(string fieldName)
         {
             m_nestingLevel++;
@@ -409,10 +365,7 @@ namespace Opc.Ua
             m_writer.Write("{");
         }
 
-        /// <summary>
-        /// Push the begin of an array on the decoder stack.
-        /// </summary>
-        /// <param name="fieldName">The name of the array field.</param>
+        /// <inheritdoc/>
         public void PushArray(string fieldName)
         {
             m_nestingLevel++;
@@ -441,9 +394,7 @@ namespace Opc.Ua
             m_writer.Write("[");
         }
 
-        /// <summary>
-        /// Pop the structure from the decoder stack.
-        /// </summary>
+        /// <inheritdoc/>
         public void PopStructure()
         {
             if (m_nestingLevel > 1 || m_topLevelIsArray ||
@@ -456,9 +407,7 @@ namespace Opc.Ua
             m_nestingLevel--;
         }
 
-        /// <summary>
-        /// Pop the array from the decoder stack.
-        /// </summary>
+        /// <inheritdoc/>
         public void PopArray()
         {
             if (m_nestingLevel > 1 || m_topLevelIsArray ||
@@ -469,6 +418,76 @@ namespace Opc.Ua
             }
 
             m_nestingLevel--;
+        }
+
+        /// <inheritdoc/>
+        public void UsingReversibleEncoding<T>(Action<string, T> action, string fieldName, T value, bool useReversibleEncoding)
+        {
+            bool currentValue = UseReversibleEncoding;
+            try
+            {
+                UseReversibleEncoding = useReversibleEncoding;
+                action(fieldName, value);
+            }
+            finally
+            {
+                UseReversibleEncoding = currentValue;
+            }
+        }
+        #endregion
+
+        #region IEncoder Members
+        /// <summary>
+        /// The type of encoding being used.
+        /// </summary>
+        public EncodingType EncodingType => EncodingType.Json;
+
+        /// <summary>
+        /// The message context associated with the encoder.
+        /// </summary>
+        public IServiceMessageContext Context => m_context;
+
+        /// <summary>
+        /// The Json encoder reversible encoding option
+        /// </summary>
+        public bool UseReversibleEncoding { get; private set; }
+
+        /// <summary>
+        /// The Json encoder to encoder namespace URI instead of
+        /// namespace Index in NodeIds.
+        /// </summary>
+        public bool ForceNamespaceUri { get; set; }
+
+        /// <summary>
+        /// The Json encoder to encode namespace URI for all
+        /// namespaces
+        /// </summary>
+        public bool ForceNamespaceUriForIndex1 { get; set; }
+
+        /// <summary>
+        /// The Json encoder default value option.
+        /// </summary>
+        public bool IncludeDefaultValues { get; set; }
+
+        /// <summary>
+        /// The Json encoder default value option.
+        /// </summary>
+        public bool IncludeDefaultNumberValues { get; set; }
+
+        /// <summary>
+        /// Pushes a namespace onto the namespace stack.
+        /// </summary>
+        public void PushNamespace(string namespaceUri)
+        {
+            m_namespaces.Push(namespaceUri);
+        }
+
+        /// <summary>
+        /// Pops a namespace from the namespace stack.
+        /// </summary>
+        public void PopNamespace()
+        {
+            m_namespaces.Pop();
         }
 
         private static readonly char[] m_specialChars = new char[] { '"', '\\', '\n', '\r', '\t', '\b', '\f', };
@@ -855,7 +874,8 @@ namespace Opc.Ua
                 return;
             }
 
-            if (!UseReversibleEncoding && namespaceIndex > 1)
+            if ((!UseReversibleEncoding || ForceNamespaceUri) && namespaceIndex > (ForceNamespaceUriForIndex1 ? 0 : 1))
+
             {
                 var uri = m_context.NamespaceUris.GetString(namespaceIndex);
                 if (!String.IsNullOrEmpty(uri))
@@ -936,7 +956,7 @@ namespace Opc.Ua
             PushStructure(fieldName);
 
             ushort namespaceIndex = value.NamespaceIndex;
-            if (ForceNamespaceUri && namespaceIndex > 1)
+            if (ForceNamespaceUri && namespaceIndex > (ForceNamespaceUriForIndex1 ? 0 : 1))
             {
                 string namespaceUri = Context.NamespaceUris.GetString(namespaceIndex);
                 WriteNodeIdContents(value, namespaceUri);
@@ -964,7 +984,7 @@ namespace Opc.Ua
 
             string namespaceUri = value.NamespaceUri;
             ushort namespaceIndex = value.InnerNodeId.NamespaceIndex;
-            if (ForceNamespaceUri && namespaceUri == null && namespaceIndex > 1)
+            if (ForceNamespaceUri && namespaceUri == null && namespaceIndex > (ForceNamespaceUriForIndex1 ? 0 : 1))
             {
                 namespaceUri = Context.NamespaceUris.GetString(namespaceIndex);
             }
@@ -1025,67 +1045,11 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        /// Writes an DiagnosticInfo to the stream.
+        /// Writes a DiagnosticInfo to the stream.
         /// </summary>
         public void WriteDiagnosticInfo(string fieldName, DiagnosticInfo value)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            if (value == null)
-            {
-                WriteSimpleField(fieldName, null, false);
-                return;
-            }
-
-            m_nestingLevel++;
-
-            PushStructure(fieldName);
-
-            if (value.SymbolicId >= 0)
-            {
-                WriteSimpleField("SymbolicId", value.SymbolicId.ToString(CultureInfo.InvariantCulture), false);
-            }
-
-            if (value.NamespaceUri >= 0)
-            {
-                WriteSimpleField("NamespaceUri", value.NamespaceUri.ToString(CultureInfo.InvariantCulture), false);
-            }
-
-            if (value.Locale >= 0)
-            {
-                WriteSimpleField("Locale", value.Locale.ToString(CultureInfo.InvariantCulture), false);
-            }
-
-            if (value.LocalizedText >= 0)
-            {
-                WriteSimpleField("LocalizedText", value.LocalizedText.ToString(CultureInfo.InvariantCulture), false);
-            }
-
-            if (value.AdditionalInfo != null)
-            {
-                WriteSimpleField("AdditionalInfo", value.AdditionalInfo, true);
-            }
-
-            if (value.InnerStatusCode != StatusCodes.Good)
-            {
-                WriteStatusCode("InnerStatusCode", value.InnerStatusCode);
-            }
-
-            if (value.InnerDiagnosticInfo != null)
-            {
-                WriteDiagnosticInfo("InnerDiagnosticInfo", value.InnerDiagnosticInfo);
-            }
-
-            PopStructure();
-
-            m_nestingLevel--;
+            WriteDiagnosticInfo(fieldName, value, 0);
         }
 
         /// <summary>
@@ -1139,105 +1103,64 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        /// Writes an Variant to the stream with the especified reversible encoding parameter
-        /// </summary>
-        public void WriteVariant(string fieldName, Variant value, bool useReversibleEncoding)
-        {
-            bool currentValue = UseReversibleEncoding;
-
-            try
-            {
-                UseReversibleEncoding = useReversibleEncoding;
-                WriteVariant(fieldName, value);
-            }
-            finally
-            {
-                UseReversibleEncoding = currentValue;
-            }
-        }
-
-        /// <summary>
         /// Writes an Variant to the stream.
         /// </summary>
         public void WriteVariant(string fieldName, Variant value)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
             if (Variant.Null == value)
             {
                 WriteSimpleField(fieldName, null, false);
                 return;
             }
 
-            m_nestingLevel++;
-
-            bool isNull = (value.TypeInfo == null || value.TypeInfo.BuiltInType == BuiltInType.Null || value.Value == null);
-
-            if (UseReversibleEncoding && !isNull)
-            {
-                PushStructure(fieldName);
-                // encode enums as int32.
-                byte encodingByte = (byte)value.TypeInfo.BuiltInType;
-                if (value.TypeInfo.BuiltInType == BuiltInType.Enumeration)
-                {
-                    encodingByte = (byte)BuiltInType.Int32;
-                }
-
-                WriteByte("Type", encodingByte);
-                fieldName = "Body";
-            }
-
-            if (m_commaRequired)
-            {
-                m_writer.Write(",");
-            }
-
-            if (!String.IsNullOrEmpty(fieldName))
-            {
-                m_writer.Write("\"");
-                EscapeString(fieldName);
-                m_writer.Write("\":");
-            }
-
-            WriteVariantContents(value.Value, value.TypeInfo);
-
-            if (UseReversibleEncoding && !isNull)
-            {
-                Matrix matrix = value.Value as Matrix;
-
-                if (matrix != null)
-                {
-                    WriteInt32Array("Dimensions", matrix.Dimensions);
-                }
-
-                PopStructure();
-            }
-
-            m_nestingLevel--;
-        }
-
-        /// <summary>
-        /// Writes an DataValue array to the stream.
-        /// </summary>
-        public void WriteDataValue(string fieldName, DataValue value, bool useReversibleEncoding)
-        {
-            bool currentValue = UseReversibleEncoding;
+            CheckAndIncrementNestingLevel();
 
             try
             {
-                UseReversibleEncoding = useReversibleEncoding;
-                WriteDataValue(fieldName, value);
+
+                bool isNull = (value.TypeInfo == null || value.TypeInfo.BuiltInType == BuiltInType.Null || value.Value == null);
+
+                if (UseReversibleEncoding && !isNull)
+                {
+                    PushStructure(fieldName);
+                    // encode enums as int32.
+                    byte encodingByte = (byte)value.TypeInfo.BuiltInType;
+                    if (value.TypeInfo.BuiltInType == BuiltInType.Enumeration)
+                    {
+                        encodingByte = (byte)BuiltInType.Int32;
+                    }
+
+                    WriteByte("Type", encodingByte);
+                    fieldName = "Body";
+                }
+
+                if (m_commaRequired)
+                {
+                    m_writer.Write(",");
+                }
+
+                if (!String.IsNullOrEmpty(fieldName))
+                {
+                    m_writer.Write("\"");
+                    EscapeString(fieldName);
+                    m_writer.Write("\":");
+                }
+
+                WriteVariantContents(value.Value, value.TypeInfo);
+
+                if (UseReversibleEncoding && !isNull)
+                {
+                    if (value.Value is Matrix matrix)
+                    {
+                        WriteInt32Array("Dimensions", matrix.Dimensions);
+                    }
+
+                    PopStructure();
+                }
             }
             finally
             {
-                UseReversibleEncoding = currentValue;
+                m_nestingLevel--;
             }
         }
 
@@ -1302,11 +1225,11 @@ namespace Opc.Ua
             }
 
             var encodeable = value.Body as IEncodeable;
+
             if (!UseReversibleEncoding && encodeable != null)
             {
                 // non reversible encoding, only the content of the Body field is encoded
-                var structureType = value.Body as IStructureTypeInfo;
-                if (structureType != null &&
+                if (value.Body is IStructureTypeInfo structureType &&
                     structureType.StructureType == StructureType.Union)
                 {
                     encodeable.Encode(this);
@@ -1321,14 +1244,27 @@ namespace Opc.Ua
 
             PushStructure(fieldName);
 
+            var typeId = value.TypeId;
+
+            if (encodeable != null)
+            {
+                switch (value.Encoding)
+                {
+                    case ExtensionObjectEncoding.Binary: { typeId = encodeable.BinaryEncodingId; break; }
+                    case ExtensionObjectEncoding.Xml: { typeId = encodeable.XmlEncodingId; break; }
+                    default: { typeId = encodeable.TypeId; break; }
+                }
+            }
+
+            var localTypeId = ExpandedNodeId.ToNodeId(typeId, Context.NamespaceUris);
+
             if (UseReversibleEncoding)
             {
-                var nodeId = ExpandedNodeId.ToNodeId(value.TypeId, Context.NamespaceUris);
-                WriteNodeId("TypeId", nodeId);
+                WriteNodeId("TypeId", localTypeId);
             }
             else
             {
-                WriteExpandedNodeId("TypeId", value.TypeId);
+                WriteExpandedNodeId("TypeId", typeId);
             }
 
             if (encodeable != null)
@@ -1366,16 +1302,6 @@ namespace Opc.Ua
         /// </summary>
         public void WriteEncodeable(string fieldName, IEncodeable value, System.Type systemType)
         {
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-
             if (value == null)
             {
                 WriteSimpleField(fieldName, null, false);
@@ -1405,16 +1331,20 @@ namespace Opc.Ua
                 }
             }
 
-            m_nestingLevel++;
+            CheckAndIncrementNestingLevel();
 
-            PushStructure(fieldName);
+            try
+            {
+                PushStructure(fieldName);
 
-            value?.Encode(this);
+                value?.Encode(this);
 
-            PopStructure();
-
-            m_nestingLevel--;
-
+                PopStructure();
+            }
+            finally
+            {
+                m_nestingLevel--;
+            }
         }
 
         /// <summary>
@@ -2229,7 +2159,6 @@ namespace Opc.Ua
                 PopArray();
                 m_dontWriteClosing = true;
                 m_nestingLevel--;
-
             }
             else if (!string.IsNullOrWhiteSpace(fieldName) && m_nestingLevel == 0 && m_topLevelIsArray)
             {
@@ -2356,15 +2285,11 @@ namespace Opc.Ua
                 else if (typeInfo.ValueRank >= ValueRanks.OneDimension)
                 {
                     int valueRank = typeInfo.ValueRank;
-                    Matrix matrix = value as Matrix;
-                    if (matrix != null)
+                    if (UseReversibleEncoding && value is Matrix matrix)
                     {
-                        if (UseReversibleEncoding)
-                        {
-                            // linearize the matrix
-                            value = matrix.Elements;
-                            valueRank = ValueRanks.OneDimension;
-                        }
+                        // linearize the matrix
+                        value = matrix.Elements;
+                        valueRank = ValueRanks.OneDimension;
                     }
                     WriteArray(null, value, valueRank, typeInfo.BuiltInType);
                 }
@@ -2440,8 +2365,7 @@ namespace Opc.Ua
                     case BuiltInType.DiagnosticInfo: { WriteDiagnosticInfoArray(fieldName, (DiagnosticInfo[])array); return; }
                     case BuiltInType.Enumeration:
                     {
-                        Array enumArray = array as Array;
-                        if (enumArray == null)
+                        if (!(array is Array enumArray))
                         {
                             throw ServiceResultException.Create(
                                 StatusCodes.BadEncodingError,
@@ -2450,28 +2374,23 @@ namespace Opc.Ua
                         WriteEnumeratedArray(fieldName, enumArray, enumArray.GetType().GetElementType());
                         return;
                     }
-
                     case BuiltInType.Variant:
                     {
-                        Variant[] variants = array as Variant[];
-
-                        if (variants != null)
+                        if (array is Variant[] variants)
                         {
                             WriteVariantArray(fieldName, variants);
                             return;
                         }
 
                         // try to write IEncodeable Array
-                        IEncodeable[] encodeableArray = array as IEncodeable[];
-                        if (encodeableArray != null)
+                        if (array is IEncodeable[] encodeableArray)
                         {
                             WriteEncodeableArray(fieldName, encodeableArray, array.GetType().GetElementType());
                             return;
                         }
 
-                        object[] objects = array as object[];
 
-                        if (objects != null)
+                        if (array is object[] objects)
                         {
                             WriteObjectArray(fieldName, objects);
                             return;
@@ -2482,24 +2401,128 @@ namespace Opc.Ua
                             "Unexpected type encountered while encoding an array of Variants: {0}",
                             array.GetType());
                     }
+                    default:
+                    {
+                        // try to write IEncodeable Array
+                        if (array is IEncodeable[] encodeableArray)
+                        {
+                            WriteEncodeableArray(fieldName, encodeableArray, array.GetType().GetElementType());
+                            return;
+                        }
+                        if (array == null)
+                        {
+                            WriteSimpleField(fieldName, null, false);
+                            return;
+                        }
+                        throw ServiceResultException.Create(
+                            StatusCodes.BadEncodingError,
+                            "Unexpected BuiltInType encountered while encoding an array: {0}",
+                            builtInType);
+                    }
                 }
             }
             // write matrix.
             else if (valueRank > ValueRanks.OneDimension)
             {
-                Matrix matrix = array as Matrix;
+                if (!(array is Matrix matrix))
+                {
+                    if (array is Array multiArray && multiArray.Rank == valueRank)
+                    {
+                        matrix = new Matrix(multiArray, builtInType);
+                    }
+                    else
+                    {
+                        throw ServiceResultException.Create(
+                            StatusCodes.BadEncodingError,
+                            "Unexpected array type encountered while encoding array: {0}",
+                            array.GetType().Name);
+                    }
+                }
+
                 if (matrix != null)
                 {
                     int index = 0;
                     WriteStructureMatrix(fieldName, matrix, 0, ref index, matrix.TypeInfo);
                     return;
                 }
+
+                // field is omitted
             }
         }
 
         #endregion
 
         #region Private Methods
+        /// <summary>
+        /// Writes a DiagnosticInfo to the stream.
+        /// Ignores InnerDiagnosticInfo field if the nesting level
+        /// <see cref="DiagnosticInfo.MaxInnerDepth"/> is exceeded.
+        /// </summary>
+        private void WriteDiagnosticInfo(string fieldName, DiagnosticInfo value, int depth)
+        {
+            if (value == null || value.IsNullDiagnosticInfo)
+            {
+                WriteSimpleField(fieldName, null, false);
+                return;
+            }
+
+            CheckAndIncrementNestingLevel();
+
+            try
+            {
+                PushStructure(fieldName);
+
+                if (value.SymbolicId >= 0)
+                {
+                    WriteSimpleField("SymbolicId", value.SymbolicId.ToString(CultureInfo.InvariantCulture), false);
+                }
+
+                if (value.NamespaceUri >= 0)
+                {
+                    WriteSimpleField("NamespaceUri", value.NamespaceUri.ToString(CultureInfo.InvariantCulture), false);
+                }
+
+                if (value.Locale >= 0)
+                {
+                    WriteSimpleField("Locale", value.Locale.ToString(CultureInfo.InvariantCulture), false);
+                }
+
+                if (value.LocalizedText >= 0)
+                {
+                    WriteSimpleField("LocalizedText", value.LocalizedText.ToString(CultureInfo.InvariantCulture), false);
+                }
+
+                if (value.AdditionalInfo != null)
+                {
+                    WriteSimpleField("AdditionalInfo", value.AdditionalInfo, true);
+                }
+
+                if (value.InnerStatusCode != StatusCodes.Good)
+                {
+                    WriteStatusCode("InnerStatusCode", value.InnerStatusCode);
+                }
+
+                if (value.InnerDiagnosticInfo != null)
+                {
+                    if (depth < DiagnosticInfo.MaxInnerDepth)
+                    {
+                        WriteDiagnosticInfo("InnerDiagnosticInfo", value.InnerDiagnosticInfo, depth + 1);
+                    }
+                    else
+                    {
+                        Utils.LogWarning("InnerDiagnosticInfo dropped because nesting exceeds maximum of {0}.",
+                            DiagnosticInfo.MaxInnerDepth);
+                    }
+                }
+
+                PopStructure();
+            }
+            finally
+            {
+                m_nestingLevel--;
+            }
+        }
+
         /// <summary>
         /// Write multi dimensional array in structure.
         /// </summary>
@@ -2510,35 +2533,15 @@ namespace Opc.Ua
             ref int index,
             TypeInfo typeInfo)
         {
-            ulong sizeFromDimensions = 1;
             // check if matrix is well formed
-            for (int ii = 0; ii < matrix.Dimensions.Length; ii++)
-            {
-                if (matrix.Dimensions[ii] > m_context.MaxArrayLength)
-                {
-                    throw ServiceResultException.Create(
-                            StatusCodes.BadEncodingLimitsExceeded,
-                            "Maximum MaxArrayLength of {0} was exceeded while in matrix dimensions",
-                            m_context.MaxArrayLength);
-                }
+            (bool valid, int sizeFromDimensions) = Matrix.ValidateDimensions(true, matrix.Dimensions, Context.MaxArrayLength);
 
-                sizeFromDimensions *= (ulong)matrix.Dimensions[ii];
-            }
-            if (sizeFromDimensions != (ulong)matrix.Elements.Length)
+            if (!valid || (sizeFromDimensions != matrix.Elements.Length))
             {
                 throw new ArgumentException("The number of elements in the matrix does not match the dimensions.");
             }
 
-            // check the nesting level for avoiding a stack overflow.
-            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
-            {
-                throw ServiceResultException.Create(
-                    StatusCodes.BadEncodingLimitsExceeded,
-                    "Maximum nesting level of {0} was exceeded",
-                    m_context.MaxEncodingNestingLevels);
-            }
-
-            m_nestingLevel++;
+            CheckAndIncrementNestingLevel();
 
             try
             {
@@ -2574,16 +2577,19 @@ namespace Opc.Ua
         }
 
         /// <summary>
-        /// Write multi dimensional array in Variant.
+        /// Test and increment the nesting level.
         /// </summary>
-        private void WriteVariantMatrix(string fieldName, Matrix value)
+        private void CheckAndIncrementNestingLevel()
         {
-            PushStructure(fieldName);
-            WriteVariant("Matrix", new Variant(value.Elements, new TypeInfo(value.TypeInfo.BuiltInType, ValueRanks.OneDimension)));
-            WriteInt32Array("Dimensions", value.Dimensions);
-            PopStructure();
+            if (m_nestingLevel > m_context.MaxEncodingNestingLevels)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "Maximum nesting level of {0} was exceeded",
+                    m_context.MaxEncodingNestingLevels);
+            }
+            m_nestingLevel++;
         }
-
         #endregion
     }
 }
