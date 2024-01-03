@@ -490,7 +490,7 @@ namespace Opc.Ua
         /// </summary>
         public void WriteGuid(string fieldName, Uuid value)
         {
-            m_writer.Write(((Guid)value).ToByteArray());
+            WriteGuid(fieldName, (Guid)value);
         }
 
         /// <summary>
@@ -498,7 +498,14 @@ namespace Opc.Ua
         /// </summary>
         public void WriteGuid(string fieldName, Guid value)
         {
-            m_writer.Write(((Guid)value).ToByteArray());
+#if NET6_0_OR_GREATER
+            Span<byte> buffer = stackalloc byte[16];
+            value.TryWriteBytes(buffer);
+
+            m_writer.Write(buffer);
+#else
+            m_writer.Write(value.ToByteArray());
+#endif
         }
 
         /// <summary>
