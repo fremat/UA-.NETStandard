@@ -454,8 +454,14 @@ namespace Opc.Ua
         /// </summary>
         public Uuid ReadGuid(string fieldName)
         {
+#if NET8_0_OR_GREATER
+            Span<byte> buffer = stackalloc byte[16];
+            m_reader.BaseStream.ReadExactly(buffer);
+            return new Uuid(new Guid(buffer));
+#else
             byte[] bytes = m_reader.ReadBytes(16);
             return new Uuid(new Guid(bytes));
+#endif
         }
 
         /// <summary>
