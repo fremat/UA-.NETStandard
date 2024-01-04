@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Text;
 using System.Xml;
@@ -414,12 +415,34 @@ namespace Opc.Ua
                     maxStringLength,
                     length);
             }
+#if NET8_0_OR_GREATER
+            byte[] sharedBuffer = null;
 
+            Span<byte> buffer = (length < MaxStackSize) ?
+                stackalloc byte[length] :
+                sharedBuffer = ArrayPool<byte>.Shared.Rent(length);
+            buffer = buffer.Slice(0, length);
+
+            try
+            {
+                m_reader.BaseStream.ReadExactly(buffer);
+
+                // If 0 terminated, decrease length by one before converting to string
+                var utf8StringLength = buffer[buffer.Length - 1] == 0 ? buffer.Length - 1 : buffer.Length;
+                return Encoding.UTF8.GetString(buffer.Slice(0, utf8StringLength));
+            }
+            finally
+            {
+                if (sharedBuffer != null)
+                    ArrayPool<byte>.Shared.Return(sharedBuffer);
+            }
+#else
             byte[] bytes = m_reader.ReadBytes(length);
 
             // If 0 terminated, decrease length by one before converting to string
             var utf8StringLength = bytes[bytes.Length - 1] == 0 ? bytes.Length - 1 : bytes.Length;
             return Encoding.UTF8.GetString(bytes, 0, utf8StringLength);
+#endif
         }
 
         /// <summary>
@@ -2457,6 +2480,7 @@ namespace Opc.Ua
         private ushort[] m_namespaceMappings;
         private ushort[] m_serverMappings;
         private uint m_nestingLevel;
+        private const int MaxStackSize = 256;
         #endregion
     }
 }
