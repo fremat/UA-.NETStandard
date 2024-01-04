@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -452,8 +453,27 @@ namespace Opc.Ua
                     m_context.MaxStringLength,
                     byteCount);
             }
+#if NET6_0_OR_GREATER
+            byte[] sharedBuffer = null;
 
+            Span<byte> buffer = (byteCount < MaxStackSize) ?
+                stackalloc byte[byteCount] :
+                sharedBuffer = ArrayPool<byte>.Shared.Rent(byteCount);
+            buffer = buffer.Slice(0, byteCount);
+
+            try
+            {
+                Encoding.UTF8.GetBytes(value, buffer);
+                WriteByteString(null, buffer);
+            }
+            finally
+            {
+                if (sharedBuffer != null)
+                    ArrayPool<byte>.Shared.Return(sharedBuffer);
+            }
+#else
             WriteByteString(null, Encoding.UTF8.GetBytes(value));
+#endif
         }
 
         /// <summary>
@@ -531,6 +551,26 @@ namespace Opc.Ua
             WriteInt32(null, value.Length);
             m_writer.Write(value);
         }
+
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Writes a byte string to the stream.
+        /// </summary>
+        private void WriteByteString(string fieldName, ReadOnlySpan<byte> value)
+        {
+            if (m_context.MaxByteStringLength > 0 && m_context.MaxByteStringLength < value.Length)
+            {
+                throw ServiceResultException.Create(
+                    StatusCodes.BadEncodingLimitsExceeded,
+                    "MaxByteStringLength {0} < {1}",
+                    m_context.MaxByteStringLength,
+                    value.Length);
+            }
+
+            WriteInt32(null, value.Length);
+            m_writer.Write(value);
+        }
+#endif
 
         /// <summary>
         /// Writes an XmlElement to the stream.
@@ -2400,6 +2440,7 @@ namespace Opc.Ua
         private ushort[] m_namespaceMappings;
         private ushort[] m_serverMappings;
         private uint m_nestingLevel;
+        private const int MaxStackSize = 256;
         #endregion
     }
 
