@@ -442,15 +442,15 @@ namespace Opc.Ua
                 return;
             }
 
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            var byteCount = Encoding.UTF8.GetByteCount(value);
 
-            if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < bytes.Length)
+            if (m_context.MaxStringLength > 0 && m_context.MaxStringLength < byteCount)
             {
                 throw ServiceResultException.Create(
                     StatusCodes.BadEncodingLimitsExceeded,
                     "MaxStringLength {0} < {1}",
                     m_context.MaxStringLength,
-                    bytes.Length);
+                    byteCount);
             }
 
             WriteByteString(null, Encoding.UTF8.GetBytes(value));
