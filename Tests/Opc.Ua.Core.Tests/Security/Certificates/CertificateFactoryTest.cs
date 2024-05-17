@@ -37,6 +37,8 @@ using System.Security.Cryptography.X509Certificates;
 using NUnit.Framework;
 using Opc.Ua.Security.Certificates;
 using Opc.Ua.Security.Certificates.Tests;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
+
 
 namespace Opc.Ua.Core.Tests.Security.Certificates
 {
@@ -427,7 +429,7 @@ namespace Opc.Ua.Core.Tests.Security.Certificates
             Assert.NotNull(subjectAlternateName);
             TestContext.Out.WriteLine(subjectAlternateName.Format(true));
             Assert.False(subjectAlternateName.Critical);
-            var domainNames = X509Utils.GetDomainsFromCertficate(cert);
+            var domainNames = X509Utils.GetDomainsFromCertificate(cert);
             foreach (var domainName in testApp.DomainNames)
             {
                 Assert.True(domainNames.Contains(domainName, StringComparer.OrdinalIgnoreCase));

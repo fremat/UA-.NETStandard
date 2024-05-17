@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using static Opc.Ua.Utils;
 
@@ -81,7 +82,7 @@ namespace Opc.Ua.PubSub.Encoding
         }
 
         /// <summary>
-        /// Create new instance of <see cref="UadpNetworkMessage"/> as a DiscoveryResponse DataSetMetadata message
+        /// Create new instance of <see cref="UadpNetworkMessage"/> as a DiscoveryResponse DataSetMetaData message
         /// </summary>
         public UadpNetworkMessage(WriterGroupDataType writerGroupConfiguration, DataSetMetaDataType metadata)
             : base(writerGroupConfiguration, metadata)
@@ -862,7 +863,7 @@ namespace Opc.Ua.PubSub.Encoding
 
                         if (dataSetReader.DataSetWriterId == 0 || uadpDataSetMessage.DataSetWriterId == dataSetReader.DataSetWriterId)
                         {
-                            //atempt to decode dataset message using the reader
+                            //attempt to decode dataset message using the reader
                             uadpDataSetMessage.DecodePossibleDataSetReader(binaryDecoder, dataSetReader);
                             if (uadpDataSetMessage.DataSet != null)
                             {
@@ -983,19 +984,19 @@ namespace Opc.Ua.PubSub.Encoding
                     switch (publisherIdType)
                     {
                         case PublisherIdTypeEncodingMask.Byte:
-                            encoder.WriteByte("PublisherId", Convert.ToByte(PublisherId));
+                            encoder.WriteByte("PublisherId", Convert.ToByte(PublisherId, CultureInfo.InvariantCulture));
                             break;
                         case PublisherIdTypeEncodingMask.UInt16:
-                            encoder.WriteUInt16("PublisherId", Convert.ToUInt16(PublisherId));
+                            encoder.WriteUInt16("PublisherId", Convert.ToUInt16(PublisherId, CultureInfo.InvariantCulture));
                             break;
                         case PublisherIdTypeEncodingMask.UInt32:
-                            encoder.WriteUInt32("PublisherId", Convert.ToUInt32(PublisherId));
+                            encoder.WriteUInt32("PublisherId", Convert.ToUInt32(PublisherId, CultureInfo.InvariantCulture));
                             break;
                         case PublisherIdTypeEncodingMask.UInt64:
-                            encoder.WriteUInt64("PublisherId", Convert.ToUInt64(PublisherId));
+                            encoder.WriteUInt64("PublisherId", Convert.ToUInt64(PublisherId, CultureInfo.InvariantCulture));
                             break;
                         case PublisherIdTypeEncodingMask.String:
-                            encoder.WriteString("PublisherId", Convert.ToString(PublisherId));
+                            encoder.WriteString("PublisherId", Convert.ToString(PublisherId, CultureInfo.InvariantCulture));
                             break;
                         default:
                             // Reserved - no type provided

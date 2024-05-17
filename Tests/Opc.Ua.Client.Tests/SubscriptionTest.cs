@@ -37,6 +37,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
+
 
 namespace Opc.Ua.Client.Tests
 {
@@ -127,6 +129,7 @@ namespace Opc.Ua.Client.Tests
             subscription.AddItem(list.First());
             Assert.AreEqual(1, subscription.MonitoredItemCount);
             Assert.True(subscription.ChangesPending);
+            Assert.Throws<ServiceResultException>(() => subscription.Create());
             bool result = Session.AddSubscription(subscription);
             Assert.True(result);
             subscription.Create();
@@ -166,7 +169,7 @@ namespace Opc.Ua.Client.Tests
 
             subscription.ConditionRefresh();
             var sre = Assert.Throws<ServiceResultException>(() => subscription.Republish(subscription.SequenceNumber + 100));
-            Assert.AreEqual(StatusCodes.BadMessageNotAvailable, sre.StatusCode);
+            Assert.AreEqual((StatusCode)StatusCodes.BadMessageNotAvailable, (StatusCode)sre.StatusCode);
 
             // verify that reconnect created subclassed version of subscription and monitored item
             foreach (var s in Session.Subscriptions)
@@ -226,6 +229,7 @@ namespace Opc.Ua.Client.Tests
             subscription.AddItem(list.First());
             Assert.AreEqual(1, subscription.MonitoredItemCount);
             Assert.True(subscription.ChangesPending);
+            Assert.ThrowsAsync<ServiceResultException>(async () => await subscription.CreateAsync().ConfigureAwait(false));
             bool result = await Session.RemoveSubscriptionAsync(subscription).ConfigureAwait(false);
             Assert.False(result);
             result = await Session.RemoveSubscriptionsAsync(new List<Subscription>() { subscription }).ConfigureAwait(false);
@@ -277,7 +281,7 @@ namespace Opc.Ua.Client.Tests
 
             await subscription.ConditionRefreshAsync().ConfigureAwait(false);
             var sre = Assert.ThrowsAsync<ServiceResultException>(async () => await subscription.RepublishAsync(subscription.SequenceNumber + 100).ConfigureAwait(false));
-            Assert.AreEqual(StatusCodes.BadMessageNotAvailable, sre.StatusCode, $"Expected BadMessageNotAvailable, but received {sre.Message}");
+            Assert.AreEqual((StatusCode)StatusCodes.BadMessageNotAvailable, (StatusCode)sre.StatusCode, $"Expected BadMessageNotAvailable, but received {sre.Message}");
 
             // verify that reconnect created subclassed version of subscription and monitored item
             foreach (var s in Session.Subscriptions)
@@ -301,7 +305,7 @@ namespace Opc.Ua.Client.Tests
         [Test, Order(200)]
         public async Task LoadSubscriptionAsync()
         {
-            if (!File.Exists(m_subscriptionTestXml)) Assert.Ignore("Save file {0} does not exist yet", m_subscriptionTestXml);
+            if (!File.Exists(m_subscriptionTestXml)) Assert.Ignore($"Save file {m_subscriptionTestXml} does not exist yet");
 
             // load
             var subscriptions = Session.Load(m_subscriptionTestXml, false, new[] { typeof(TestableSubscription) });
@@ -341,7 +345,7 @@ namespace Opc.Ua.Client.Tests
         }
 
         [Theory, Order(300)]
-        [Timeout(30_000)]
+        [CancelAfter(30_000)]
         /// <remarks>
         /// This test doesn't deterministically prove sequential publishing,
         /// but rather relies on a subscription not being able to handle the message load.
@@ -588,7 +592,7 @@ namespace Opc.Ua.Client.Tests
                 return userIdentity;
             };
 
-            // activate the session from saved sesson secrets on the new channel
+            // activate the session from saved session secrets on the new channel
             if (asyncTest)
             {
                 await session2.ReconnectAsync(channel2).ConfigureAwait(false);
@@ -664,7 +668,7 @@ namespace Opc.Ua.Client.Tests
             if (endpoint.EndpointUrl.ToString().StartsWith(Utils.UriSchemeOpcTcp, StringComparison.Ordinal))
             {
                 sre = Assert.Throws<ServiceResultException>(() => session1.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType)));
-                Assert.AreEqual(StatusCodes.BadSecureChannelIdInvalid, sre.StatusCode, sre.Message);
+                Assert.AreEqual((StatusCode)StatusCodes.BadSecureChannelIdInvalid, (StatusCode)sre.StatusCode, sre.Message);
             }
             else
             {
@@ -692,7 +696,7 @@ namespace Opc.Ua.Client.Tests
         }
 
         [Test, Order(400)]
-        [Timeout(30_000)]
+        [CancelAfter(30_000)]
         public async Task PublishRequestCount()
         {
             var subscriptionList = new List<Subscription>();
@@ -731,6 +735,7 @@ namespace Opc.Ua.Client.Tests
                 var dict = list.ToDictionary(item => item.ClientHandle, _ => DateTime.MinValue);
 
                 subscription.AddItems(list);
+                Assert.Throws<ServiceResultException>(() => subscription.Create());
                 var result = Session.AddSubscription(subscription);
                 Assert.True(result);
                 await subscription.CreateAsync().ConfigureAwait(false);
@@ -774,7 +779,7 @@ namespace Opc.Ua.Client.Tests
             /// <summary>
             /// The origin session gets network disconnected,
             /// after transfer available sequence numbers are
-            /// just acknoledged.
+            /// just acknowledged.
             /// </summary>
             DisconnectedAck,
             /// <summary>
@@ -1010,7 +1015,7 @@ namespace Opc.Ua.Client.Tests
                 if (jj == 0)
                 {
                     // correct for delayed ack and republish count
-                    if (transferType == TransferType.DisconnectedRepublishDelayedAck || transferType == TransferType.DisconnectedRepublish)
+                    if (transferType == TransferType.DisconnectedRepublishDelayedAck)
                     {
                         targetExpectedCount += monitoredItemCount;
                     }
@@ -1181,7 +1186,7 @@ namespace Opc.Ua.Client.Tests
             Assert.True(conditionRefresh);
 
             var sre = Assert.Throws<ServiceResultException>(() => subscription.Republish(subscription.SequenceNumber + 100));
-            Assert.AreEqual(StatusCodes.BadMessageNotAvailable, sre.StatusCode);
+            Assert.AreEqual((StatusCode)StatusCodes.BadMessageNotAvailable, (StatusCode)sre.StatusCode);
 
             subscription.RemoveItems(list);
             subscription.ApplyChanges();
@@ -1255,7 +1260,7 @@ namespace Opc.Ua.Client.Tests
             }
         }
 
-        private IList<MonitoredItem> CreateMonitoredItemTestSet(Subscription subscription, IList<NodeId> nodeIds)
+        private List<MonitoredItem> CreateMonitoredItemTestSet(Subscription subscription, IList<NodeId> nodeIds)
         {
             var list = new List<MonitoredItem>();
             foreach (NodeId nodeId in nodeIds)

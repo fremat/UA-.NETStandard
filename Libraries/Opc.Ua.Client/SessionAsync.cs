@@ -93,6 +93,7 @@ namespace Opc.Ua.Client
 
                 if (requireEncryption)
                 {
+                    ValidateServerCertificateApplicationUri(serverCertificate);
                     if (checkDomain)
                     {
                         await m_configuration.CertificateValidator.ValidateAsync(serverCertificateChain, m_endpoint, ct).ConfigureAwait(false);
@@ -184,6 +185,7 @@ namespace Opc.Ua.Client
             // save session id.
             lock (SyncRoot)
             {
+                // save session id and cookie in base
                 base.SessionCreated(sessionId, sessionCookie);
             }
 
@@ -215,12 +217,8 @@ namespace Opc.Ua.Client
                     securityPolicyUri = m_endpoint.Description.SecurityPolicyUri;
                 }
 
-                byte[] previousServerNonce = null;
-
-                if (TransportChannel.CurrentToken != null)
-                {
-                    previousServerNonce = TransportChannel.CurrentToken.ServerNonce;
-                }
+                // save previous nonce
+                byte[] previousServerNonce = GetCurrentTokenServerNonce();
 
                 // validate server nonce and security parameters for user identity.
                 ValidateServerNonce(
@@ -296,8 +294,11 @@ namespace Opc.Ua.Client
                 // start keep alive thread.
                 StartKeepAliveTimer();
 
-                // raise event that session configuration chnaged.
+                // raise event that session configuration changed.
                 IndicateSessionConfigurationChanged();
+
+                // call session created callback, which was already set in base class only.
+                SessionCreated(sessionId, sessionCookie);
             }
             catch (Exception)
             {
@@ -423,11 +424,11 @@ namespace Opc.Ua.Client
                     m_reconnectLock.Release();
                 }
 
-                RestartPublishing();
+                StartPublishing(OperationTimeout, true);
             }
             else
             {
-                Utils.LogInfo("No subscriptions. Transfersubscription skipped.");
+                Utils.LogInfo("No subscriptions. TransferSubscription skipped.");
             }
 
             return failedSubscriptions == 0;
@@ -508,12 +509,12 @@ namespace Opc.Ua.Client
                         {
                             if (await subscriptions[ii].TransferAsync(this, subscriptionIds[ii], results[ii].AvailableSequenceNumbers, ct).ConfigureAwait(false))
                             {
-                                lock (SyncRoot)
+                                lock (m_acknowledgementsToSendLock)
                                 {
                                     // create ack for available sequence numbers
                                     foreach (uint sequenceNumber in results[ii].AvailableSequenceNumbers)
                                     {
-                                        AddAcknowledgementToSend(subscriptionIds[ii], sequenceNumber);
+                                        AddAcknowledgementToSend(m_acknowledgementsToSend, subscriptionIds[ii], sequenceNumber);
                                     }
                                 }
                             }
@@ -538,11 +539,11 @@ namespace Opc.Ua.Client
                     m_reconnectLock.Release();
                 }
 
-                RestartPublishing();
+                StartPublishing(OperationTimeout, false);
             }
             else
             {
-                Utils.LogInfo("No subscriptions. Transfersubscription skipped.");
+                Utils.LogInfo("No subscriptions. TransferSubscription skipped.");
             }
 
             return failedSubscriptions == 0;
@@ -1395,7 +1396,7 @@ namespace Opc.Ua.Client
             // stop the keep alive timer.
             StopKeepAliveTimer();
 
-            // check if currectly connected.
+            // check if correctly connected.
             bool connected = Connected;
 
             // halt all background threads.
@@ -1409,7 +1410,7 @@ namespace Opc.Ua.Client
                     }
                     catch (Exception e)
                     {
-                        Utils.LogError(e, "Session: Unexpected eror raising SessionClosing event.");
+                        Utils.LogError(e, "Session: Unexpected error raising SessionClosing event.");
                     }
                 }
             }
@@ -1433,7 +1434,7 @@ namespace Opc.Ua.Client
                     // raised notification indicating the session is closed.
                     SessionCreated(null, null);
                 }
-                // dont throw errors on disconnect, but return them
+                // don't throw errors on disconnect, but return them
                 // so the caller can log the error.
                 catch (ServiceResultException sre)
                 {
@@ -1520,15 +1521,12 @@ namespace Opc.Ua.Client
                     out certificateResults,
                     out certificateDiagnosticInfos);
 
-                int publishCount = 0;
-
                 Utils.LogInfo("Session RECONNECT {0} completed successfully.", SessionId);
 
                 lock (SyncRoot)
                 {
                     m_previousServerNonce = m_serverNonce;
                     m_serverNonce = serverNonce;
-                    publishCount = GetMinPublishRequestCount(true);
                 }
 
                 await m_reconnectLock.WaitAsync(ct).ConfigureAwait(false);
@@ -1536,11 +1534,7 @@ namespace Opc.Ua.Client
                 resetReconnect = false;
                 m_reconnectLock.Release();
 
-                // refill pipeline.
-                for (int ii = 0; ii < publishCount; ii++)
-                {
-                    BeginPublish(OperationTimeout);
-                }
+                StartPublishing(OperationTimeout, true);
 
                 StartKeepAliveTimer();
 
@@ -1558,7 +1552,7 @@ namespace Opc.Ua.Client
         }
 
         /// <inheritdoc/>
-        public async Task<bool> RepublishAsync(uint subscriptionId, uint sequenceNumber, CancellationToken ct)
+        public async Task<(bool, ServiceResult)> RepublishAsync(uint subscriptionId, uint sequenceNumber, CancellationToken ct)
         {
             // send republish request.
             RequestHeader requestHeader = new RequestHeader {
@@ -1590,7 +1584,7 @@ namespace Opc.Ua.Client
                     false,
                     notificationMessage);
 
-                return true;
+                return (true, ServiceResult.Good);
             }
             catch (Exception e)
             {

@@ -52,11 +52,7 @@ namespace Opc.Ua
         /// </returns>
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            if (!String.IsNullOrEmpty(format))
-            {
-                throw new FormatException();
-            }
-
+            if (format != null) throw new FormatException(Utils.Format("Invalid format string: '{0}'.", format));
             return ToString();
         }
         #endregion
@@ -193,18 +189,19 @@ namespace Opc.Ua
             store.Open(this.StorePath);
             return store;
         }
-
         /// <summary>
         /// Returns an object to access the store containing the certificates.
         /// </summary>
         /// <remarks>
         /// Opens an instance of the store which contains public keys.
         /// </remarks>
+        /// <param name="path">location of the store</param>
+        /// <param name="noPrivateKeys">Indicates whether NO private keys are found in the store. Default <c>true</c>.</param>
         /// <returns>A disposable instance of the <see cref="ICertificateStore"/>.</returns>
-        public static ICertificateStore OpenStore(string path)
+        public static ICertificateStore OpenStore(string path, bool noPrivateKeys = true)
         {
             ICertificateStore store = CertificateStoreIdentifier.CreateStore(CertificateStoreIdentifier.DetermineStoreType(path));
-            store.Open(path);
+            store.Open(path, noPrivateKeys);
             return store;
         }
         #endregion

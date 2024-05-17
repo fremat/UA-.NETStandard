@@ -923,7 +923,7 @@ namespace Opc.Ua.Test
             }
         }
 
-        // It stores encodable types of the executing assembly.       
+        // It stores encodeable types of the executing assembly.       
         private static IEncodeableFactory s_Factory = new EncodeableFactory();
 
         /// <summary>
@@ -969,9 +969,11 @@ namespace Opc.Ua.Test
 
             if (body is byte[] bytes)
             {
-                BinaryDecoder decoder = new BinaryDecoder(bytes, context);
-                body = decoder.ReadEncodeable(null, expectedType);
-                decoder.Close();
+                using (BinaryDecoder decoder = new BinaryDecoder(bytes, context))
+                {
+                    body = decoder.ReadEncodeable(null, expectedType);
+                    decoder.Close();
+                }
 
                 return (IEncodeable)body;
             }

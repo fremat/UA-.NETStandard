@@ -253,6 +253,9 @@ namespace Opc.Ua.Client
         public IServiceMessageContext MessageContext => m_session.MessageContext;
 
         /// <inheritdoc/>
+        public ITransportChannel NullableTransportChannel => m_session.NullableTransportChannel;
+
+        /// <inheritdoc/>
         public ITransportChannel TransportChannel => m_session.TransportChannel;
 
         /// <inheritdoc/>
@@ -926,16 +929,25 @@ namespace Opc.Ua.Client
         }
 
         /// <inheritdoc/>
-        public bool Republish(uint subscriptionId, uint sequenceNumber)
+        public void StartPublishing(int timeout, bool fullQueue)
         {
             using (Activity activity = ActivitySource.StartActivity())
             {
-                return m_session.Republish(subscriptionId, sequenceNumber);
+                m_session.StartPublishing(timeout, fullQueue);
             }
         }
 
         /// <inheritdoc/>
-        public async Task<bool> RepublishAsync(uint subscriptionId, uint sequenceNumber, CancellationToken ct = default)
+        public bool Republish(uint subscriptionId, uint sequenceNumber, out ServiceResult error)
+        {
+            using (Activity activity = ActivitySource.StartActivity())
+            {
+                return m_session.Republish(subscriptionId, sequenceNumber, out error);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<(bool, ServiceResult)> RepublishAsync(uint subscriptionId, uint sequenceNumber, CancellationToken ct = default)
         {
             using (Activity activity = ActivitySource.StartActivity())
             {

@@ -37,6 +37,7 @@ using NUnit.Framework;
 using Opc.Ua.PubSub.Configuration;
 using Opc.Ua.PubSub.Encoding;
 using Opc.Ua.PubSub.Transport;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Opc.Ua.PubSub.Tests.Transport
 {
@@ -63,7 +64,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(subscriberConfiguration, "subscriberConfiguration is null");
 
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, localhost.Address.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, localhost.Address.ToString());
             subscriberConfiguration.Connections.First().Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -78,7 +79,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(publisherConfiguration, "publisherConfiguration is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, localhost.Address.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, localhost.Address.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -130,7 +131,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(subscriberConfiguration, "subscriberConfiguration is null");
 
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, localhost.Address.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, localhost.Address.ToString());
             subscriberConfiguration.Connections.First().Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -148,7 +149,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(broadcastIPAddress, "broadcastIPAddress is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, broadcastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, broadcastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -201,7 +202,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(subscriberConfiguration, "subscriberConfiguration is null");
 
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             subscriberConfiguration.Connections[0].Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -216,7 +217,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(publisherConfiguration, "publisherConfiguration is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -272,7 +273,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
 
             //set address and create subscriber
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             subscriberConfiguration.Connections[0].Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -291,7 +292,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
 
             //set address and create publisher
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -363,7 +364,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
 
             //set address and create subscriber
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             subscriberConfiguration.Connections[0].Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -381,7 +382,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(publisherConfiguration, "publisherConfiguration is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -440,7 +441,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(subscriberConfiguration, "subscriberConfiguration is null");
 
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             subscriberConfiguration.Connections[0].Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -455,7 +456,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(publisherConfiguration, "publisherConfiguration is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -515,7 +516,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(subscriberConfiguration, "subscriberConfiguration is null");
 
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             subscriberConfiguration.Connections[0].Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -530,7 +531,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(publisherConfiguration, "publisherConfiguration is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -590,7 +591,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(subscriberConfiguration, "subscriberConfiguration is null");
 
             NetworkAddressUrlDataType subscriberAddress = new NetworkAddressUrlDataType();
-            subscriberAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            subscriberAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             subscriberConfiguration.Connections[0].Address = new ExtensionObject(subscriberAddress);
             UaPubSubApplication subscriberApplication = UaPubSubApplication.Create(subscriberConfiguration);
             Assert.IsNotNull(subscriberApplication, "subscriberApplication is null");
@@ -605,7 +606,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             Assert.IsNotNull(publisherConfiguration, "publisherConfiguration is null");
 
             NetworkAddressUrlDataType publisherAddress = new NetworkAddressUrlDataType();
-            publisherAddress.Url = string.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
+            publisherAddress.Url = Utils.Format(kUdpUrlFormat, Utils.UriSchemeOpcUdp, multicastIPAddress.ToString());
             publisherConfiguration.Connections.First().Address = new ExtensionObject(publisherAddress);
             UaPubSubApplication publisherApplication = UaPubSubApplication.Create(publisherConfiguration);
             Assert.IsNotNull(publisherApplication, "publisherApplication is null");
@@ -816,7 +817,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
-                throw ex;
+                throw;
             }
         }
 
@@ -847,7 +848,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
-                throw ex;
+                throw;
             }
         }
 
@@ -920,7 +921,7 @@ namespace Opc.Ua.PubSub.Tests.Transport
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
-                throw ex;
+                throw;
             }
         }
 

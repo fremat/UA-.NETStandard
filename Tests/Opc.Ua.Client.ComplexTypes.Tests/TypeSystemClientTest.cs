@@ -30,6 +30,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -39,6 +40,8 @@ using Opc.Ua.Client.Tests;
 using Opc.Ua.Server.Tests;
 using Quickstarts;
 using Quickstarts.ReferenceServer;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
+
 
 namespace Opc.Ua.Client.ComplexTypes.Tests
 {
@@ -104,7 +107,7 @@ namespace Opc.Ua.Client.ComplexTypes.Tests
                 SecurityNone = true,
                 AutoAccept = true,
                 AllNodeManagers = true,
-                OperationLimits = true,
+                OperationLimits = true
             };
             if (writer != null)
             {
@@ -113,19 +116,17 @@ namespace Opc.Ua.Client.ComplexTypes.Tests
             m_server = await m_serverFixture.StartAsync(writer ?? TestContext.Out, m_pkiRoot).ConfigureAwait(false);
 
             m_clientFixture = new ClientFixture();
-            m_clientFixture.UseTracing = true;
-            m_clientFixture.StartActivityListener();
 
             await m_clientFixture.LoadClientConfiguration(m_pkiRoot).ConfigureAwait(false);
             m_clientFixture.Config.TransportQuotas.MaxMessageSize = 4 * 1024 * 1024;
-            m_url = new Uri(m_uriScheme + "://localhost:" + m_serverFixture.Port.ToString());
+            m_url = new Uri(m_uriScheme + "://localhost:" + m_serverFixture.Port.ToString(CultureInfo.InvariantCulture));
             try
             {
                 m_session = await m_clientFixture.ConnectAsync(m_url, SecurityPolicies.Basic256Sha256).ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                Assert.Ignore("OneTimeSetup failed to create session, tests skipped. Error: {0}", e.Message);
+                Assert.Ignore($"OneTimeSetup failed to create session, tests skipped. Error: {e.Message}");
             }
         }
 

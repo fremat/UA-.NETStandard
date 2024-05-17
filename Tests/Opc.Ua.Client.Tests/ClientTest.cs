@@ -41,9 +41,11 @@ using BenchmarkDotNet.Attributes;
 using Moq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using Opc.Ua.Bindings;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server.Tests;
-using static Opc.Ua.Client.HeaderUpdatingSession;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
+
 
 namespace Opc.Ua.Client.Tests
 {
@@ -111,24 +113,6 @@ namespace Opc.Ua.Client.Tests
             return base.TearDown();
         }
         #endregion
-
-        // Test class for testing protected methods in HeaderUpdatingSession
-        public class TestableHeaderUpdatingSession : HeaderUpdatingSession
-        {
-            public TestableHeaderUpdatingSession(
-                ISessionChannel channel,
-                ApplicationConfiguration configuration,
-                ConfiguredEndpoint endpoint)
-                : base(channel, configuration, endpoint)
-            {
-            }
-
-            // Expose the protected method for testing
-            public void TestableUpdateRequestHeader(IServiceRequest request, bool useDefaults)
-            {
-                base.UpdateRequestHeader(request, useDefaults);
-            }
-        }
 
         #region Benchmark Setup
         /// <summary>
@@ -301,9 +285,9 @@ namespace Opc.Ua.Client.Tests
                 // client may report channel closed instead of security policy rejected
                 if (StatusCodes.BadSecureChannelClosed == sre.StatusCode)
                 {
-                    Assert.Inconclusive("Unexpected Status: {0}", sre);
+                    Assert.Inconclusive($"Unexpected Status: {sre}" );
                 }
-                Assert.AreEqual(StatusCodes.BadSecurityPolicyRejected, sre.StatusCode, "Unexpected Status: {0}", sre);
+                Assert.AreEqual((StatusCode)StatusCodes.BadSecurityPolicyRejected, (StatusCode)sre.StatusCode, "Unexpected Status: {0}", sre);
             }
         }
 
@@ -330,9 +314,9 @@ namespace Opc.Ua.Client.Tests
                 // client may report channel closed instead of security policy rejected
                 if (StatusCodes.BadSecureChannelClosed == sre.StatusCode)
                 {
-                    Assert.Inconclusive("Unexpected Status: {0}", sre);
+                    Assert.Inconclusive($"Unexpected Status: {sre}" );
                 }
-                Assert.AreEqual(StatusCodes.BadSecurityPolicyRejected, sre.StatusCode, "Unexpected Status: {0}", sre);
+                Assert.AreEqual((StatusCode)StatusCodes.BadSecurityPolicyRejected, (StatusCode)sre.StatusCode, "Unexpected Status: {0}", sre);
             }
         }
 
@@ -386,14 +370,80 @@ namespace Opc.Ua.Client.Tests
                 var node = await session.ReadNodeAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
                 var value = await session.ReadValueAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
 
-                // keep channel open
+                // keep channel open/inactive
                 var result = await session.CloseAsync(1_000, false).ConfigureAwait(false);
                 Assert.AreEqual((StatusCode)StatusCodes.Good, result);
 
                 await Task.Delay(5_000).ConfigureAwait(false);
 
                 var sre = Assert.ThrowsAsync<ServiceResultException>(async () => await session.ReadNodeAsync(nodeId, CancellationToken.None).ConfigureAwait(false));
-                Assert.AreEqual((StatusCode)StatusCodes.BadSessionIdInvalid, sre.StatusCode);
+                Assert.AreEqual((StatusCode)StatusCodes.BadSessionIdInvalid, (StatusCode)sre.StatusCode);
+            }
+        }
+
+        [Test, Order(204)]
+        public async Task ConnectAndCloseAsyncReadAfterCloseSessionReconnect()
+        {
+            var securityPolicy = SecurityPolicies.Basic256Sha256;
+            using (var session = await ClientFixture.ConnectAsync(ServerUrl, securityPolicy, Endpoints).ConfigureAwait(false))
+            {
+                Assert.NotNull(session);
+                Session.SessionClosing += Session_Closing;
+
+                var userIdentity = session.Identity;
+                var sessionName = session.SessionName;
+
+                var nodeId = new NodeId(Opc.Ua.VariableIds.ServerStatusType_BuildInfo);
+                var node = await session.ReadNodeAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
+                var value = await session.ReadValueAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
+
+                // keep channel open/inactive
+                var result = await session.CloseAsync(1_000, false).ConfigureAwait(false);
+                Assert.AreEqual((StatusCode)StatusCodes.Good, result);
+
+                await Task.Delay(5_000).ConfigureAwait(false);
+
+                var sre = Assert.ThrowsAsync<ServiceResultException>(async () => await session.ReadNodeAsync(nodeId, CancellationToken.None).ConfigureAwait(false));
+                Assert.AreEqual((StatusCode)StatusCodes.BadSessionIdInvalid, (StatusCode)sre.StatusCode);
+
+                // reconect/reactivate
+                await session.OpenAsync(sessionName, userIdentity, CancellationToken.None).ConfigureAwait(false);
+
+                node = await session.ReadNodeAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
+                value = await session.ReadValueAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test, Order(206)]
+        public async Task ConnectCloseSessionCloseChannel()
+        {
+            var securityPolicy = SecurityPolicies.Basic256Sha256;
+            using (var session = await ClientFixture.ConnectAsync(ServerUrl, securityPolicy, Endpoints).ConfigureAwait(false))
+            {
+
+                Assert.NotNull(session);
+                Session.SessionClosing += Session_Closing;
+
+                var userIdentity = session.Identity;
+                var sessionName = session.SessionName;
+
+                var nodeId = new NodeId(Opc.Ua.VariableIds.ServerStatusType_BuildInfo);
+                var node = await session.ReadNodeAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
+                var value = await session.ReadValueAsync(nodeId, CancellationToken.None).ConfigureAwait(false);
+
+                // keep channel opened but detach so no comm goes through
+                var channel = session.TransportChannel;
+                session.DetachChannel();
+
+                int waitTime = ServerFixture.Application.ApplicationConfiguration.TransportQuotas.ChannelLifetime +
+                    (ServerFixture.Application.ApplicationConfiguration.TransportQuotas.ChannelLifetime / 2) + 5_000;
+                await Task.Delay(waitTime).ConfigureAwait(false);
+
+                // Channel handling checked for TcpTransportChannel only
+                if (channel is TcpTransportChannel tcp)
+                {
+                    Assert.IsNull(tcp.Socket);
+                }
             }
         }
 
@@ -590,7 +640,8 @@ namespace Opc.Ua.Client.Tests
                 channel1.Dispose();
 
                 // cannot read using a detached channel
-                Assert.Throws<NullReferenceException>(() => session1.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType)));
+                var exception = Assert.Throws<ServiceResultException>(() => session1.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType)));
+                Assert.AreEqual((StatusCode)StatusCodes.BadSecureChannelClosed, (StatusCode)exception.StatusCode);
             }
 
             // the inactive channel
@@ -622,7 +673,7 @@ namespace Opc.Ua.Client.Tests
 
             // cannot read using a closed session, validate the status code
             sre = Assert.Throws<ServiceResultException>(() => session1.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType)));
-            Assert.AreEqual(StatusCodes.BadSessionIdInvalid, sre.StatusCode, sre.Message);
+            Assert.AreEqual((StatusCode)StatusCodes.BadSessionIdInvalid, (StatusCode)sre.StatusCode, sre.Message);
 
             // close the channel
             channel2.Close();
@@ -632,13 +683,16 @@ namespace Opc.Ua.Client.Tests
             sre = Assert.Throws<ServiceResultException>(() => session1.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType)));
 
             // TODO: Both channel should return BadSecureChannelClosed
-            if (endpoint.EndpointUrl.ToString().StartsWith(Utils.UriSchemeOpcTcp, StringComparison.Ordinal))
+            if (!(StatusCodes.BadSecureChannelClosed == sre.StatusCode))
             {
-                Assert.AreEqual(StatusCodes.BadSessionIdInvalid, sre.StatusCode, sre.Message);
-            }
-            else
-            {
-                Assert.AreEqual(StatusCodes.BadUnknownResponse, sre.StatusCode, sre.Message);
+                if (endpoint.EndpointUrl.ToString().StartsWith(Utils.UriSchemeOpcTcp, StringComparison.Ordinal))
+                {
+                    Assert.AreEqual((StatusCode)StatusCodes.BadSessionIdInvalid, (StatusCode)sre.StatusCode, sre.Message);
+                }
+                else
+                {
+                    Assert.AreEqual((StatusCode)StatusCodes.BadUnknownResponse, (StatusCode)sre.StatusCode, sre.Message);
+                }
             }
         }
 
@@ -701,7 +755,7 @@ namespace Opc.Ua.Client.Tests
                 return userIdentity;
             };
 
-            // activate the session from saved sesson secrets on the new channel
+            // activate the session from saved session secrets on the new channel
             session2.Reconnect(channel2);
 
             Thread.Sleep(500);
@@ -717,7 +771,7 @@ namespace Opc.Ua.Client.Tests
             if (endpoint.EndpointUrl.ToString().StartsWith(Utils.UriSchemeOpcTcp, StringComparison.Ordinal))
             {
                 sre = Assert.Throws<ServiceResultException>(() => session1.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType)));
-                Assert.AreEqual(StatusCodes.BadSecureChannelIdInvalid, sre.StatusCode, sre.Message);
+                Assert.AreEqual((StatusCode)StatusCodes.BadSecureChannelIdInvalid, (StatusCode)sre.StatusCode, sre.Message);
             }
             else
             {
@@ -806,7 +860,7 @@ namespace Opc.Ua.Client.Tests
             _ = Session.ReadValue(VariableIds.Server_ServerRedundancy_RedundancySupport, typeof(Int32));
             _ = Session.ReadValue(VariableIds.Server_ServerStatus, typeof(ServerStatusDataType));
             var sre = Assert.Throws<ServiceResultException>(() => Session.ReadValue(VariableIds.Server_ServerStatus, typeof(ServiceHost)));
-            Assert.AreEqual(StatusCodes.BadTypeMismatch, sre.StatusCode);
+            Assert.AreEqual((StatusCode)StatusCodes.BadTypeMismatch, (StatusCode)sre.StatusCode);
         }
 
         [Test]
@@ -962,7 +1016,7 @@ namespace Opc.Ua.Client.Tests
                 {
                     Session.OperationLimits.MaxNodesPerRead = 0;
                     var sre = Assert.Throws<ServiceResultException>(() => Session.ReadDisplayName(nodeIds, out var displayNames, out var errors));
-                    Assert.AreEqual(StatusCodes.BadTooManyOperations, sre.StatusCode);
+                    Assert.AreEqual((StatusCode)StatusCodes.BadTooManyOperations, (StatusCode)sre.StatusCode);
                     while (nodeIds.Count > 0)
                     {
                         Session.ReadDisplayName(nodeIds.Take((int)OperationLimits.MaxNodesPerRead).ToArray(), out var displayNames, out var errors);
@@ -1197,7 +1251,7 @@ namespace Opc.Ua.Client.Tests
         public void ReadAvailableEncodings()
         {
             var sre = Assert.Throws<ServiceResultException>(() => Session.ReadAvailableEncodings(DataTypeIds.BaseDataType));
-            Assert.AreEqual(StatusCodes.BadNodeIdInvalid, sre.StatusCode);
+            Assert.AreEqual((StatusCode)StatusCodes.BadNodeIdInvalid, (StatusCode)sre.StatusCode);
             var encoding = Session.ReadAvailableEncodings(VariableIds.Server_ServerStatus_CurrentTime);
             Assert.NotNull(encoding);
             Assert.AreEqual(0, encoding.Count);
@@ -1209,7 +1263,7 @@ namespace Opc.Ua.Client.Tests
             var sre = Assert.ThrowsAsync<ServiceResultException>(async () => {
                 var t = await Session.LoadDataTypeSystem(ObjectIds.ObjectAttributes_Encoding_DefaultJson).ConfigureAwait(false);
             });
-            Assert.AreEqual(StatusCodes.BadNodeIdInvalid, sre.StatusCode);
+            Assert.AreEqual((StatusCode)StatusCodes.BadNodeIdInvalid, (StatusCode)sre.StatusCode);
             var typeSystem = await Session.LoadDataTypeSystem().ConfigureAwait(false);
             Assert.NotNull(typeSystem);
             typeSystem = await Session.LoadDataTypeSystem(ObjectIds.OPCBinarySchema_TypeSystem).ConfigureAwait(false);
@@ -1318,8 +1372,66 @@ namespace Opc.Ua.Client.Tests
             }
         }
 
+        // Test class for testing protected methods in TraceableRequestHeaderClientSession
+        public class TestableTraceableRequestHeaderClientSession : TraceableRequestHeaderClientSession
+        {
+            public TestableTraceableRequestHeaderClientSession(
+                ISessionChannel channel,
+                ApplicationConfiguration configuration,
+                ConfiguredEndpoint endpoint)
+                : base(channel, configuration, endpoint)
+            {
+            }
+
+            // Expose the protected method for testing
+            public void TestableUpdateRequestHeader(IServiceRequest request, bool useDefaults)
+            {
+                base.UpdateRequestHeader(request, useDefaults);
+            }
+        }
+
+        public static ActivityContext TestExtractActivityContextFromParameters(AdditionalParametersType parameters)
+        {
+            if (parameters == null)
+            {
+                return default;
+            }
+
+            ActivityTraceId traceId = default;
+            ActivitySpanId spanId = default;
+            ActivityTraceFlags traceFlags = ActivityTraceFlags.None;
+
+            foreach (var item in parameters.Parameters)
+            {
+                if (item.Key == "traceparent")
+                {
+                    var traceparent = item.Value.ToString();
+                    int firstDash = traceparent.IndexOf('-');
+                    int secondDash = traceparent.IndexOf('-', firstDash + 1);
+                    int thirdDash = traceparent.IndexOf('-', secondDash + 1);
+
+                    if (firstDash != -1 && secondDash != -1)
+                    {
+                        ReadOnlySpan<char> traceIdSpan = traceparent.AsSpan(firstDash + 1, secondDash - firstDash - 1);
+                        ReadOnlySpan<char> spanIdSpan = traceparent.AsSpan(secondDash + 1, thirdDash - secondDash - 1);
+                        ReadOnlySpan<char> traceFlagsSpan = traceparent.AsSpan(thirdDash + 1);
+
+                        traceId = ActivityTraceId.CreateFromString(traceIdSpan);
+                        spanId = ActivitySpanId.CreateFromString(spanIdSpan);
+                        traceFlags = traceFlagsSpan.SequenceEqual("01".AsSpan()) ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None;
+
+                        return new ActivityContext(traceId, spanId, traceFlags);
+                    }
+                    return default;
+                }
+            }
+
+            // no traceparent header found
+            return default;
+        }
+
         [Test, Order(900)]
-        public async Task TestTraceContextIsPropagated()
+        public async Task ClientTestRequestHeaderUpdate()
         {
             var rootActivity = new Activity("Test_Activity_Root") {
                 ActivityTraceFlags = ActivityTraceFlags.Recorded,
@@ -1343,26 +1455,26 @@ namespace Opc.Ua.Client.Tests
                     var channelMock = new Mock<ITransportChannel>();
                     var sessionChannelMock = channelMock.As<ISessionChannel>();
 
-                    TestableHeaderUpdatingSession testableHeaderUpdatingSession = new TestableHeaderUpdatingSession(sessionChannelMock.Object, ClientFixture.Config, endpoint);
+                    TestableTraceableRequestHeaderClientSession testableTraceableRequestHeaderClientSession = new TestableTraceableRequestHeaderClientSession(sessionChannelMock.Object, ClientFixture.Config, endpoint);
                     CreateSessionRequest request = new CreateSessionRequest();
                     request.RequestHeader = new RequestHeader();
 
                     // Mock call TestableUpdateRequestHeader() to simulate the header update
-                    testableHeaderUpdatingSession.TestableUpdateRequestHeader(request, true);
+                    testableTraceableRequestHeaderClientSession.TestableUpdateRequestHeader(request, true);
 
                     // Get the AdditionalHeader from the request
                     var additionalHeader = request.RequestHeader.AdditionalHeader as ExtensionObject;
                     Assert.NotNull(additionalHeader);
 
                     // Simulate extraction
-                    var extractedContext = HeaderUpdatingSession.ExtractTraceContextFromParameters(additionalHeader.Body as AdditionalParametersType);
+                    var extractedContext = TestExtractActivityContextFromParameters(additionalHeader.Body as AdditionalParametersType);
 
                     // Verify that the trace context is propagated.
-                    Assert.AreEqual(activity.TraceId, extractedContext.ActivityContext.TraceId);
-                    Assert.AreEqual(activity.SpanId, extractedContext.ActivityContext.SpanId);
+                    Assert.AreEqual(activity.TraceId, extractedContext.TraceId);
+                    Assert.AreEqual(activity.SpanId, extractedContext.SpanId);
 
                     TestContext.Out.WriteLine($"Activity TraceId: {activity.TraceId}, Activity SpanId: {activity.SpanId}");
-                    TestContext.Out.WriteLine($"Extracted TraceId: {extractedContext.ActivityContext.TraceId}, Extracted SpanId: {extractedContext.ActivityContext.SpanId}");
+                    TestContext.Out.WriteLine($"Extracted TraceId: {extractedContext.TraceId}, Extracted SpanId: {extractedContext.SpanId}");
                 }
             }
 
